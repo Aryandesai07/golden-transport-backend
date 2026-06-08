@@ -6,49 +6,49 @@ from database import Base, engine
 from routes.driver import router as driver_router
 import os
 
-# =========================================
+# =========================
 # CREATE UPLOAD FOLDERS
-# =========================================
+# =========================
 os.makedirs("uploads/proofs", exist_ok=True)
 os.makedirs("uploads/fuel_bills", exist_ok=True)
 
-# =========================================
-# FASTAPI APP
-# =========================================
-app = FastAPI(title="Smart Transport System")
+# =========================
+# FASTAPI APP (ONLY ONCE)
+# =========================
+app = FastAPI(title="Golden Transport API")
 
-# =========================================
-# STATIC FILES (IMPORTANT FOR IMAGES)
-# =========================================
+# =========================
+# STATIC FILES
+# =========================
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# =========================================
-# CORS (FOR EXPO / MOBILE APP)
-# =========================================
+# =========================
+# CORS
+# =========================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # for development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# =========================================
+# =========================
 # DATABASE INIT
-# =========================================
+# =========================
 Base.metadata.create_all(bind=engine)
 
-# =========================================
+# =========================
 # ROUTES
-# =========================================
+# =========================
 app.include_router(driver_router)
 
-# =========================================
-# TEST ROUTES
-# =========================================
+# =========================
+# ROOT TEST ROUTE
+# =========================
 @app.get("/")
-def home():
-    return {"message": "Backend Running Successfully"}
+def root():
+    return {"message": "Golden Transport API Running"}
 
 @app.get("/test")
 def test():

@@ -36,7 +36,7 @@ export default function Dashboard() {
       setLoading(true);
 
       const response = await fetch(
-        `http://192.168.31.182:8000/driver/trips/${driverId}`
+        `https://golden-transport-backend-production.up.railway.app/driver/trips/${driverId}`
       );
 
       const data = await response.json();

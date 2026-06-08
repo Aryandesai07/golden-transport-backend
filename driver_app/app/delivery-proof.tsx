@@ -13,7 +13,7 @@ import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = "http://192.168.31.182:8000";
+const BASE_URL = "https://golden-transport-backend-production.up.railway.app";
 
 export default function DeliveryProof() {
 
