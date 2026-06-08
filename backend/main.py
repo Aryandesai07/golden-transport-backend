@@ -6,25 +6,17 @@ from database import Base, engine
 from routes.driver import router as driver_router
 import os
 
-# =========================================
-# CREATE UPLOAD FOLDERS
-# =========================================
+# CREATE FOLDERS
 os.makedirs("uploads/proofs", exist_ok=True)
 os.makedirs("uploads/fuel_bills", exist_ok=True)
 
-# =========================================
-# FASTAPI APP (FIXED)
-# =========================================
-app = FastAPI(title="Smart Transport System")
+# FASTAPI APP (ONLY ONCE)
+app = FastAPI(title="Golden Transport API")
 
-# =========================================
 # STATIC FILES
-# =========================================
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# =========================================
 # CORS
-# =========================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,19 +25,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================================
-# DATABASE INIT
-# =========================================
+# DATABASE
 Base.metadata.create_all(bind=engine)
 
-# =========================================
 # ROUTES
-# =========================================
 app.include_router(driver_router)
 
-# =========================================
-# TEST ROUTES
-# =========================================
+# HOME
 @app.get("/")
 def home():
     return {"message": "Backend Running Successfully"}
