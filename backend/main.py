@@ -10,7 +10,6 @@ import os
 os.makedirs("uploads/proofs", exist_ok=True)
 os.makedirs("uploads/fuel_bills", exist_ok=True)
 
-# FASTAPI APP (ONLY ONCE)
 app = FastAPI(title="Golden Transport API")
 
 # STATIC FILES
