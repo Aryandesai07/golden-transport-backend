@@ -33,7 +33,7 @@ app.include_router(driver_router)
 # HOME
 @app.get("/")
 def home():
-    return {"message": "Backend Running Successfully"}
+    return {"message": "API Running"}
 
 @app.get("/test")
 def test():
