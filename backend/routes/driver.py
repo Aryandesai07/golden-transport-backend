@@ -13,7 +13,7 @@ import folium
 from fastapi.responses import HTMLResponse
 from auth import create_access_token
 from models import SOSAlert
-from schemas import SOSRequest
+from schemas import SOSRequest, DriverCreate
 from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
 from fastapi import UploadFile, File, Depends
 from sqlalchemy.orm import Session
@@ -589,3 +589,22 @@ def admin_dashboard(db: Session = Depends(get_db)):
             Trip.proof_image.isnot(None)
         ).count()
     }
+    
+# =========================================
+# DRIVER REGISTER
+# =========================================
+
+@router.post("/register")
+def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
+    new_driver = Driver(
+        name=driver.name,
+        mobile=driver.mobile,
+        password=driver.password,
+        vehicle_no=driver.vehicle_no,
+        vehicle_type=driver.vehicle_type
+    )
+    db.add(new_driver)
+    db.commit()
+    db.refresh(new_driver)
+    return {"status": "success", "driver_id": new_driver.id}
+

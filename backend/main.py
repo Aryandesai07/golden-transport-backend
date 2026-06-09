@@ -14,7 +14,7 @@ app = FastAPI(title="Golden Transport API")
 
 # STATIC FILES
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
+app.include_router(driver_router, prefix="/driver")
 # CORS
 app.add_middleware(
     CORSMiddleware,

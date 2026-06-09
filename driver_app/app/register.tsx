@@ -41,7 +41,7 @@ export default function RegisterScreen() {
       setLoading(true);
 
       const response = await API.post(
-        "/driver/register",
+        "/register",
         {
           name,
           mobile,

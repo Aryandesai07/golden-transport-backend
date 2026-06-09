@@ -144,6 +144,15 @@ export default function LoginScreen() {
           }
         </Text>
       </TouchableOpacity>
+      <TouchableOpacity
+  onPress={() => router.push("/register")}
+  style={{ marginTop: 15 }}
+>
+  <Text style={{ color: "#2563EB", textAlign: "center" }}>
+    New Driver? Register Here
+  </Text>
+</TouchableOpacity>
+
 
     </View>
   );
