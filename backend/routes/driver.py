@@ -608,3 +608,8 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
     db.refresh(new_driver)
     return {"status": "success", "driver_id": new_driver.id}
 
+@router.get("/drivers")
+def get_all_drivers(db: Session = Depends(get_db)):
+    drivers = db.query(Driver).all()
+    return drivers
+
