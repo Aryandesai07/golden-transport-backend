@@ -32,8 +32,4 @@ typing_extensions==4.15.0
 urllib3==2.7.0
 uvicorn==0.48.0
 xyzservices==2026.3.0
-fastapi
-uvicorn
-sqlalchemy
-pydantic
-python-multipart
+sqlalchemy==2.0.50

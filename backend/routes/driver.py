@@ -28,7 +28,11 @@ from schemas import (
     LocationData
 )
 
-from auth import create_access_token, create_password_hash
+from auth import (
+    create_access_token,
+    create_password_hash,
+    verify_password
+)
 
 from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
 
