@@ -40,16 +40,14 @@ export default function RegisterScreen() {
 
       setLoading(true);
 
-      const response = await API.post(
-        "/register",
-        {
+      const response = await API.post("/driver/driver/register", {
           name,
           mobile,
           password,
           vehicle_no: vehicleNo,
-          vehicle_type: vehicleType
-        }
-      );
+          vehicle_type: vehicleType,
+        });
+
 
       if (
         response.data.status === "success"
