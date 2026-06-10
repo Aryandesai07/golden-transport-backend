@@ -261,21 +261,6 @@ def upload_fuel_bill(
         "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
         "bill_id": bill.id
     }
-    
-@router.get("/update-test-driver")
-def update_test_driver(db: Session = Depends(get_db)):
-
-    driver = db.query(Driver).filter(Driver.id == 1).first()
-
-    if driver:
-        driver.vehicle_no = "TN09AB1234"
-        driver.vehicle_type = "Container Truck"
-        driver.earnings = 4500
-
-        db.commit()
-
-    return {"message": "Updated"}
-
 @router.get("/admin/live-map")
 def live_map(db: Session = Depends(get_db)):
 
@@ -520,4 +505,30 @@ def register_driver(
         "status": "success",
         "driver_id": new_driver.id,
         "message": "Driver registered successfully"
+    }
+# =========================================
+# TEST LOGIN (REMOVE IN PRODUCTION)
+# =========================================
+
+@router.post("/test-login")
+def test_login():
+
+    token = create_access_token(
+        data={
+            "driver_id": 999,
+            "mobile": "9999999999"
+        }
+    )
+
+    return {
+        "status": "success",
+        "message": "Test Login Successful",
+        "token": token,
+        "driver": {
+            "id": 999,
+            "name": "Test Driver",
+            "mobile": "9999999999",
+            "vehicle_no": "MH47GT1001",
+            "vehicle_type": "Truck"
+        }
     }

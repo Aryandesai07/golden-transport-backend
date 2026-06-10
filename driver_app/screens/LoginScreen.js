@@ -37,11 +37,7 @@ export default function LoginScreen() {
       console.log("Sending Login Request...");
 
       const response = await API.post(
-        "/driver/login",
-        {
-          mobile: mobile.trim(),
-          password: password.trim()
-        }
+        "/driver/test-login"
       );
 
       console.log("Response:", response.data);
@@ -50,12 +46,12 @@ export default function LoginScreen() {
 
         await AsyncStorage.setItem(
           "driver_id",
-          String(response.data.driver_id)
+          String(response.data.driver.id)
         );
 
         await AsyncStorage.setItem(
           "driver_name",
-          response.data.name
+          response.data.driver.name
         );
 
         if (response.data.token) {
@@ -68,7 +64,7 @@ export default function LoginScreen() {
 
         Alert.alert(
           "Login Success",
-          `Welcome ${response.data.name}`
+          `Welcome ${response.data.driver.name}`
         );
 
         router.replace("/dashboard");
@@ -83,14 +79,14 @@ export default function LoginScreen() {
 
     } catch (error) {
 
-  console.log("LOGIN ERROR:", error);
+      console.log("LOGIN ERROR:", error);
 
-  Alert.alert(
-    "Connection Error",
-    "Cannot connect to backend"
-  );
+      Alert.alert(
+        "Connection Error",
+        "Cannot connect to backend"
+      );
 
-} finally {
+    } finally {
 
       setLoading(false);
     }
