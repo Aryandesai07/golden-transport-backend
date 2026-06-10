@@ -205,25 +205,20 @@ def update_location(
     db: Session = Depends(get_db)
 ):
 
-    location = db.query(
-        DriverLocation
-    ).filter(
+    location = db.query(DriverLocation).filter(
         DriverLocation.driver_id == data.driver_id
     ).first()
 
     if location:
-
         location.latitude = data.latitude
         location.longitude = data.longitude
 
     else:
-
         location = DriverLocation(
             driver_id=data.driver_id,
             latitude=data.latitude,
             longitude=data.longitude
         )
-
         db.add(location)
 
     db.commit()
@@ -265,15 +260,27 @@ def upload_fuel_bill(
         "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
         "bill_id": bill.id
     }
+    
+@router.get("/update-test-driver")
+def update_test_driver(db: Session = Depends(get_db)):
+
+    driver = db.query(Driver).filter(Driver.id == 1).first()
+
+    if driver:
+        driver.vehicle_no = "TN09AB1234"
+        driver.vehicle_type = "Container Truck"
+        driver.earnings = 4500
+
+        db.commit()
+
+    return {"message": "Updated"}
+
 @router.get("/admin/live-map")
 def live_map(db: Session = Depends(get_db)):
 
     locations = db.query(DriverLocation).all()
 
-    m = folium.Map(
-        location=[20.5937, 78.9629],
-        zoom_start=5
-    )
+    m = folium.Map(location=[20.5937, 78.9629], zoom_start=5)
 
     for loc in locations:
 
@@ -286,17 +293,10 @@ def live_map(db: Session = Depends(get_db)):
         folium.Marker(
             [float(loc.latitude), float(loc.longitude)],
             popup=name,
-            icon=folium.Icon(
-                color="green",
-                icon="truck",
-                prefix="fa"
-            )
+            icon=folium.Icon(color="green", icon="truck", prefix="fa")
         ).add_to(m)
 
-    return HTMLResponse(
-        m._repr_html_()
-    )
-    
+    return HTMLResponse(m._repr_html_())
 @router.post("/sos")
 def send_sos(data: SOSRequest, db: Session = Depends(get_db)):
 

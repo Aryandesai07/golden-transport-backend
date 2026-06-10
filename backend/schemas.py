@@ -20,3 +20,8 @@ class DriverCreate(BaseModel):
     password: str
     vehicle_no: str
     vehicle_type: str | None = None
+    
+class LocationData(BaseModel):
+    driver_id: int
+    latitude: float
+    longitude: float
