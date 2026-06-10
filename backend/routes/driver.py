@@ -612,4 +612,3 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
 def get_all_drivers(db: Session = Depends(get_db)):
     drivers = db.query(Driver).all()
     return drivers
-
