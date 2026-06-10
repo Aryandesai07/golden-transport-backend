@@ -27,26 +27,36 @@ export default function Index() {
         return;
       }
 
-      // 🔥 NOT LOGGED IN → LOGIN
+      // 🔥 NOT LOGGED IN → LOGIN PAGE
       router.replace("/login");
 
     } catch (error) {
       console.log("APP START ERROR:", error);
       router.replace("/login");
+
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>🚚</Text>
-      <Text style={styles.title}>Golden Transport</Text>
+  // ✅ OPTION 1 FIX: USE loading properly
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.logo}>🚚</Text>
+        <Text style={styles.title}>Golden Transport</Text>
 
-      <ActivityIndicator size="large" color="#2563EB" />
-      <Text style={styles.text}>Loading system...</Text>
-    </View>
-  );
+        <ActivityIndicator size="large" color="#2563EB" />
+
+        <Text style={styles.text}>
+          Loading system...
+        </Text>
+      </View>
+    );
+  }
+
+  // fallback (never shown but safe)
+  return null;
 }
 
 const styles = StyleSheet.create({
@@ -56,16 +66,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F3F6FA"
   },
+
   logo: {
     fontSize: 60,
     marginBottom: 10
   },
+
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
     color: "#1F2937"
   },
+
   text: {
     marginTop: 10,
     color: "#6B7280"
