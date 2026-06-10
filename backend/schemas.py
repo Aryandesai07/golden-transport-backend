@@ -13,10 +13,10 @@ class SOSRequest(BaseModel):
     driver_id: int
     latitude: float
     longitude: float
-    
+
 class DriverCreate(BaseModel):
     name: str
     mobile: str
     password: str
     vehicle_no: str
-    vehicle_type: str
+    vehicle_type: str | None = None

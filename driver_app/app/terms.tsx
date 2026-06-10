@@ -1,23 +1,14 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet
-} from "react-native";
-
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
-export default function TermsScreen() {
+export default function Terms() {
 
   const acceptTerms = async () => {
+    await AsyncStorage.setItem("termsAccepted", "true");
 
-    await AsyncStorage.setItem(
-      "termsAccepted",
-      "true"
-    );
+    Alert.alert("Success", "Terms Accepted");
 
     router.replace("/login");
   };
@@ -25,49 +16,21 @@ export default function TermsScreen() {
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>
-        Terms & Conditions
-      </Text>
+      <Text style={styles.title}>🚚 Golden Transport</Text>
+      <Text style={styles.subtitle}>Terms & Conditions</Text>
 
-      <ScrollView style={styles.card}>
-
+      <ScrollView style={styles.box}>
         <Text style={styles.text}>
-          Welcome to Golden Tamilnadu Transport Driver App.
-
-          {"\n\n"}
-
-          • Drivers must provide accurate information.
-
-          {"\n\n"}
-
-          • Location tracking may be enabled during trips.
-
-          {"\n\n"}
-
-          • Any misuse of the platform can result in account suspension.
-
-          {"\n\n"}
-
-          • Transport records must be genuine.
-
-          {"\n\n"}
-
-          • Company reserves the right to update policies.
-
-          {"\n\n"}
-
-          By continuing, you agree to all terms and conditions.
+          1. Driver must follow all transport rules.{'\n\n'}
+          2. Earnings will be calculated daily.{'\n\n'}
+          3. Fake trips will lead to account suspension.{'\n\n'}
+          4. Driver must maintain vehicle condition.{'\n\n'}
+          5. Company can update policies anytime.
         </Text>
-
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={acceptTerms}
-      >
-        <Text style={styles.buttonText}>
-          I Agree & Continue
-        </Text>
+      <TouchableOpacity style={styles.button} onPress={acceptTerms}>
+        <Text style={styles.buttonText}>Accept & Continue</Text>
       </TouchableOpacity>
 
     </View>
@@ -79,40 +42,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: "#F5F7FB",
+    justifyContent: "center"
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "bold",
-    marginTop: 50,
-    marginBottom: 20
+    textAlign: "center"
   },
 
-  card: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 15
+  subtitle: {
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#666"
+  },
+
+  box: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    height: 300
   },
 
   text: {
-    fontSize: 16,
-    lineHeight: 25
+    fontSize: 14,
+    color: "#333"
   },
 
   button: {
     backgroundColor: "#2563EB",
-    padding: 18,
-    borderRadius: 12,
-    marginVertical: 20
+    padding: 15,
+    marginTop: 20,
+    borderRadius: 10
   },
 
   buttonText: {
-    color: "#FFFFFF",
+    color: "#fff",
     textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 16
+    fontWeight: "bold"
   }
-
 });

@@ -1,38 +1,35 @@
 import React, { useState } from "react";
 import {
+  View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ScrollView
+  ActivityIndicator
 } from "react-native";
 
 import { router } from "expo-router";
 import API from "../services/api";
 
-export default function RegisterScreen() {
+export default function Register() {
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
-  const [vehicleType, setVehicleType] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const register = async () => {
+  const handleRegister = async () => {
 
-    if (
-      !name ||
-      !mobile ||
-      !password ||
-      !vehicleNo ||
-      !vehicleType
-    ) {
-      Alert.alert(
-        "Error",
-        "Please fill all fields"
-      );
+    // ✅ VALIDATION
+    if (!name || !mobile || !password || !vehicleNo) {
+      Alert.alert("Error", "All fields are required");
+      return;
+    }
+
+    if (mobile.length < 10) {
+      Alert.alert("Error", "Enter valid mobile number");
       return;
     }
 
@@ -40,124 +37,113 @@ export default function RegisterScreen() {
 
       setLoading(true);
 
-      const response = await API.post("/driver/driver/register", {
-          name,
-          mobile,
-          password,
-          vehicle_no: vehicleNo,
-          vehicle_type: vehicleType,
-        });
+      console.log("Register request sending...");
 
+      const payload = {
+        name: name.trim(),
+        mobile: mobile.trim(),
+        password: password.trim(),
+        vehicle_no: vehicleNo.trim(),
+        vehicle_type: "Truck"
+      };
 
-      if (
-        response.data.status === "success"
-      ) {
+      console.log("Payload:", payload);
+
+      const res = await API.post("/driver/register", payload);
+
+      console.log("Response:", res.data);
+
+      if (res.data?.status === "success") {
 
         Alert.alert(
           "Success",
-          "Registration Completed"
+          "Driver Registered Successfully"
         );
 
+        // redirect to login
         router.replace("/login");
 
       } else {
 
         Alert.alert(
-          "Error",
-          response.data.message
+          "Registration Failed",
+          res.data?.message || "Something went wrong"
         );
+
       }
 
     } catch (error: any) {
 
-      console.log(error);
+      console.log("REGISTER ERROR:", error?.response?.data || error.message);
 
       Alert.alert(
         "Server Error",
-        "Unable to register"
+        error?.response?.data?.message || "Cannot connect to server"
       );
 
     } finally {
-
       setLoading(false);
     }
   };
 
   return (
+    <View style={styles.container}>
 
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-
-      <Text style={styles.title}>
-        Driver Registration
-      </Text>
+      <Text style={styles.title}>🚚 Driver Registration</Text>
 
       <TextInput
-        placeholder="Driver Name"
-        style={styles.input}
+        placeholder="Full Name"
         value={name}
         onChangeText={setName}
+        style={styles.input}
       />
 
       <TextInput
         placeholder="Mobile Number"
-        style={styles.input}
-        keyboardType="phone-pad"
         value={mobile}
         onChangeText={setMobile}
+        keyboardType="phone-pad"
+        style={styles.input}
       />
 
       <TextInput
         placeholder="Password"
-        style={styles.input}
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
       />
 
       <TextInput
         placeholder="Vehicle Number"
-        style={styles.input}
         value={vehicleNo}
         onChangeText={setVehicleNo}
-      />
-
-      <TextInput
-        placeholder="Vehicle Type"
         style={styles.input}
-        value={vehicleType}
-        onChangeText={setVehicleType}
       />
 
       <TouchableOpacity
         style={styles.button}
-        onPress={register}
+        onPress={handleRegister}
         disabled={loading}
       >
-
-        <Text style={styles.buttonText}>
-          {
-            loading
-              ? "Registering..."
-              : "Register Driver"
-          }
-        </Text>
-
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() =>
-          router.replace("/login")
+        {
+          loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              Register Driver
+            </Text>
+          )
         }
-      >
-        <Text style={styles.loginLink}>
-          Already have an account? Login
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.replace("/login")}>
+        <Text style={styles.loginText}>
+          Already have account? Login
         </Text>
       </TouchableOpacity>
 
-    </ScrollView>
+    </View>
   );
 }
 
@@ -165,45 +151,43 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
-    padding: 20
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#F3F6FA"
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
-    marginTop: 60,
-    marginBottom: 30
+    textAlign: "center",
+    marginBottom: 25
   },
 
   input: {
-    backgroundColor: "#FFFFFF",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#D1D5DB"
+    borderColor: "#ddd"
   },
 
   button: {
-    backgroundColor: "#2563EB",
-    padding: 18,
-    borderRadius: 12,
+    backgroundColor: "#16A34A",
+    padding: 15,
+    borderRadius: 10,
     marginTop: 10
   },
 
   buttonText: {
-    color: "#FFFFFF",
+    color: "#fff",
     textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 16
+    fontWeight: "bold"
   },
 
-  loginLink: {
+  loginText: {
     textAlign: "center",
-    marginTop: 20,
-    color: "#2563EB",
-    fontWeight: "600"
+    marginTop: 15,
+    color: "#2563EB"
   }
-
 });

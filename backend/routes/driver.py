@@ -1,29 +1,39 @@
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Driver, Notification, Trip
-from schemas import DriverLogin
 from pydantic import BaseModel
-from models import DriverLocation
-import shutil
-import os
-import time
 import folium
-from fastapi.responses import HTMLResponse
-from auth import create_access_token
-from models import SOSAlert
-from schemas import SOSRequest, DriverCreate
-from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
-from fastapi import UploadFile, File, Depends
+from models import (
+    Driver,
+    Notification,
+    Trip,
+    DeliveryProof,
+    DriverLocation,
+    FuelBill,
+    Payment,
+    SOSAlert
+)
 
-from models import Payment, FuelBill
-from database import SessionLocal
+from schemas import (
+    DriverLogin,
+    TripStatusUpdate,
+    SOSRequest,
+    DriverCreate
+)
+
+from fastapi.responses import HTMLResponse
+
+from auth import create_access_token
+from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
+
+import os
+import shutil
+import time
 
 router = APIRouter(
     prefix="/driver",
-    tags=["Driver"],
+    tags=["Driver"]
 )
-
 UPLOAD_DIR = UPLOAD_PROOFS
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -474,25 +484,12 @@ def admin_dashboard(db: Session = Depends(get_db)):
 # DRIVER REGISTER
 # =========================================
 
-@router.post("/register")
+@router.post("/driver/register")
 def register_driver(
     driver: DriverCreate,
     db: Session = Depends(get_db)
 ):
 
-    # CHECK MOBILE ALREADY EXISTS
-    existing_driver = db.query(Driver).filter(
-        Driver.mobile == driver.mobile
-    ).first()
-
-    if existing_driver:
-
-        return {
-            "status": "error",
-            "message": "Mobile number already registered"
-        }
-
-    # CREATE NEW DRIVER
     new_driver = Driver(
         name=driver.name,
         mobile=driver.mobile,
