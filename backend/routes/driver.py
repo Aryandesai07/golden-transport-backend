@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+
+import os
+import shutil
+import time
 import folium
+
+from database import SessionLocal
+
 from models import (
     Driver,
     Notification,
@@ -18,17 +24,13 @@ from schemas import (
     DriverLogin,
     TripStatusUpdate,
     SOSRequest,
-    DriverCreate
+    DriverCreate,
+    LocationData
 )
 
-from fastapi.responses import HTMLResponse
+from auth import create_access_token, create_password_hash
 
-from auth import create_access_token
 from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
-
-import os
-import shutil
-import time
 
 router = APIRouter(
     prefix="/driver",
@@ -193,11 +195,6 @@ def update_test_driver(
     return {
         "message": "Updated"
     }
-
-class LocationData(BaseModel):
-    driver_id: int
-    latitude: float
-    longitude: float
     
 @router.post("/location")
 def update_location(
@@ -484,29 +481,49 @@ def admin_dashboard(db: Session = Depends(get_db)):
 # DRIVER REGISTER
 # =========================================
 
-@router.post("/driver/register")
+@router.post("/register")
 def register_driver(
     driver: DriverCreate,
     db: Session = Depends(get_db)
 ):
 
-    new_driver = Driver(
-        name=driver.name,
-        mobile=driver.mobile,
-        password=driver.password,
-        vehicle_no=driver.vehicle_no,
-        vehicle_type=driver.vehicle_type
-    )
+    try:
+        # 🔍 check if driver already exists
+        existing_driver = db.query(Driver).filter(
+            Driver.mobile == driver.mobile
+        ).first()
 
-    db.add(new_driver)
-    db.commit()
-    db.refresh(new_driver)
+        if existing_driver:
+            return {
+                "status": "error",
+                "message": "Driver already exists"
+            }
 
-    return {
-        "status": "success",
-        "driver_id": new_driver.id,
-        "message": "Driver registered successfully"
-    }
+        # 🔐 create new driver (password should be hashed in real apps)
+        new_driver = Driver(
+            name=driver.name,
+            mobile=driver.mobile,
+            password=driver.password,  # later: hash this
+            vehicle_no=driver.vehicle_no,
+            vehicle_type=driver.vehicle_type
+        )
+
+        db.add(new_driver)
+        db.commit()
+        db.refresh(new_driver)
+
+        return {
+            "status": "success",
+            "driver_id": new_driver.id,
+            "message": "Driver registered successfully"
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "message": f"Registration failed: {str(e)}"
+        }
 @router.get("/drivers")
 def get_all_drivers(db: Session = Depends(get_db)):
     drivers = db.query(Driver).all()
