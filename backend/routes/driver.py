@@ -475,7 +475,24 @@ def admin_dashboard(db: Session = Depends(get_db)):
 # =========================================
 
 @router.post("/register")
-def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
+def register_driver(
+    driver: DriverCreate,
+    db: Session = Depends(get_db)
+):
+
+    # CHECK MOBILE ALREADY EXISTS
+    existing_driver = db.query(Driver).filter(
+        Driver.mobile == driver.mobile
+    ).first()
+
+    if existing_driver:
+
+        return {
+            "status": "error",
+            "message": "Mobile number already registered"
+        }
+
+    # CREATE NEW DRIVER
     new_driver = Driver(
         name=driver.name,
         mobile=driver.mobile,
@@ -483,11 +500,16 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
         vehicle_no=driver.vehicle_no,
         vehicle_type=driver.vehicle_type
     )
+
     db.add(new_driver)
     db.commit()
     db.refresh(new_driver)
-    return {"status": "success", "driver_id": new_driver.id}
 
+    return {
+        "status": "success",
+        "driver_id": new_driver.id,
+        "message": "Driver registered successfully"
+    }
 @router.get("/drivers")
 def get_all_drivers(db: Session = Depends(get_db)):
     drivers = db.query(Driver).all()
