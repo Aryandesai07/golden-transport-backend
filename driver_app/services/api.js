@@ -1,6 +1,8 @@
 import axios from "axios";
 
-// 🌍 Railway Production Backend URL
+// =====================================
+// RAILWAY BACKEND URL
+// =====================================
 const BASE_URL = "https://golden-transport-backend-production.up.railway.app";
 
 const API = axios.create({
@@ -12,24 +14,30 @@ const API = axios.create({
   },
 });
 
-// ✅ Optional: Request interceptor (debugging help)
+// =====================================
+// REQUEST LOGGER
+// =====================================
 API.interceptors.request.use(
   (config) => {
-    console.log("➡️ API Request:", config.url);
+    console.log("➡️ API:", `${config.baseURL}${config.url}`);
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// ✅ Optional: Response interceptor (better error logs)
+// =====================================
+// RESPONSE LOGGER
+// =====================================
 API.interceptors.response.use(
   (response) => {
+    console.log("✅ API Response:", response.data);
     return response;
   },
   (error) => {
-    console.log("❌ API Error:", error?.response?.data || error.message);
+    console.log(
+      "❌ API Error:",
+      error?.response?.data || error.message
+    );
     return Promise.reject(error);
   }
 );

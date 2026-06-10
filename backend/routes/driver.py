@@ -38,7 +38,8 @@ from config import (
 # ROUTER
 # =========================================
 router = APIRouter(
-    tags=["Driver"]
+    tags=["Driver"],
+    prefix="/driver"
 )
 
 UPLOAD_DIR = UPLOAD_PROOFS
