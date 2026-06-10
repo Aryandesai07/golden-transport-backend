@@ -13,7 +13,6 @@ from models import (
     Driver,
     Notification,
     Trip,
-    DeliveryProof,
     DriverLocation,
     FuelBill,
     Payment,
@@ -22,16 +21,13 @@ from models import (
 
 from schemas import (
     DriverLogin,
-    TripStatusUpdate,
     SOSRequest,
     DriverCreate,
     LocationData
 )
 
 from auth import (
-    create_access_token,
-    create_password_hash,
-    verify_password
+    create_access_token
 )
 
 from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
