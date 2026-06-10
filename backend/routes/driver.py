@@ -487,44 +487,33 @@ def register_driver(
     db: Session = Depends(get_db)
 ):
 
-    try:
-        # 🔍 check if driver already exists
-        existing_driver = db.query(Driver).filter(
-            Driver.mobile == driver.mobile
-        ).first()
+    # CHECK MOBILE ALREADY EXISTS
+    existing_driver = db.query(Driver).filter(
+        Driver.mobile == driver.mobile
+    ).first()
 
-        if existing_driver:
-            return {
-                "status": "error",
-                "message": "Driver already exists"
-            }
+    if existing_driver:
 
-        # 🔐 create new driver (password should be hashed in real apps)
-        new_driver = Driver(
-            name=driver.name,
-            mobile=driver.mobile,
-            password=driver.password,  # later: hash this
-            vehicle_no=driver.vehicle_no,
-            vehicle_type=driver.vehicle_type
-        )
-
-        db.add(new_driver)
-        db.commit()
-        db.refresh(new_driver)
-
-        return {
-            "status": "success",
-            "driver_id": new_driver.id,
-            "message": "Driver registered successfully"
-        }
-
-    except Exception as e:
-        db.rollback()
         return {
             "status": "error",
-            "message": f"Registration failed: {str(e)}"
+            "message": "Mobile number already registered"
         }
-@router.get("/drivers")
-def get_all_drivers(db: Session = Depends(get_db)):
-    drivers = db.query(Driver).all()
-    return drivers
+
+    # CREATE NEW DRIVER
+    new_driver = Driver(
+        name=driver.name,
+        mobile=driver.mobile,
+        password=driver.password,
+        vehicle_no=driver.vehicle_no,
+        vehicle_type=driver.vehicle_type
+    )
+
+    db.add(new_driver)
+    db.commit()
+    db.refresh(new_driver)
+
+    return {
+        "status": "success",
+        "driver_id": new_driver.id,
+        "message": "Driver registered successfully"
+    }
