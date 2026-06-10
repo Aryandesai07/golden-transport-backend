@@ -39,7 +39,7 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # =====================================
-# ROUTES (ONLY ONCE - IMPORTANT)
+# ROUTES
 # =====================================
 app.include_router(driver_router, prefix="/driver")
 
@@ -48,8 +48,12 @@ app.include_router(driver_router, prefix="/driver")
 # =====================================
 @app.get("/")
 def home():
-    return {"message": "🚚 Golden Transport API Working"}
+    return {
+        "message": "🚚 Golden Transport API Working"
+    }
 
 @app.get("/test")
 def test():
-    return {"status": "OK"}
+    return {
+        "status": "OK"
+    }

@@ -26,19 +26,23 @@ from schemas import (
     LocationData
 )
 
-from auth import (
-    create_access_token
+from auth import create_access_token
+
+from config import (
+    BASE_URL,
+    UPLOAD_PROOFS,
+    UPLOAD_FUEL
 )
 
-from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
-
+# =========================================
+# ROUTER
+# =========================================
 router = APIRouter(
-    prefix="/driver",
     tags=["Driver"]
 )
+
 UPLOAD_DIR = UPLOAD_PROOFS
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
 
 # =========================================
 # DATABASE CONNECTION

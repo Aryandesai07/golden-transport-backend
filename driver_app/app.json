@@ -8,30 +8,24 @@
     "scheme": "goldentransport",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.goldentamilnadu.driver"
     },
-
     "android": {
       "package": "com.goldentamilnadu.driver",
       "versionCode": 1,
-
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#0F172A"
       },
-
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -40,15 +34,12 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
-
     "web": {
       "favicon": "./assets/images/favicon.png",
       "output": "static"
     },
-
     "plugins": [
       "expo-router",
-
       [
         "expo-splash-screen",
         {
@@ -59,14 +50,16 @@
         }
       ]
     ],
-
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-
     "extra": {
-      "apiUrl": "https://golden-transport-backend-production.up.railway.app"
+      "apiUrl": "https://golden-transport-backend-production.up.railway.app",
+      "router": {},
+      "eas": {
+        "projectId": "32359c95-82a9-4adc-8f04-e3274889308b"
+      }
     }
   }
 }
