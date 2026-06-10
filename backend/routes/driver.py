@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Driver, Notification, Trip, DeliveryProof
-from schemas import DriverLogin, TripStatusUpdate
+from models import Driver, Notification, Trip
+from schemas import DriverLogin
 from pydantic import BaseModel
 from models import DriverLocation
 import shutil
 import os
 import time
-from models import FuelBill
 import folium
 from fastapi.responses import HTMLResponse
 from auth import create_access_token
@@ -16,12 +15,8 @@ from models import SOSAlert
 from schemas import SOSRequest, DriverCreate
 from config import BASE_URL, UPLOAD_PROOFS, UPLOAD_FUEL
 from fastapi import UploadFile, File, Depends
-from sqlalchemy.orm import Session
-import os
-import shutil
-import time
 
-from models import Payment, FuelBill, Trip
+from models import Payment, FuelBill
 from database import SessionLocal
 
 router = APIRouter(
@@ -44,30 +39,6 @@ def get_db():
     finally:
         db.close()
 
-
-# =========================================
-# CREATE TEST DRIVER
-# =========================================
-
-@router.post("/create-test-driver")
-def create_test_driver(db: Session = Depends(get_db)):
-    driver = Driver(
-        name="Prasanna",
-        mobile="9876543210",
-        password="1234",
-        vehicle_no="TN09AB1234",
-        vehicle_type="Container Truck",
-        earnings=4500,
-        license_number="LIC12345",
-        address="Chennai",
-        photo="driver.jpg"
-    )
-    db.add(driver)
-    db.commit()
-    db.refresh(driver)
-    return {"status": "success", "driver_id": driver.id}
-
-
 @router.post("/update-status")
 def update_status(data: dict, db: Session = Depends(get_db)):
 
@@ -86,27 +57,6 @@ def update_status(data: dict, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e)}
-# =========================================
-# VIEW ALL DRIVERS
-# =========================================
-
-@router.get("/all")
-def all_drivers(
-    db: Session = Depends(get_db)
-):
-
-    drivers = db.query(Driver).all()
-
-    return [
-        {
-            "id": d.id,
-            "name": d.name,
-            "mobile": d.mobile,
-            "password": d.password
-        }
-        for d in drivers
-    ]
-
 # =========================================
 # DRIVER LOGIN
 # =========================================
@@ -188,21 +138,6 @@ def update_profile(data: dict, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "success", "message": "Profile updated"}
-@router.get("/create-test-trip")
-def create_test_trip(db: Session = Depends(get_db)):
-
-    trip = Trip(
-        driver_id=1,
-        pickup="Chennai",
-        drop_location="Bangalore",
-        status="ASSIGNED"
-    )
-
-    db.add(trip)
-    db.commit()
-
-    return {"message": "Test Trip Created"}
-
 @router.get("/profile/{driver_id}")
 def driver_profile(
     driver_id: int,
@@ -403,24 +338,6 @@ def get_notifications(
             for n in notifications
         ]
     }
-@router.get("/create-test-notification")
-def create_test_notification(
-    db: Session = Depends(get_db)
-):
-
-    notification = Notification(
-        driver_id=1,
-        title="New Trip Assigned",
-        message="Pickup from Chennai Port"
-    )
-
-    db.add(notification)
-    db.commit()
-
-    return {
-        "status": "success"
-    }
-    
 @router.get("/payments/{driver_id}")
 def get_payments(
     driver_id: int,
@@ -443,26 +360,6 @@ def get_payments(
             }
             for p in payments
         ]
-    }
-    
-@router.get("/create-test-payment")
-def create_test_payment(
-    db: Session = Depends(get_db)
-):
-
-    payment = Payment(
-        driver_id=1,
-        amount=2500,
-        trip_id=1,
-        payment_date="2026-06-01",
-        status="PAID"
-    )
-
-    db.add(payment)
-    db.commit()
-
-    return {
-        "status": "success"
     }
 @router.get("/trip-history/{driver_id}")
 def trip_history(
@@ -487,23 +384,6 @@ def trip_history(
             for trip in trips
         ]
     }
-    
-@router.get("/create-demo-trips/{driver_id}")
-def create_demo_trips(driver_id: int, db: Session = Depends(get_db)):
-
-    trips = [
-        Trip(driver_id=driver_id, pickup="Chennai", drop_location="Bangalore", status="ASSIGNED"),
-        Trip(driver_id=driver_id, pickup="Madurai", drop_location="Coimbatore", status="LOADED"),
-    ]
-
-    db.add_all(trips)
-    db.commit()
-
-    return {
-        "status": "success",
-        "message": "Demo trips created"
-    }
-    
 # =========================================
 # UPLOAD PROOF
 # =========================================
