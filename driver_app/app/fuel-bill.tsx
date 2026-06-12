@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,87 +11,207 @@ import {
 } from "react-native";
 
 import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-const BASE_URL = "https://golden-transport-backend-production.up.railway.app";
+const BASE_URL =
+  "https://golden-transport-backend-production.up.railway.app";
 
 export default function FuelBill() {
   const [image, setImage] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const driverId = 1;
+  const [driverId, setDriverId] = useState<number | null>(null);
+  const [cameraGranted, setCameraGranted] = useState(false);
 
-  // 📸 PICK IMAGE
-  const pickImage = async () => {
+  // =====================================
+  // INITIALIZE
+  // =====================================
+
+  useEffect(() => {
+    initialize();
+  }, []);
+
+  const initialize = async () => {
     try {
-      const permission =
-        await ImagePicker.requestCameraPermissionsAsync();
+      // Load Driver
+      const id =
+        await AsyncStorage.getItem("driver_id");
 
-      if (!permission.granted) {
-        Alert.alert("Permission Required", "Camera permission needed");
+      if (!id) {
+        Alert.alert(
+          "Session Expired",
+          "Please login again"
+        );
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
-        quality: 0.7,
-        allowsEditing: true,
-      });
+      setDriverId(Number(id));
+
+      // Camera Permission
+      const permission =
+        await ImagePicker.requestCameraPermissionsAsync();
+
+      setCameraGranted(permission.granted);
+
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Camera permission is required"
+        );
+      }
+
+    } catch (error) {
+      console.log(
+        "Initialization Error:",
+        error
+      );
+
+      Alert.alert(
+        "Error",
+        "Failed to initialize screen"
+      );
+    }
+  };
+
+  // =====================================
+  // TAKE PHOTO
+  // =====================================
+
+  const pickImage = async () => {
+    try {
+      if (!cameraGranted) {
+        Alert.alert(
+          "Permission Required",
+          "Camera permission not granted"
+        );
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchCameraAsync({
+          quality: 0.7,
+          allowsEditing: true,
+        });
 
       if (!result.canceled) {
         setImage(result.assets[0].uri);
       }
+
     } catch (error) {
-      console.log(error);
-      Alert.alert("Error", "Camera failed");
+      console.log(
+        "Camera Error:",
+        error
+      );
+
+      Alert.alert(
+        "Error",
+        "Camera failed"
+      );
     }
   };
 
-  // 🚀 UPLOAD
+  // =====================================
+  // UPLOAD FUEL BILL
+  // =====================================
+
   const uploadFuelBill = async () => {
-    if (!image) return Alert.alert("Error", "Take a photo first");
-    if (!amount) return Alert.alert("Error", "Enter amount");
+    if (!image) {
+      Alert.alert(
+        "Error",
+        "Take a photo first"
+      );
+      return;
+    }
+
+    if (!amount) {
+      Alert.alert(
+        "Error",
+        "Enter amount"
+      );
+      return;
+    }
+
+    if (isNaN(Number(amount))) {
+      Alert.alert(
+        "Error",
+        "Enter valid amount"
+      );
+      return;
+    }
+
+    if (!driverId) {
+      Alert.alert(
+        "Error",
+        "Driver not loaded"
+      );
+      return;
+    }
 
     setLoading(true);
 
-    const formData = new FormData();
-
-    formData.append("amount", amount);
-
-    formData.append("file", {
-      uri: image,
-      name: "fuel.jpg",
-      type: "image/jpeg",
-    } as any);
-
     try {
-      const res = await axios.post(
+      const formData = new FormData();
+
+      formData.append(
+        "amount",
+        String(Number(amount))
+      );
+
+      formData.append("file", {
+        uri: image,
+        name: `fuel_${driverId}.jpg`,
+        type: "image/jpeg",
+      } as any);
+
+      const response = await axios.post(
         `${BASE_URL}/driver/upload-fuel-bill/${driverId}`,
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            "Content-Type":
+              "multipart/form-data",
           },
         }
       );
 
-      console.log(res.data);
+      console.log(response.data);
 
-      Alert.alert("Success", "Fuel bill uploaded");
+      Alert.alert(
+        "Success",
+        "Fuel bill uploaded successfully"
+      );
 
       setImage(null);
       setAmount("");
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Upload Failed", "Check backend or network");
-    }
 
-    setLoading(false);
+    } catch (error: any) {
+      console.log(
+        "Upload Error:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message ||
+          "Upload failed"
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // =====================================
+  // UI
+  // =====================================
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>⛽ Fuel Bill Upload</Text>
+      <Text style={styles.title}>
+        ⛽ Fuel Bill Upload
+      </Text>
 
       <TextInput
         placeholder="Enter Amount"
@@ -101,11 +221,22 @@ export default function FuelBill() {
         style={styles.input}
       />
 
-      <TouchableOpacity style={styles.button} onPress={pickImage}>
-        <Text style={styles.btnText}>Take Photo</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={pickImage}
+        disabled={loading}
+      >
+        <Text style={styles.btnText}>
+          Take Photo
+        </Text>
       </TouchableOpacity>
 
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {image && (
+        <Image
+          source={{ uri: image }}
+          style={styles.image}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.uploadBtn}
@@ -113,9 +244,11 @@ export default function FuelBill() {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text style={styles.btnText}>Upload Fuel Bill</Text>
+          <Text style={styles.btnText}>
+            Upload Fuel Bill
+          </Text>
         )}
       </TouchableOpacity>
     </View>
@@ -129,39 +262,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F3F6FA",
   },
+
   title: {
     fontSize: 24,
     fontWeight: "bold",
+    marginTop: 20,
     marginBottom: 20,
   },
+
   input: {
     width: "100%",
     padding: 12,
     borderWidth: 1,
-    borderRadius: 8,
+    borderColor: "#DDD",
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
     marginBottom: 15,
-    backgroundColor: "#fff",
   },
+
   button: {
     backgroundColor: "#2563EB",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+    borderRadius: 12,
   },
+
   uploadBtn: {
     backgroundColor: "#16A34A",
-    padding: 15,
-    borderRadius: 10,
+    paddingHorizontal: 25,
+    paddingVertical: 15,
+    borderRadius: 12,
     marginTop: 15,
   },
+
   btnText: {
-    color: "#fff",
+    color: "#FFFFFF",
     fontWeight: "bold",
+    fontSize: 16,
   },
+
   image: {
     width: 300,
     height: 300,
-    marginTop: 15,
-    borderRadius: 10,
+    marginTop: 20,
+    borderRadius: 15,
   },
 });

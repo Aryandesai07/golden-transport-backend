@@ -10,9 +10,11 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-
-      <Stack screenOptions={{ headerShown: false }}>
-
+      <Stack
+        screenOptions={{
+          headerShown: false, // global default
+        }}
+      >
         {/* AUTH / ENTRY */}
         <Stack.Screen name="index" />
 
@@ -39,10 +41,9 @@ export default function RootLayout() {
             title: "Modal",
           }}
         />
-
       </Stack>
 
-      <StatusBar style="auto" />
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
   );
 }

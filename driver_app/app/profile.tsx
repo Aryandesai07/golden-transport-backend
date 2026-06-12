@@ -7,26 +7,42 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API from "../services/api";
 import { router } from "expo-router";
 
+// =====================================
+// TYPES
+// =====================================
+
+interface DriverProfile {
+  name: string;
+  mobile: string;
+  vehicle_no: string;
+  vehicle_type: string;
+}
+
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [driverId, setDriverId] = useState<string | null>(null);
+  const [driverId, setDriverId] =
+    useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [vehicleNo, setVehicleNo] = useState("");
-  const [vehicleType, setVehicleType] = useState("");
+  const [vehicleNo, setVehicleNo] =
+    useState("");
+  const [vehicleType, setVehicleType] =
+    useState("");
 
-  // =========================
+  // =====================================
   // LOAD PROFILE
-  // =========================
+  // =====================================
+
   useEffect(() => {
     loadProfile();
   }, []);
@@ -35,142 +51,286 @@ export default function Profile() {
     try {
       setLoading(true);
 
-      const id = await AsyncStorage.getItem("driver_id");
+      const storedId =
+        await AsyncStorage.getItem(
+          "driver_id"
+        );
 
-      if (!id) {
+      if (!storedId) {
+        Alert.alert(
+          "Session Expired",
+          "Please login again"
+        );
+
         router.replace("/");
         return;
       }
 
+      const id = Number(storedId);
+
       setDriverId(id);
 
-      const res = await API.get(`/driver/profile/${id}`);
+      const response = await API.get(
+        `/driver/profile/${id}`
+      );
 
-      if (res.data.status === "success") {
-        const d = res.data.driver;
+      if (
+        response.data.status === "success"
+      ) {
+        const driver: DriverProfile =
+          response.data.driver;
 
-        setName(d.name || "");
-        setMobile(d.mobile || "");
-        setVehicleNo(d.vehicle_no || "");
-        setVehicleType(d.vehicle_type || "");
+        setName(driver.name || "");
+        setMobile(driver.mobile || "");
+        setVehicleNo(
+          driver.vehicle_no || ""
+        );
+        setVehicleType(
+          driver.vehicle_type || ""
+        );
       } else {
-        Alert.alert("Error", "Failed to load profile");
+        Alert.alert(
+          "Error",
+          response.data.message ||
+            "Failed to load profile"
+        );
       }
+
     } catch (error: any) {
-      console.log("PROFILE LOAD ERROR:", error?.response?.data || error.message);
-      Alert.alert("Error", "Server error while loading profile");
+      console.log(
+        "PROFILE LOAD ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message ||
+          "Failed to load profile"
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================
+  // =====================================
   // UPDATE PROFILE
-  // =========================
+  // =====================================
+
   const updateProfile = async () => {
     try {
-      if (!driverId) return;
+      if (!driverId) {
+        Alert.alert(
+          "Error",
+          "Driver not found"
+        );
+        return;
+      }
+
+      // Validation
+
+      if (!name.trim()) {
+        Alert.alert(
+          "Validation",
+          "Please enter full name"
+        );
+        return;
+      }
+
+      if (
+        mobile.trim().length < 10
+      ) {
+        Alert.alert(
+          "Validation",
+          "Enter valid mobile number"
+        );
+        return;
+      }
+
+      if (!vehicleNo.trim()) {
+        Alert.alert(
+          "Validation",
+          "Vehicle number is required"
+        );
+        return;
+      }
+
+      if (!vehicleType.trim()) {
+        Alert.alert(
+          "Validation",
+          "Vehicle type is required"
+        );
+        return;
+      }
 
       setSaving(true);
 
-      const res = await API.post("/driver/update-profile", {
-        driver_id: driverId,
-        name,
-        mobile,
-        vehicle_no: vehicleNo,
-        vehicle_type: vehicleType,
-      });
+      const response = await API.post(
+        "/driver/update-profile",
+        {
+          driver_id: driverId,
+          name: name.trim(),
+          mobile: mobile.trim(),
+          vehicle_no:
+            vehicleNo.trim(),
+          vehicle_type:
+            vehicleType.trim(),
+        }
+      );
 
-      if (res.data.status === "success") {
-        Alert.alert("Success", "Profile updated successfully");
-        loadProfile();
+      if (
+        response.data.status === "success"
+      ) {
+        Alert.alert(
+          "Success",
+          "Profile updated successfully"
+        );
+
+        // No need to call loadProfile()
+        // State already contains latest values
+
       } else {
-        Alert.alert("Error", res.data.message || "Update failed");
+        Alert.alert(
+          "Error",
+          response.data.message ||
+            "Update failed"
+        );
       }
+
     } catch (error: any) {
-      console.log("UPDATE ERROR:", error?.response?.data || error.message);
-      Alert.alert("Error", "Server error while updating profile");
+      console.log(
+        "UPDATE ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message ||
+          "Failed to update profile"
+      );
+
     } finally {
       setSaving(false);
     }
   };
 
-  // =========================
-  // LOADING UI
-  // =========================
+  // =====================================
+  // LOADING SCREEN
+  // =====================================
+
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" />
-        <Text>Loading Profile...</Text>
+        <ActivityIndicator
+          size="large"
+          color="#2563EB"
+        />
+
+        <Text
+          style={{ marginTop: 10 }}
+        >
+          Loading Profile...
+        </Text>
       </View>
     );
   }
 
+  // =====================================
+  // UI
+  // =====================================
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>👤 Driver Profile</Text>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={
+        false
+      }
+    >
+      <Text style={styles.title}>
+        👤 Driver Profile
+      </Text>
 
-      {/* INPUT FIELDS */}
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-      />
+      <View style={styles.card}>
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Mobile Number"
-        keyboardType="phone-pad"
-        value={mobile}
-        onChangeText={setMobile}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile Number"
+          keyboardType="phone-pad"
+          maxLength={10}
+          value={mobile}
+          onChangeText={setMobile}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Vehicle Number"
-        value={vehicleNo}
-        onChangeText={setVehicleNo}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Number"
+          value={vehicleNo}
+          onChangeText={setVehicleNo}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Vehicle Type (Truck/Tempo/etc)"
-        value={vehicleType}
-        onChangeText={setVehicleType}
-      />
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Type"
+          value={vehicleType}
+          onChangeText={
+            setVehicleType
+          }
+        />
 
-      {/* SAVE BUTTON */}
-      <TouchableOpacity
-        style={styles.saveBtn}
-        onPress={updateProfile}
-        disabled={saving}
-      >
-        <Text style={styles.btnText}>
-          {saving ? "Saving..." : "💾 Save Changes"}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.saveBtn,
+            saving &&
+              styles.disabledBtn,
+          ]}
+          onPress={updateProfile}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator
+              color="#FFFFFF"
+            />
+          ) : (
+            <Text
+              style={styles.btnText}
+            >
+              💾 Save Changes
+            </Text>
+          )}
+        </TouchableOpacity>
 
-      {/* BACK BUTTON */}
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.btnText}>⬅ Back</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() =>
+            router.back()
+          }
+        >
+          <Text
+            style={styles.btnText}
+          >
+            ⬅ Back
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
-// =========================
+// =====================================
 // STYLES
-// =========================
+// =====================================
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: "#F3F6FA",
+    padding: 20,
   },
 
   loader: {
@@ -180,35 +340,53 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "bold",
+    marginTop: 20,
     marginBottom: 20,
+    color: "#111827",
+  },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 20,
+    elevation: 4,
   },
 
   input: {
-    backgroundColor: "#fff",
-    padding: 15,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
     borderRadius: 12,
-    marginBottom: 12,
+    padding: 15,
+    marginBottom: 14,
+    fontSize: 16,
   },
 
   saveBtn: {
     backgroundColor: "#16A34A",
     padding: 15,
     borderRadius: 12,
+    alignItems: "center",
     marginTop: 10,
+  },
+
+  disabledBtn: {
+    opacity: 0.7,
   },
 
   backBtn: {
     backgroundColor: "#6B7280",
     padding: 15,
     borderRadius: 12,
-    marginTop: 10,
+    alignItems: "center",
+    marginTop: 12,
   },
 
   btnText: {
-    color: "#fff",
-    textAlign: "center",
+    color: "#FFFFFF",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });

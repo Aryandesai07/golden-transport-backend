@@ -1,130 +1,299 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   Alert,
+  ActivityIndicator,
+  ScrollView,
 } from "react-native";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import API from "../services/api";
 
-export default function Settings() {
+// =====================================
+// TYPES
+// =====================================
 
-  const logout = async () => {
+interface DriverCreate {
+  name: string;
+  mobile: string;
+  password: string;
+  vehicle_no: string;
+  vehicle_type: string;
+}
+
+export default function Register() {
+  const [loading, setLoading] = useState(false);
+
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [password, setPassword] = useState("");
+  const [vehicleNo, setVehicleNo] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+
+  // =====================================
+  // REGISTER DRIVER
+  // =====================================
+
+  const handleRegister = async () => {
     try {
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("driver_id");
+      // Validation
 
-      router.replace("/");
-    } catch {
-      Alert.alert("Error", "Logout failed");
+      if (
+        !name.trim() ||
+        !mobile.trim() ||
+        !password.trim() ||
+        !vehicleNo.trim() ||
+        !vehicleType.trim()
+      ) {
+        Alert.alert(
+          "Validation",
+          "All fields are required"
+        );
+        return;
+      }
+
+      if (mobile.trim().length !== 10) {
+        Alert.alert(
+          "Validation",
+          "Enter a valid 10-digit mobile number"
+        );
+        return;
+      }
+
+      if (password.trim().length < 6) {
+        Alert.alert(
+          "Validation",
+          "Password must be at least 6 characters"
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      const payload: DriverCreate = {
+        name: name.trim(),
+        mobile: mobile.trim(),
+        password: password.trim(),
+        vehicle_no: vehicleNo.trim(),
+        vehicle_type: vehicleType.trim(),
+      };
+
+      console.log(
+        "Register Payload:",
+        payload
+      );
+
+      const response = await API.post(
+        "/driver/register",
+        payload
+      );
+
+      console.log(
+        "Register Response:",
+        response.data
+      );
+
+      if (
+        response.data.status === "success"
+      ) {
+        Alert.alert(
+          "Success",
+          "Driver registered successfully",
+          [
+            {
+              text: "OK",
+              onPress: () =>
+                router.replace("/login"),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          "Registration Failed",
+          response.data.message ||
+            "Unable to register driver"
+        );
+      }
+
+    } catch (error: any) {
+      console.log(
+        "REGISTER ERROR:",
+        error?.response?.data || error
+      );
+
+      Alert.alert(
+        "Error",
+        error?.response?.data?.message ||
+          "Cannot connect to server"
+      );
+
+    } finally {
+      setLoading(false);
     }
   };
 
-  const clearCache = async () => {
-    try {
-      await AsyncStorage.clear();
-      Alert.alert("Success", "Cache Cleared");
-    } catch {
-      Alert.alert("Error", "Failed to clear cache");
-    }
-  };
+  // =====================================
+  // UI
+  // =====================================
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={
+        styles.container
+      }
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.card}>
+        <Text style={styles.title}>
+          🚚 Driver Registration
+        </Text>
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Ionicons name="settings-outline" size={28} color="#000" />
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.subtitle}>
+          Create your Golden Transport account
+        </Text>
+
+        <TextInput
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
+
+        <TextInput
+          placeholder="Mobile Number"
+          value={mobile}
+          onChangeText={setMobile}
+          keyboardType="phone-pad"
+          maxLength={10}
+          style={styles.input}
+        />
+
+        <TextInput
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+        />
+
+        <TextInput
+          placeholder="Vehicle Number"
+          value={vehicleNo}
+          onChangeText={setVehicleNo}
+          style={styles.input}
+        />
+
+        <TextInput
+          placeholder="Vehicle Type (Truck, Tempo, Pickup, etc.)"
+          value={vehicleType}
+          onChangeText={setVehicleType}
+          style={styles.input}
+        />
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            loading &&
+              styles.buttonDisabled,
+          ]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator
+              color="#FFFFFF"
+            />
+          ) : (
+            <Text style={styles.buttonText}>
+              Register Driver
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() =>
+            router.replace("/login")
+          }
+        >
+          <Text style={styles.loginText}>
+            Already have an account?
+            Login
+          </Text>
+        </TouchableOpacity>
       </View>
-
-      {/* OPTIONS */}
-
-      <TouchableOpacity style={styles.card} onPress={() => router.push("/profile")}>
-        <Ionicons name="person-outline" size={22} color="#2563EB" />
-        <Text style={styles.text}>Profile Settings</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.card} onPress={() => router.push("/notifications")}>
-        <Ionicons name="notifications-outline" size={22} color="#2563EB" />
-        <Text style={styles.text}>Notifications</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.card} onPress={clearCache}>
-        <Ionicons name="trash-outline" size={22} color="#DC2626" />
-        <Text style={styles.text}>Clear Cache</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.card} onPress={() => Alert.alert("Info", "App Version 1.0")}>
-        <Ionicons name="information-circle-outline" size={22} color="#2563EB" />
-        <Text style={styles.text}>About App</Text>
-      </TouchableOpacity>
-
-      {/* LOGOUT */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Ionicons name="log-out-outline" size={22} color="#fff" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-
-    </View>
+    </ScrollView>
   );
 }
 
+// =====================================
+// STYLES
+// =====================================
+
 const styles = StyleSheet.create({
-
   container: {
-    flex: 1,
-    backgroundColor: "#F3F6FA",
+    flexGrow: 1,
+    justifyContent: "center",
     padding: 20,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 25,
-    gap: 10,
-  },
-
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
+    backgroundColor: "#F3F6FA",
   },
 
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
-    gap: 10,
-    elevation: 3,
+    backgroundColor: "#FFFFFF",
+    padding: 25,
+    borderRadius: 20,
+    elevation: 5,
   },
 
-  text: {
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#111827",
+  },
+
+  subtitle: {
+    textAlign: "center",
+    color: "#6B7280",
+    marginTop: 5,
+    marginBottom: 25,
+  },
+
+  input: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 14,
     fontSize: 16,
-    fontWeight: "500",
   },
 
-  logoutBtn: {
-    flexDirection: "row",
-    backgroundColor: "#DC2626",
-    padding: 15,
+  button: {
+    backgroundColor: "#16A34A",
+    padding: 16,
     borderRadius: 12,
-    marginTop: 30,
-    justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    marginTop: 10,
   },
 
-  logoutText: {
-    color: "#fff",
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
     fontWeight: "bold",
     fontSize: 16,
-  }
+  },
 
+  loginText: {
+    textAlign: "center",
+    marginTop: 18,
+    color: "#2563EB",
+    fontWeight: "600",
+  },
 });

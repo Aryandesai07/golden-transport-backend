@@ -1,124 +1,303 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+
+import * as Location from "expo-location";
 import API from "../services/api";
 
-export default function Login() {
+export default function LocationScreen() {
+  const [driverId, setDriverId] =
+    useState<number | null>(null);
 
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const handleLogin = async () => {
+  const [latitude, setLatitude] =
+    useState<number | null>(null);
 
-    if (!mobile || !password) {
-      Alert.alert("Error", "Enter mobile & password");
-      return;
-    }
+  const [longitude, setLongitude] =
+    useState<number | null>(null);
 
-    try {
-      setLoading(true);
+  const [lastUpdated, setLastUpdated] =
+    useState<string>("Waiting...");
 
-      const res = await API.post("/driver/login", {
-        mobile: mobile.trim(),
-        password: password.trim()
-      });
+  const [trackingStatus, setTrackingStatus] =
+    useState("Initializing...");
 
-      if (res.data.status === "success") {
+  useEffect(() => {
+    let interval: ReturnType<
+      typeof setInterval
+    > | null = null;
 
-        await AsyncStorage.setItem("token", res.data.token || "true");
-        await AsyncStorage.setItem("driver_id", String(res.data.driver_id));
+    const initializeTracking = async () => {
+      try {
+        const storedDriverId =
+          await AsyncStorage.getItem(
+            "driver_id"
+          );
 
-        Alert.alert("Success", "Login Successful");
+        if (!storedDriverId) {
+          Alert.alert(
+            "Session Expired",
+            "Please login again"
+          );
+          return;
+        }
 
-        router.replace("/dashboard");
+        setDriverId(Number(storedDriverId));
 
-      } else {
-        Alert.alert("Login Failed", res.data.message);
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Denied",
+            "Location permission required"
+          );
+
+          setTrackingStatus(
+            "Permission Denied"
+          );
+
+          return;
+        }
+
+        setTrackingStatus(
+          "Tracking Active"
+        );
+
+        await sendLocation(
+          Number(storedDriverId)
+        );
+
+        interval = setInterval(() => {
+          sendLocation(
+            Number(storedDriverId)
+          );
+        }, 30000);
+
+      } catch (error) {
+        console.log(error);
+
+        Alert.alert(
+          "Error",
+          "Failed to start GPS tracking"
+        );
+      } finally {
+        setLoading(false);
       }
+    };
+
+    initializeTracking();
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, []);
+
+  // =====================================
+  // SEND LOCATION
+  // =====================================
+
+  const sendLocation = async (
+    currentDriverId: number
+  ) => {
+    try {
+      const location =
+        await Location.getCurrentPositionAsync(
+          {
+            accuracy:
+              Location.Accuracy.High,
+          }
+        );
+
+      const lat =
+        location.coords.latitude;
+
+      const lng =
+        location.coords.longitude;
+
+      setLatitude(lat);
+      setLongitude(lng);
+
+      await API.post(
+        "/driver/location",
+        {
+          driver_id:
+            currentDriverId,
+          latitude: lat,
+          longitude: lng,
+        }
+      );
+
+      setLastUpdated(
+        new Date().toLocaleTimeString()
+      );
+
+      console.log(
+        "GPS Updated:",
+        lat,
+        lng
+      );
 
     } catch (error: any) {
-      console.log(error);
-      Alert.alert("Network Error", "Server not reachable");
-    } finally {
-      setLoading(false);
+      console.log(
+        "Location Error:",
+        error
+      );
+
+      setTrackingStatus(
+        "Update Failed"
+      );
     }
   };
 
+  // =====================================
+  // LOADING
+  // =====================================
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator
+          size="large"
+          color="#2563EB"
+        />
+
+        <Text>
+          Starting GPS Tracking...
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
+      <Text style={styles.header}>
+        📍 Live GPS Tracking
+      </Text>
 
-      <Text style={styles.title}>🚚 Driver Login</Text>
-
-      <TextInput
-        placeholder="Mobile Number"
-        value={mobile}
-        onChangeText={setMobile}
-        keyboardType="phone-pad"
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>
-          {loading ? "Logging in..." : "Login"}
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Driver ID
         </Text>
-      </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={styles.link}>New Driver? Register</Text>
-      </TouchableOpacity>
+        <Text style={styles.value}>
+          {driverId ?? "N/A"}
+        </Text>
+      </View>
 
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Status
+        </Text>
+
+        <Text style={styles.active}>
+          {trackingStatus}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Latitude
+        </Text>
+
+        <Text style={styles.value}>
+          {latitude
+            ? latitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Longitude
+        </Text>
+
+        <Text style={styles.value}>
+          {longitude
+            ? longitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Last Updated
+        </Text>
+
+        <Text style={styles.value}>
+          {lastUpdated}
+        </Text>
+      </View>
+
+      <Text style={styles.footer}>
+        GPS updates are sent to the
+        server every 30 seconds.
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
+    backgroundColor: "#F3F6FA",
     padding: 20,
+  },
+
+  loader: {
+    flex: 1,
     justifyContent: "center",
-    backgroundColor: "#F5F7FB"
+    alignItems: "center",
   },
 
-  title: {
-    fontSize: 26,
+  header: {
+    fontSize: 28,
     fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 25,
     textAlign: "center",
-    marginBottom: 30
   },
 
-  input: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 12,
+    elevation: 3,
   },
 
-  button: {
-    backgroundColor: "#2563EB",
-    padding: 15,
-    borderRadius: 10
+  label: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 5,
   },
 
-  buttonText: {
-    color: "#fff",
+  value: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111",
+  },
+
+  active: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#16A34A",
+  },
+
+  footer: {
+    marginTop: 20,
     textAlign: "center",
-    fontWeight: "bold"
+    color: "#666",
+    fontSize: 14,
   },
-
-  link: {
-    marginTop: 15,
-    textAlign: "center",
-    color: "#2563EB"
-  }
 });

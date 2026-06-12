@@ -1,124 +1,303 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
   Text,
   StyleSheet,
-  Alert
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 
 import * as Location from "expo-location";
 import API from "../services/api";
 
 export default function LocationScreen() {
+  const [driverId, setDriverId] =
+    useState<number | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [latitude, setLatitude] =
+    useState<number | null>(null);
+
+  const [longitude, setLongitude] =
+    useState<number | null>(null);
+
+  const [lastUpdated, setLastUpdated] =
+    useState<string>("Waiting...");
+
+  const [trackingStatus, setTrackingStatus] =
+    useState("Initializing...");
 
   useEffect(() => {
+    let interval: ReturnType<
+      typeof setInterval
+    > | null = null;
 
-    let interval: any;
+    const initializeTracking = async () => {
+      try {
+        const storedDriverId =
+          await AsyncStorage.getItem(
+            "driver_id"
+          );
 
-    const startTracking = async () => {
+        if (!storedDriverId) {
+          Alert.alert(
+            "Session Expired",
+            "Please login again"
+          );
+          return;
+        }
 
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
+        setDriverId(Number(storedDriverId));
 
-      if (status !== "granted") {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
 
-        Alert.alert(
-          "Permission Denied",
-          "Location permission required"
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Denied",
+            "Location permission required"
+          );
+
+          setTrackingStatus(
+            "Permission Denied"
+          );
+
+          return;
+        }
+
+        setTrackingStatus(
+          "Tracking Active"
         );
 
-        return;
+        await sendLocation(
+          Number(storedDriverId)
+        );
+
+        interval = setInterval(() => {
+          sendLocation(
+            Number(storedDriverId)
+          );
+        }, 30000);
+
+      } catch (error) {
+        console.log(error);
+
+        Alert.alert(
+          "Error",
+          "Failed to start GPS tracking"
+        );
+      } finally {
+        setLoading(false);
       }
-
-      sendLocation();
-
-      interval = setInterval(() => {
-        sendLocation();
-      }, 30000); // every 30 sec
     };
 
-    startTracking();
+    initializeTracking();
 
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
-
   }, []);
 
-  const sendLocation = async () => {
+  // =====================================
+  // SEND LOCATION
+  // =====================================
 
-  try {
+  const sendLocation = async (
+    currentDriverId: number
+  ) => {
+    try {
+      const location =
+        await Location.getCurrentPositionAsync(
+          {
+            accuracy:
+              Location.Accuracy.High,
+          }
+        );
 
-    const storedDriverId =
-      await AsyncStorage.getItem("driver_id");
+      const lat =
+        location.coords.latitude;
 
-    if (!storedDriverId) {
-      return;
+      const lng =
+        location.coords.longitude;
+
+      setLatitude(lat);
+      setLongitude(lng);
+
+      await API.post(
+        "/driver/location",
+        {
+          driver_id:
+            currentDriverId,
+          latitude: lat,
+          longitude: lng,
+        }
+      );
+
+      setLastUpdated(
+        new Date().toLocaleTimeString()
+      );
+
+      console.log(
+        "GPS Updated:",
+        lat,
+        lng
+      );
+
+    } catch (error: any) {
+      console.log(
+        "Location Error:",
+        error
+      );
+
+      setTrackingStatus(
+        "Update Failed"
+      );
     }
+  };
 
-    const location =
-      await Location.getCurrentPositionAsync({});
+  // =====================================
+  // LOADING
+  // =====================================
 
-    await API.post(
-      "/driver/location",
-      {
-        driver_id: Number(storedDriverId),
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      }
-    );
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator
+          size="large"
+          color="#2563EB"
+        />
 
-    console.log(
-      "GPS Updated:",
-      location.coords.latitude,
-      location.coords.longitude
-    );
-
-  } catch (error) {
-
-    console.log(
-      "Location Error:",
-      error
+        <Text>
+          Starting GPS Tracking...
+        </Text>
+      </View>
     );
   }
-};
 
   return (
-
     <View style={styles.container}>
-
-      <Text style={styles.title}>
-        📍 GPS Tracking Active
+      <Text style={styles.header}>
+        📍 Live GPS Tracking
       </Text>
 
-      <Text style={styles.subtitle}>
-        Your location is updating every 30 seconds
-      </Text>
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Driver ID
+        </Text>
 
+        <Text style={styles.value}>
+          {driverId ?? "N/A"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Status
+        </Text>
+
+        <Text style={styles.active}>
+          {trackingStatus}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Latitude
+        </Text>
+
+        <Text style={styles.value}>
+          {latitude
+            ? latitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Longitude
+        </Text>
+
+        <Text style={styles.value}>
+          {longitude
+            ? longitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Last Updated
+        </Text>
+
+        <Text style={styles.value}>
+          {lastUpdated}
+        </Text>
+      </View>
+
+      <Text style={styles.footer}>
+        GPS updates are sent to the
+        server every 30 seconds.
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
+    flex: 1,
+    backgroundColor: "#F3F6FA",
+    padding: 20,
+  },
+
+  loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F3F6FA"
   },
 
-  title: {
-    fontSize: 24,
-    fontWeight: "bold"
+  header: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 25,
+    textAlign: "center",
   },
 
-  subtitle: {
-    marginTop: 10,
-    color: "#666"
-  }
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 12,
+    elevation: 3,
+  },
 
+  label: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 5,
+  },
+
+  value: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111",
+  },
+
+  active: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#16A34A",
+  },
+
+  footer: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#666",
+    fontSize: 14,
+  },
 });

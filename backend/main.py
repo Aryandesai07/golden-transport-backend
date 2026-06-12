@@ -1,10 +1,10 @@
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import Base, engine
 from routes.driver import router as driver_router
-import os
 
 # =====================================
 # APP INIT
@@ -14,6 +14,7 @@ app = FastAPI(title="Golden Transport API")
 # =====================================
 # FOLDERS
 # =====================================
+os.makedirs("uploads", exist_ok=True)
 os.makedirs("uploads/proofs", exist_ok=True)
 os.makedirs("uploads/fuel_bills", exist_ok=True)
 
@@ -27,7 +28,7 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # =====================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # 🔒 Replace with frontend domain in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,12 +49,16 @@ app.include_router(driver_router, prefix="/driver")
 # =====================================
 @app.get("/")
 def home():
-    return {
-        "message": "🚚 Golden Transport API Working"
-    }
+    return {"message": "🚚 Golden Transport API Working"}
 
 @app.get("/test")
 def test():
-    return {
-        "status": "OK"
-    }
+    return {"status": "OK"}
+
+# =====================================
+# RAILWAY ENTRY POINT
+# =====================================
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)

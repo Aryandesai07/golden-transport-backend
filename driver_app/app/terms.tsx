@@ -1,85 +1,95 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from "react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
 export default function Terms() {
-
   const acceptTerms = async () => {
     await AsyncStorage.setItem("termsAccepted", "true");
-
-    Alert.alert("Success", "Terms Accepted");
-
+    Alert.alert("✅ Success", "You have accepted the terms");
     router.replace("/login");
   };
 
   return (
     <View style={styles.container}>
-
+      {/* HEADER */}
       <Text style={styles.title}>🚚 Golden Transport</Text>
-      <Text style={styles.subtitle}>Terms & Conditions</Text>
+      <Text style={styles.subtitle}>Driver Terms & Conditions</Text>
 
-      <ScrollView style={styles.box}>
+      {/* TERMS BOX */}
+      <ScrollView style={styles.card}>
         <Text style={styles.text}>
-          1. Driver must follow all transport rules.{'\n\n'}
-          2. Earnings will be calculated daily.{'\n\n'}
-          3. Fake trips will lead to account suspension.{'\n\n'}
-          4. Driver must maintain vehicle condition.{'\n\n'}
-          5. Company can update policies anytime.
+          • Drivers must provide accurate information.{"\n\n"}
+          • Earnings will be calculated daily.{"\n\n"}
+          • Fake trips will lead to account suspension.{"\n\n"}
+          • Drivers must maintain vehicle condition.{"\n\n"}
+          • Location tracking may be enabled during trips.{"\n\n"}
+          • Company can update policies anytime.
         </Text>
       </ScrollView>
 
+      {/* BUTTON */}
       <TouchableOpacity style={styles.button} onPress={acceptTerms}>
         <Text style={styles.buttonText}>Accept & Continue</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#F5F7FB",
-    justifyContent: "center"
+    padding: 25,
+    backgroundColor: "#F3F6FA",
+    justifyContent: "center",
   },
-
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "bold",
-    textAlign: "center"
+    textAlign: "center",
+    color: "#111",
+    marginBottom: 5,
   },
-
   subtitle: {
     textAlign: "center",
     marginBottom: 20,
-    color: "#666"
+    fontSize: 16,
+    color: "#555",
   },
-
-  box: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    height: 300
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 15,
+    height: 320,
+    marginBottom: 25,
+    elevation: 4, // shadow for Android
+    shadowColor: "#000", // shadow for iOS
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
   },
-
   text: {
-    fontSize: 14,
-    color: "#333"
+    fontSize: 15,
+    lineHeight: 24,
+    color: "#333",
   },
-
   button: {
     backgroundColor: "#2563EB",
-    padding: 15,
-    marginTop: 20,
-    borderRadius: 10
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 3,
   },
-
   buttonText: {
     color: "#fff",
-    textAlign: "center",
-    fontWeight: "bold"
-  }
+    fontSize: 17,
+    fontWeight: "bold",
+  },
 });

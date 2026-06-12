@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
-
 import os
 import shutil
 import time
 import folium
-
 from database import SessionLocal
-
 from models import (
     Driver,
     Notification,
@@ -18,28 +15,19 @@ from models import (
     Payment,
     SOSAlert
 )
-
 from schemas import (
     DriverLogin,
     SOSRequest,
     DriverCreate,
     LocationData
 )
-
 from auth import create_access_token
-
 from config import (
     BASE_URL,
     UPLOAD_PROOFS,
     UPLOAD_FUEL
 )
-
-# =========================================
-# ROUTER
-# =========================================
-router = APIRouter(
-    tags=["Driver"]
-)
+router = APIRouter(prefix="/driver", tags=["Driver"])
 
 UPLOAD_DIR = UPLOAD_PROOFS
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -77,36 +65,12 @@ def update_status(data: dict, db: Session = Depends(get_db)):
 # DRIVER LOGIN
 # =========================================
 
-@router.post("/login")
-def driver_login(
-    data: DriverLogin,
-    db: Session = Depends(get_db)
-):
-
-    driver = db.query(Driver).filter(
-        Driver.mobile == data.mobile,
-        Driver.password == data.password
-    ).first()
-
-    if not driver:
-
-        return {
-            "status": "error",
-            "message": "Invalid credentials"
-        }
-
-    token = create_access_token(
-    {
-        "driver_id": driver.id
-    }
-)
-
-    return {
-        "status": "success",
-        "token": token,
-        "driver_id": driver.id,
-        "name": driver.name
-    }
+@router.post("/driver/login")
+def login_driver(data: DriverLogin, db: Session = Depends(get_db)):
+    driver = db.query(Driver).filter(Driver.mobile == data.mobile).first()
+    if not driver or driver.password != data.password:
+        return {"status": "error", "message": "Invalid credentials"}
+    return {"status": "success", "driver": driver, "token": "some-jwt-token"}
 
 # =========================================
 # GET DRIVER TRIPS
@@ -154,7 +118,7 @@ def update_profile(data: dict, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "success", "message": "Profile updated"}
-@router.get("/profile/{driver_id}")
+@router.get("/driver/profile/{driver_id}")
 def driver_profile(
     driver_id: int,
     db: Session = Depends(get_db)
@@ -200,7 +164,7 @@ def update_test_driver(
         "message": "Updated"
     }
     
-@router.post("/location")
+@router.post("/driver/location")
 def update_location(
     data: LocationData,
     db: Session = Depends(get_db)
@@ -227,7 +191,7 @@ def update_location(
     return {
         "status": "success"
     }
-@router.post("/upload-fuel-bill/{driver_id}")
+@router.post("/driver/upload-fuel-bill/{driver_id}")
 def upload_fuel_bill(
     driver_id: int,
     amount: int = Form(...),
@@ -261,21 +225,6 @@ def upload_fuel_bill(
         "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
         "bill_id": bill.id
     }
-    
-@router.get("/update-test-driver")
-def update_test_driver(db: Session = Depends(get_db)):
-
-    driver = db.query(Driver).filter(Driver.id == 1).first()
-
-    if driver:
-        driver.vehicle_no = "TN09AB1234"
-        driver.vehicle_type = "Container Truck"
-        driver.earnings = 4500
-
-        db.commit()
-
-    return {"message": "Updated"}
-
 @router.get("/admin/live-map")
 def live_map(db: Session = Depends(get_db)):
 
@@ -298,7 +247,7 @@ def live_map(db: Session = Depends(get_db)):
         ).add_to(m)
 
     return HTMLResponse(m._repr_html_())
-@router.post("/sos")
+@router.post("/driver/sos")
 def send_sos(data: SOSRequest, db: Session = Depends(get_db)):
 
     alert = SOSAlert(
@@ -372,7 +321,7 @@ def get_payments(
             for p in payments
         ]
     }
-@router.get("/trip-history/{driver_id}")
+@router.get("/driver/trip-history/{driver_id}")
 def trip_history(
     driver_id: int,
     db: Session = Depends(get_db)
@@ -405,7 +354,6 @@ def upload_proof(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    import time
 
     folder = UPLOAD_PROOFS
     os.makedirs(folder, exist_ok=True)
@@ -485,7 +433,7 @@ def admin_dashboard(db: Session = Depends(get_db)):
 # DRIVER REGISTER
 # =========================================
 
-@router.post("/register")
+@router.post("/driver/register")
 def register_driver(
     driver: DriverCreate,
     db: Session = Depends(get_db)
