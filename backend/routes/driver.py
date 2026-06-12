@@ -27,10 +27,7 @@ from config import (
     UPLOAD_PROOFS,
     UPLOAD_FUEL
 )
-router = APIRouter(
-    prefix="/driver",
-    tags=["Driver"]
-)
+router = APIRouter(prefix="/driver", tags=["Driver"])
 
 UPLOAD_DIR = UPLOAD_PROOFS
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -107,7 +104,7 @@ def get_trips(driver_id: int, db: Session = Depends(get_db)):
 # UPDATE TRIP STATUS
 # =========================================
 
-@router.post("/driver/update-profile")
+@router.post("/update-profile")
 def update_profile(data: dict, db: Session = Depends(get_db)):
     driver = db.query(Driver).filter(Driver.id == data["driver_id"]).first()
 
@@ -121,7 +118,7 @@ def update_profile(data: dict, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "success", "message": "Profile updated"}
-@router.get("/driver/profile/{driver_id}")
+@router.get("/profile/{driver_id}")
 def driver_profile(
     driver_id: int,
     db: Session = Depends(get_db)
@@ -167,7 +164,7 @@ def update_test_driver(
         "message": "Updated"
     }
     
-@router.post("/driver/location")
+@router.post("/location")
 def update_location(
     data: LocationData,
     db: Session = Depends(get_db)
