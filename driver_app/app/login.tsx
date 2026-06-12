@@ -1,123 +1,309 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+
+import * as Location from "expo-location";
 import API from "../services/api";
 
-export default function Login() {
+export default function LocationScreen() {
+  const [driverId, setDriverId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const handleLogin = async () => {
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
-    if (!mobile || !password) {
-      Alert.alert("Error", "Enter mobile & password");
-      return;
-    }
+  const [lastUpdated, setLastUpdated] =
+    useState("Waiting...");
 
+  const [trackingStatus, setTrackingStatus] =
+    useState("Initializing...");
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null =
+      null;
+
+    const initializeTracking = async () => {
+      try {
+        const storedDriverId =
+          await AsyncStorage.getItem("driver_id");
+
+        if (!storedDriverId) {
+          Alert.alert(
+            "Session Expired",
+            "Please login again"
+          );
+
+          router.replace("/login");
+          return;
+        }
+
+        const id = Number(storedDriverId);
+
+        setDriverId(id);
+
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
+        if (status !== "granted") {
+          setTrackingStatus("Permission Denied");
+
+          Alert.alert(
+            "Permission Denied",
+            "Location permission required"
+          );
+
+          return;
+        }
+
+        setTrackingStatus("Tracking Active");
+
+        await sendLocation(id);
+
+        interval = setInterval(() => {
+          sendLocation(id);
+        }, 30000);
+
+      } catch (error) {
+        console.log(
+          "TRACKING ERROR:",
+          error
+        );
+
+        Alert.alert(
+          "Error",
+          "Failed to start GPS tracking"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeTracking();
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, []);
+
+  const sendLocation = async (
+    currentDriverId: number
+  ) => {
     try {
-      setLoading(true);
+      const location =
+        await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
 
-      const res = await API.post("/driver/login", {
-        mobile: mobile.trim(),
-        password: password.trim()
+      const lat =
+        location.coords.latitude;
+
+      const lng =
+        location.coords.longitude;
+
+      setLatitude(lat);
+      setLongitude(lng);
+
+      await API.post("/driver/location", {
+        driver_id: currentDriverId,
+        latitude: lat,
+        longitude: lng,
       });
 
-      if (res.data.status === "success") {
+      setLastUpdated(
+        new Date().toLocaleTimeString()
+      );
 
-        await AsyncStorage.setItem("token", res.data.token || "true");
-        await AsyncStorage.setItem("driver_id", String(res.data.driver_id));
+      setTrackingStatus("Tracking Active");
 
-        Alert.alert("Success", "Login Successful");
+      console.log(
+        "GPS Updated:",
+        lat,
+        lng
+      );
 
-        router.replace("/dashboard");
+    } catch (error) {
+      console.log(
+        "LOCATION ERROR:",
+        error
+      );
 
-      } else {
-        Alert.alert("Login Failed", res.data.message);
-      }
-
-    } catch (error: any) {
-      console.log(error);
-      Alert.alert("Network Error", "Server not reachable");
-    } finally {
-      setLoading(false);
+      setTrackingStatus(
+        "Update Failed"
+      );
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator
+          size="large"
+          color="#2563EB"
+        />
+
+        <Text style={{ marginTop: 10 }}>
+          Starting GPS Tracking...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
 
-      <Text style={styles.title}>🚚 Driver Login</Text>
+      <Text style={styles.header}>
+        📍 Live GPS Tracking
+      </Text>
 
-      <TextInput
-        placeholder="Mobile Number"
-        value={mobile}
-        onChangeText={setMobile}
-        keyboardType="phone-pad"
-        style={styles.input}
-      />
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Driver ID
+        </Text>
 
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+        <Text style={styles.value}>
+          {driverId ?? "N/A"}
+        </Text>
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>
-          {loading ? "Logging in..." : "Login"}
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Tracking Status
+        </Text>
+
+        <Text style={styles.active}>
+          {trackingStatus}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Latitude
+        </Text>
+
+        <Text style={styles.value}>
+          {latitude
+            ? latitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Longitude
+        </Text>
+
+        <Text style={styles.value}>
+          {longitude
+            ? longitude.toFixed(6)
+            : "--"}
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.label}>
+          Last Updated
+        </Text>
+
+        <Text style={styles.value}>
+          {lastUpdated}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() =>
+          router.replace("/dashboard")
+        }
+      >
+        <Text style={styles.backText}>
+          ← Back To Dashboard
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text style={styles.link}>New Driver? Register</Text>
-      </TouchableOpacity>
+      <Text style={styles.footer}>
+        GPS location is automatically
+        sent to the server every
+        30 seconds.
+      </Text>
 
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
+    backgroundColor: "#F3F6FA",
     padding: 20,
-    justifyContent: "center",
-    backgroundColor: "#F5F7FB"
   },
 
-  title: {
-    fontSize: 26,
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  header: {
+    fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30
+    marginTop: 20,
+    marginBottom: 25,
   },
 
-  input: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    borderRadius: 15,
+    marginBottom: 12,
+    elevation: 3,
   },
 
-  button: {
+  label: {
+    color: "#6B7280",
+    fontSize: 14,
+    marginBottom: 4,
+  },
+
+  value: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+
+  active: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#16A34A",
+  },
+
+  backButton: {
     backgroundColor: "#2563EB",
     padding: 15,
-    borderRadius: 10
-  },
-
-  buttonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "bold"
-  },
-
-  link: {
+    borderRadius: 12,
     marginTop: 15,
+  },
+
+  backText: {
+    color: "#FFFFFF",
     textAlign: "center",
-    color: "#2563EB"
-  }
+    fontWeight: "bold",
+  },
+
+  footer: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#6B7280",
+    fontSize: 14,
+  },
 });
