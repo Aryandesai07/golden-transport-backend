@@ -9,7 +9,7 @@ class DriverLogin(BaseModel):
     password: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # =========================
@@ -20,7 +20,7 @@ class TripStatusUpdate(BaseModel):
     status: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # =========================
@@ -32,7 +32,7 @@ class SOSRequest(BaseModel):
     longitude: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # =========================
@@ -46,7 +46,7 @@ class DriverCreate(BaseModel):
     vehicle_type: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # =========================
@@ -58,4 +58,4 @@ class LocationData(BaseModel):
     longitude: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
