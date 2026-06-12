@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
@@ -6,84 +7,75 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 
 import * as Location from "expo-location";
 import API from "../services/api";
 
 export default function LocationScreen() {
-  const [driverId, setDriverId] =
-    useState<number | null>(null);
+  const [driverId, setDriverId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [latitude, setLatitude] =
-    useState<number | null>(null);
-
-  const [longitude, setLongitude] =
-    useState<number | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   const [lastUpdated, setLastUpdated] =
-    useState<string>("Waiting...");
+    useState("Waiting...");
 
   const [trackingStatus, setTrackingStatus] =
     useState("Initializing...");
 
   useEffect(() => {
-    let interval: ReturnType<
-      typeof setInterval
-    > | null = null;
+    let interval: ReturnType<typeof setInterval> | null =
+      null;
 
     const initializeTracking = async () => {
       try {
         const storedDriverId =
-          await AsyncStorage.getItem(
-            "driver_id"
-          );
+          await AsyncStorage.getItem("driver_id");
 
         if (!storedDriverId) {
           Alert.alert(
             "Session Expired",
             "Please login again"
           );
+
+          router.replace("/login");
           return;
         }
 
-        setDriverId(Number(storedDriverId));
+        const id = Number(storedDriverId);
+
+        setDriverId(id);
 
         const { status } =
           await Location.requestForegroundPermissionsAsync();
 
         if (status !== "granted") {
+          setTrackingStatus("Permission Denied");
+
           Alert.alert(
             "Permission Denied",
             "Location permission required"
           );
 
-          setTrackingStatus(
-            "Permission Denied"
-          );
-
           return;
         }
 
-        setTrackingStatus(
-          "Tracking Active"
-        );
+        setTrackingStatus("Tracking Active");
 
-        await sendLocation(
-          Number(storedDriverId)
-        );
+        await sendLocation(id);
 
         interval = setInterval(() => {
-          sendLocation(
-            Number(storedDriverId)
-          );
+          sendLocation(id);
         }, 30000);
 
       } catch (error) {
-        console.log(error);
+        console.log(
+          "TRACKING ERROR:",
+          error
+        );
 
         Alert.alert(
           "Error",
@@ -103,21 +95,14 @@ export default function LocationScreen() {
     };
   }, []);
 
-  // =====================================
-  // SEND LOCATION
-  // =====================================
-
   const sendLocation = async (
     currentDriverId: number
   ) => {
     try {
       const location =
-        await Location.getCurrentPositionAsync(
-          {
-            accuracy:
-              Location.Accuracy.High,
-          }
-        );
+        await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
 
       const lat =
         location.coords.latitude;
@@ -128,19 +113,17 @@ export default function LocationScreen() {
       setLatitude(lat);
       setLongitude(lng);
 
-      await API.post(
-        "/driver/location",
-        {
-          driver_id:
-            currentDriverId,
-          latitude: lat,
-          longitude: lng,
-        }
-      );
+      await API.post("/driver/location", {
+        driver_id: currentDriverId,
+        latitude: lat,
+        longitude: lng,
+      });
 
       setLastUpdated(
         new Date().toLocaleTimeString()
       );
+
+      setTrackingStatus("Tracking Active");
 
       console.log(
         "GPS Updated:",
@@ -148,9 +131,9 @@ export default function LocationScreen() {
         lng
       );
 
-    } catch (error: any) {
+    } catch (error) {
       console.log(
-        "Location Error:",
+        "LOCATION ERROR:",
         error
       );
 
@@ -160,10 +143,6 @@ export default function LocationScreen() {
     }
   };
 
-  // =====================================
-  // LOADING
-  // =====================================
-
   if (loading) {
     return (
       <View style={styles.loader}>
@@ -172,7 +151,7 @@ export default function LocationScreen() {
           color="#2563EB"
         />
 
-        <Text>
+        <Text style={{ marginTop: 10 }}>
           Starting GPS Tracking...
         </Text>
       </View>
@@ -181,6 +160,7 @@ export default function LocationScreen() {
 
   return (
     <View style={styles.container}>
+
       <Text style={styles.header}>
         📍 Live GPS Tracking
       </Text>
@@ -197,7 +177,7 @@ export default function LocationScreen() {
 
       <View style={styles.card}>
         <Text style={styles.label}>
-          Status
+          Tracking Status
         </Text>
 
         <Text style={styles.active}>
@@ -239,10 +219,23 @@ export default function LocationScreen() {
         </Text>
       </View>
 
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() =>
+          router.replace("/dashboard")
+        }
+      >
+        <Text style={styles.backText}>
+          ← Back To Dashboard
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.footer}>
-        GPS updates are sent to the
-        server every 30 seconds.
+        GPS location is automatically
+        sent to the server every
+        30 seconds.
       </Text>
+
     </View>
   );
 }
@@ -263,9 +256,9 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: "bold",
+    textAlign: "center",
     marginTop: 20,
     marginBottom: 25,
-    textAlign: "center",
   },
 
   card: {
@@ -277,15 +270,15 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    color: "#6B7280",
     fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
+    marginBottom: 4,
   },
 
   value: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
+    color: "#111827",
   },
 
   active: {
@@ -294,10 +287,23 @@ const styles = StyleSheet.create({
     color: "#16A34A",
   },
 
-  footer: {
-    marginTop: 20,
+  backButton: {
+    backgroundColor: "#2563EB",
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 15,
+  },
+
+  backText: {
+    color: "#FFFFFF",
     textAlign: "center",
-    color: "#666",
+    fontWeight: "bold",
+  },
+
+  footer: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#6B7280",
     fontSize: 14,
   },
 });
