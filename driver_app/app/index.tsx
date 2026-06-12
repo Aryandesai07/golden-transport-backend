@@ -17,9 +17,10 @@ export default function Index() {
 
       // 🔥 FIRST TIME USER → TERMS PAGE
       if (termsAccepted !== "true") {
-        router.replace("/terms");
-        return;
-      }
+  router.replace("/terms");
+  return;
+}
+
 
       // 🔥 LOGGED IN USER → DASHBOARD
       if (token) {
