@@ -65,13 +65,42 @@ def update_status(data: dict, db: Session = Depends(get_db)):
 # DRIVER LOGIN
 # =========================================
 
-@router.post("/driver/login")
-def login_driver(data: DriverLogin, db: Session = Depends(get_db)):
-    driver = db.query(Driver).filter(Driver.mobile == data.mobile).first()
-    if not driver or driver.password != data.password:
-        return {"status": "error", "message": "Invalid credentials"}
-    return {"status": "success", "driver": driver, "token": "some-jwt-token"}
+@router.post("/login")
+def login_driver(
+    data: DriverLogin,
+    db: Session = Depends(get_db)
+):
+    driver = db.query(Driver).filter(
+        Driver.mobile == data.mobile
+    ).first()
 
+    if not driver:
+        return {
+            "status": "error",
+            "message": "Driver not found"
+        }
+
+    if driver.password != data.password:
+        return {
+            "status": "error",
+            "message": "Invalid password"
+        }
+
+    token = create_access_token(
+        {"driver_id": driver.id}
+    )
+
+    return {
+        "status": "success",
+        "token": token,
+        "driver": {
+            "id": driver.id,
+            "name": driver.name,
+            "mobile": driver.mobile,
+            "vehicle_no": driver.vehicle_no,
+            "vehicle_type": driver.vehicle_type
+        }
+    }
 # =========================================
 # GET DRIVER TRIPS
 # =========================================
@@ -143,27 +172,6 @@ def driver_profile(
         }
     }
     
-@router.get("/update-test-driver")
-def update_test_driver(
-    db: Session = Depends(get_db)
-):
-
-    driver = db.query(Driver).filter(
-        Driver.id == 1
-    ).first()
-
-    if driver:
-
-        driver.vehicle_no = "TN09AB1234"
-        driver.vehicle_type = "Container Truck"
-        driver.earnings = 4500
-
-        db.commit()
-
-    return {
-        "message": "Updated"
-    }
-    
 @router.post("/location")
 def update_location(
     data: LocationData,
@@ -191,23 +199,30 @@ def update_location(
     return {
         "status": "success"
     }
-@router.post("/driver/upload-fuel-bill/{driver_id}")
+@router.post("/upload-fuel-bill/{driver_id}")
 def upload_fuel_bill(
     driver_id: int,
     amount: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-
     folder = UPLOAD_FUEL
     os.makedirs(folder, exist_ok=True)
 
-    filename = f"{driver_id}_{int(time.time())}_{file.filename}"
+    filename = (
+        f"{driver_id}_{int(time.time())}_{file.filename}"
+    )
 
-    file_path = os.path.join(folder, filename)
+    file_path = os.path.join(
+        folder,
+        filename
+    )
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        shutil.copyfileobj(
+            file.file,
+            buffer
+        )
 
     bill = FuelBill(
         driver_id=driver_id,
@@ -222,8 +237,9 @@ def upload_fuel_bill(
     return {
         "status": "success",
         "message": "Fuel bill uploaded successfully",
-        "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
-        "bill_id": bill.id
+        "bill_id": bill.id,
+        "image_url":
+            f"{BASE_URL}/uploads/fuel_bills/{filename}"
     }
 @router.get("/admin/live-map")
 def live_map(db: Session = Depends(get_db)):
