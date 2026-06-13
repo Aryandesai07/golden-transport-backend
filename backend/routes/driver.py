@@ -12,8 +12,8 @@ from models import (
     Trip,
     DriverLocation,
     FuelBill,
-    Payment,
-    SOSAlert
+    SOSAlert,
+    Payment
 )
 from schemas import (
     DriverLogin,
