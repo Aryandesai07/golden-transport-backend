@@ -241,12 +241,19 @@ def upload_fuel_bill(
         "image_url":
             f"{BASE_URL}/uploads/fuel_bills/{filename}"
     }
+# =========================================
+# ADMIN LIVE MAP
+# =========================================
+
 @router.get("/admin/live-map")
 def live_map(db: Session = Depends(get_db)):
 
     locations = db.query(DriverLocation).all()
 
-    m = folium.Map(location=[20.5937, 78.9629], zoom_start=5)
+    m = folium.Map(
+        location=[20.5937, 78.9629],
+        zoom_start=5
+    )
 
     for loc in locations:
 
@@ -259,12 +266,25 @@ def live_map(db: Session = Depends(get_db)):
         folium.Marker(
             [float(loc.latitude), float(loc.longitude)],
             popup=name,
-            icon=folium.Icon(color="green", icon="truck", prefix="fa")
+            icon=folium.Icon(
+                color="green",
+                icon="truck",
+                prefix="fa"
+            )
         ).add_to(m)
 
     return HTMLResponse(m._repr_html_())
-@router.post("/driver/sos")
-def send_sos(data: SOSRequest, db: Session = Depends(get_db)):
+
+
+# =========================================
+# SOS ALERT
+# =========================================
+
+@router.post("/sos")
+def send_sos(
+    data: SOSRequest,
+    db: Session = Depends(get_db)
+):
 
     alert = SOSAlert(
         driver_id=data.driver_id,
@@ -277,7 +297,6 @@ def send_sos(data: SOSRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(alert)
 
-    # ✅ ALSO CREATE NOTIFICATION FOR ADMIN PANEL
     notification = Notification(
         driver_id=data.driver_id,
         title="🚨 SOS ALERT",
@@ -292,6 +311,12 @@ def send_sos(data: SOSRequest, db: Session = Depends(get_db)):
         "message": "SOS sent successfully",
         "alert_id": alert.id
     }
+
+
+# =========================================
+# DRIVER NOTIFICATIONS
+# =========================================
+
 @router.get("/notifications/{driver_id}")
 def get_notifications(
     driver_id: int,
@@ -314,6 +339,12 @@ def get_notifications(
             for n in notifications
         ]
     }
+
+
+# =========================================
+# DRIVER PAYMENTS
+# =========================================
+
 @router.get("/payments/{driver_id}")
 def get_payments(
     driver_id: int,
@@ -337,7 +368,13 @@ def get_payments(
             for p in payments
         ]
     }
-@router.get("/driver/trip-history/{driver_id}")
+
+
+# =========================================
+# TRIP HISTORY
+# =========================================
+
+@router.get("/trip-history/{driver_id}")
 def trip_history(
     driver_id: int,
     db: Session = Depends(get_db)
@@ -380,7 +417,9 @@ def upload_proof(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    trip = db.query(Trip).filter(
+        Trip.id == trip_id
+    ).first()
 
     if not trip:
         return {
@@ -388,8 +427,8 @@ def upload_proof(
             "message": "Trip not found"
         }
 
-    # ✅ store relative path only
     relative_path = f"proofs/{filename}"
+
     trip.proof_image = relative_path
 
     db.commit()
@@ -400,8 +439,16 @@ def upload_proof(
         "image_url": f"{BASE_URL}/uploads/{relative_path}",
         "trip_id": trip_id
     }
+
+
+# =========================================
+# ADMIN SOS ALERTS
+# =========================================
+
 @router.get("/admin/sos-alerts")
-def get_sos_alerts(db: Session = Depends(get_db)):
+def get_sos_alerts(
+    db: Session = Depends(get_db)
+):
 
     alerts = db.query(SOSAlert).all()
 
@@ -418,56 +465,57 @@ def get_sos_alerts(db: Session = Depends(get_db)):
             for a in alerts
         ]
     }
-    
-@router.get("/debug/trips")
-def debug_trips(db: Session = Depends(get_db)):
-    return db.query(Trip).all()
-
+# =========================================
+# ADMIN DASHBOARD
+# =========================================
 
 @router.get("/admin/dashboard")
-def admin_dashboard(db: Session = Depends(get_db)):
+def admin_dashboard(
+    db: Session = Depends(get_db)
+):
 
     return {
         "drivers": db.query(Driver).count(),
         "trips": db.query(Trip).count(),
 
-        # active = only running trips
         "active_trips": db.query(Trip).filter(
-            Trip.status.in_(["ASSIGNED", "LOADED", "IN_TRANSIT"])
+            Trip.status.in_([
+                "ASSIGNED",
+                "LOADED",
+                "IN_TRANSIT"
+            ])
         ).count(),
 
-        "fuel_bills": db.query(FuelBill).count(),
-        
+        "fuel_bills": db.query(
+            FuelBill
+        ).count(),
 
-        # safe NULL check
         "proofs": db.query(Trip).filter(
             Trip.proof_image.isnot(None)
         ).count()
     }
-    
+
+
 # =========================================
 # DRIVER REGISTER
 # =========================================
 
-@router.post("/driver/register")
+@router.post("/register")
 def register_driver(
     driver: DriverCreate,
     db: Session = Depends(get_db)
 ):
 
-    # CHECK MOBILE ALREADY EXISTS
     existing_driver = db.query(Driver).filter(
         Driver.mobile == driver.mobile
     ).first()
 
     if existing_driver:
-
         return {
             "status": "error",
             "message": "Mobile number already registered"
         }
 
-    # CREATE NEW DRIVER
     new_driver = Driver(
         name=driver.name,
         mobile=driver.mobile,
