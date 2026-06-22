@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Golden Tamilnadu Transport",
+    "slug": "golden-tamilnadu-transport",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "goldentransport",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F172A"
+    },
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.goldentamilnadu.driver",
+      "buildNumber": "1.0.0"
+    },
+
+    "android": {
+      "package": "com.goldentamilnadu.driver",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#0F172A"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "WAKE_LOCK"
+      ]
+    },
+
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "output": "static"
+    },
+
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 250,
+          "resizeMode": "contain",
+          "backgroundColor": "#0F172A"
+        }
+      ]
+    ],
+
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+
+    "extra": {
+      "apiUrl": "https://golden-transport-backend-production.up.railway.app",
+      "eas": {
+        "projectId": "32359c95-82a9-4adc-8f04-e3274889308b"
+      }
+    }
+  }
+}
