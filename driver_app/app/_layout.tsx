@@ -10,41 +10,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack
-  screenOptions={{
-    headerShown: false, // default
-  }}
->
-  {/* AUTH */}
+      <Stack screenOptions={{ headerShown: false }}>
   <Stack.Screen name="index" />
   <Stack.Screen name="login" />
   <Stack.Screen name="register" />
-
-  {/* MAIN APP */}
   <Stack.Screen name="dashboard" />
-
-  {/* DRIVER SCREENS */}
   <Stack.Screen name="profile" options={{ headerShown: true, title: "Profile" }} />
   <Stack.Screen name="settings" options={{ headerShown: true, title: "Settings" }} />
   <Stack.Screen name="notifications" />
   <Stack.Screen name="location" />
-  <Stack.Screen name="fuelBill" />   {/* consistent naming */}
-  <Stack.Screen name="deliveryProof" />
+  <Stack.Screen name="fuel-bill" />
+  <Stack.Screen name="delivery-proof" />
   <Stack.Screen name="earnings" />
-  <Stack.Screen name="tripHistory" />
+  <Stack.Screen name="trip-history" />
   <Stack.Screen name="sos" />
-
-  {/* MODAL */}
-  <Stack.Screen
-    name="modal"
-    options={{
-      presentation: "modal",
-      headerShown: true,
-      title: "Modal",
-    }}
-  />
+  <Stack.Screen name="modal" options={{ presentation: "modal", headerShown: true, title: "Modal" }} />
 </Stack>
-
 
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </ThemeProvider>
