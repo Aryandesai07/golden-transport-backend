@@ -27,7 +27,7 @@ from config import (
     UPLOAD_PROOFS,
     UPLOAD_FUEL
 )
-router = APIRouter(prefix="/driver", tags=["Driver"])
+router = APIRouter(tags=["Driver"])
 
 UPLOAD_DIR = UPLOAD_PROOFS
 os.makedirs(UPLOAD_DIR, exist_ok=True)
