@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
@@ -43,44 +43,39 @@ export default function Dashboard() {
   // ======================================
 
   const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const storedDriverId =
-        await AsyncStorage.getItem("driver_id");
+    const storedDriverId = await AsyncStorage.getItem("driver_id");
+    const storedToken = await AsyncStorage.getItem("token");
 
-      if (!storedDriverId) {
-        router.replace("/");
-        return;
-      }
-
-      const driverId = Number(storedDriverId);
-
-      // Profile
-      const profileRes =
-        await API.get(`/driver/profile/${driverId}`);
-
-      if (
-        profileRes.data.status === "success"
-      ) {
-        setDriver(profileRes.data.driver);
-      }
-
-      // Trips
-      await fetchTrips(driverId);
-
-    } catch (error: any) {
-      console.log("Dashboard Error:", error);
-
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message ||
-          "Failed to load dashboard"
-      );
-    } finally {
-      setLoading(false);
+    if (!storedDriverId || !storedToken) {
+      router.replace("/login");
+      return;
     }
-  }, []);
+
+    const driverId = Number(storedDriverId);
+
+    // Profile
+    const profileRes = await API.get(`/driver/profile/${driverId}`, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+
+    if (profileRes.data.status === "success") {
+      setDriver(profileRes.data.driver);
+    }
+
+    // Trips
+    await fetchTrips(driverId, storedToken);
+
+  } catch (error: any) {
+    console.log("Dashboard Error:", error);
+    Alert.alert("Error", error?.response?.data?.message || "Failed to load dashboard");
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   useEffect(() => {
     loadData();
@@ -90,100 +85,67 @@ export default function Dashboard() {
   // FETCH TRIPS
   // ======================================
 
-  const fetchTrips = async (
-    driverId: number
-  ) => {
-    try {
-      const response = await API.get(
-        `/driver/trips/${driverId}`
-      );
+  const fetchTrips = async (driverId: number, token: string) => {
+  try {
+    const response = await API.get(`/driver/trips/${driverId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-      if (
-        response.data.status === "success"
-      ) {
-        setTrips(response.data.trips);
-      } else {
-        setTrips([]);
-      }
-    } catch (error: any) {
-      console.log(
-        "Fetch Trips Error:",
-        error
-      );
-
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message ||
-          "Failed to fetch trips"
-      );
-
+    if (response.data.status === "success") {
+      setTrips(response.data.trips);
+    } else {
       setTrips([]);
     }
-  };
+  } catch (error: any) {
+    console.log("Fetch Trips Error:", error);
+    Alert.alert("Error", error?.response?.data?.message || "Failed to fetch trips");
+    setTrips([]);
+  }
+};
 
-  // ======================================
-  // UPDATE STATUS
-  // ======================================
 
-  const updateStatus = async (
-    tripId: number,
-    status: string
-  ) => {
-    try {
-      const response = await API.post(
-        "/driver/update-status",
-        {
-          trip_id: tripId,
-          status,
-        }
-      );
+  const updateStatus = async (tripId: number, status: string) => {
+  try {
+    const token = await AsyncStorage.getItem("token");  // ✅ get token
 
-      Alert.alert(
-        "Success",
-        response.data.message ||
-          `Trip Updated To ${status}`
-      );
+    const response = await API.post(
+      "/driver/update-status",
+      { trip_id: tripId, status },
+      { headers: { Authorization: `Bearer ${token}` } }  // ✅ secure call
+    );
 
-      // Refresh only trips
-      if (driver?.id) {
-        fetchTrips(driver.id);
-      }
-    } catch (error: any) {
-      console.log(
-        "Update Status Error:",
-        error
-      );
+    Alert.alert("Success", response.data.message || `Trip Updated To ${status}`);
 
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message ||
-          "Status update failed"
-      );
+    // Refresh only trips
+    if (driver?.id && token) {
+      fetchTrips(driver.id, token);  // ✅ pass token
     }
-  };
+  } catch (error: any) {
+    console.log("Update Status Error:", error);
+    Alert.alert("Error", error?.response?.data?.message || "Status update failed");
+  }
+};
+
 
   // ======================================
-  // LOGOUT
-  // ======================================
+// LOGOUT
+// ======================================
+const logout = async () => {
+  try {
+    // Clear all stored driver session data
+    await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("driver_id");
+    await AsyncStorage.removeItem("driver_name");
+    // await AsyncStorage.removeItem("termsAccepted"); // only if you want reset
 
-  const logout = async () => {
-    try {
-      await AsyncStorage.removeItem(
-        "token"
-      );
+    // Redirect to login screen
+    router.replace("/login");
+  } catch (error) {
+    console.log("Logout Error:", error);
+    Alert.alert("Error", "Logout failed, please try again.");
+  }
+};
 
-      await AsyncStorage.removeItem(
-        "driver_id"
-      );
-
-      router.replace("/");
-    } catch (error) {
-      console.log(
-        "Logout Error:",
-        error
-      );
-    }
-  };
 
   // ======================================
   // LOADER

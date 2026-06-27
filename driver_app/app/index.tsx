@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
@@ -13,26 +19,31 @@ export default function Index() {
   const startApp = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
+      const driverId = await AsyncStorage.getItem("driver_id");
       const termsAccepted = await AsyncStorage.getItem("termsAccepted");
 
-      // 🔥 FIRST TIME USER → TERMS PAGE
+      // First-time user
       if (termsAccepted !== "true") {
-  router.replace("/terms");
-  return;
-}
-
-
-      // 🔥 LOGGED IN USER → DASHBOARD
-      if (token) {
-        router.replace("/dashboard");
+        router.replace("/terms");
         return;
       }
 
-      // 🔥 NOT LOGGED IN → LOGIN PAGE
+      // Already logged in
+      if (token && driverId) {
+        router.replace("/(tabs)/index");
+        return;
+      }
+
+      // Login
       router.replace("/login");
     } catch (error) {
       console.log("APP START ERROR:", error);
-      Alert.alert("Error", "Something went wrong, redirecting to login.");
+
+      Alert.alert(
+        "Error",
+        "Something went wrong. Redirecting to login."
+      );
+
       router.replace("/login");
     } finally {
       setLoading(false);
@@ -43,38 +54,49 @@ export default function Index() {
     return (
       <View style={styles.container}>
         <Text style={styles.logo}>🚚</Text>
-        <Text style={styles.title}>Golden Transport</Text>
 
-        <ActivityIndicator size="large" color="#2563EB" />
+        <Text style={styles.title}>
+          Golden Transport
+        </Text>
 
-        <Text style={styles.text}>Loading system...</Text>
+        <ActivityIndicator
+          size="large"
+          color="#F59E0B"
+        />
+
+        <Text style={styles.text}>
+          Loading system...
+        </Text>
       </View>
     );
   }
 
-  // fallback (never shown but safe)
   return null;
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F8FAFC",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F3F6FA",
   },
+
   logo: {
-    fontSize: 60,
-    marginBottom: 10,
+    fontSize: 70,
+    marginBottom: 15,
   },
+
   title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#1F2937",
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 20,
   },
+
   text: {
-    marginTop: 10,
-    color: "#6B7280",
+    marginTop: 15,
+    fontSize: 16,
+    color: "#64748B",
   },
 });
