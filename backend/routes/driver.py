@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
+from security import hash_password
+from security import verify_password
 import os
 import shutil
 import time
@@ -80,7 +82,7 @@ def login_driver(
             "message": "Driver not found"
         }
 
-    if driver.password != data.password:
+    if not verify_password(data.password, driver.password):
         return {
             "status": "error",
             "message": "Invalid password"
@@ -519,7 +521,7 @@ def register_driver(
     new_driver = Driver(
         name=driver.name,
         mobile=driver.mobile,
-        password=driver.password,
+        password=hash_password(driver.password),
         vehicle_no=driver.vehicle_no,
         vehicle_type=driver.vehicle_type
     )

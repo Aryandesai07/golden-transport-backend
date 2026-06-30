@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
+
 
 # =========================
 # DRIVER LOGIN
@@ -56,6 +57,19 @@ class LocationData(BaseModel):
     driver_id: int
     latitude: float
     longitude: float
+
+    class Config:
+        from_attributes = True
+
+
+# =========================
+# DRIVER PROFILE UPDATE (MISSING BEFORE)
+# =========================
+class DriverUpdate(BaseModel):
+    driver_id: int
+    name: str
+    mobile: str
+    vehicle_no: str
 
     class Config:
         from_attributes = True
