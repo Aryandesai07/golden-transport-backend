@@ -18,6 +18,9 @@ os.makedirs("uploads", exist_ok=True)
 os.makedirs("uploads/proofs", exist_ok=True)
 os.makedirs("uploads/fuel_bills", exist_ok=True)
 
+os.makedirs("uploads/licenses", exist_ok=True)
+os.makedirs("uploads/aadhaar", exist_ok=True)
+os.makedirs("uploads/pan", exist_ok=True)
 # =====================================
 # STATIC FILES
 # =====================================

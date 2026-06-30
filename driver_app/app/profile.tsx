@@ -27,6 +27,10 @@ interface DriverProfile {
   earnings?: number;
 }
 
+// =====================================
+// MAIN COMPONENT
+// =====================================
+
 export default function Profile() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -38,6 +42,8 @@ export default function Profile() {
   const [vehicleNo, setVehicleNo] = useState<string>("");
   const [vehicleType, setVehicleType] = useState<string>("");
 
+
+  const [documents, setDocuments] = useState<any>(null);
   // =====================================
   // LOAD PROFILE
   // =====================================
@@ -68,6 +74,9 @@ export default function Profile() {
 
       setDriverId(id);
 
+      // =========================
+      // PROFILE API CALL
+      // =========================
       const response = await API.get(`/driver/profile/${id}`);
 
       if (response?.data?.status === "success") {
@@ -82,6 +91,15 @@ export default function Profile() {
           "Error",
           response?.data?.message || "Failed to load profile"
         );
+      }
+
+      // =========================
+      // DOCUMENT API CALL (NEW)
+      // =========================
+      const docRes = await API.get(`/driver/documents/${id}`);
+
+      if (docRes?.data?.status === "success") {
+        setDocuments(docRes.data.documents);
       }
 
     } catch (error: any) {
@@ -107,7 +125,7 @@ export default function Profile() {
       }
 
       // =========================
-      // VALIDATION
+      // VALIDATION (IMPROVED)
       // =========================
 
       if (!name?.trim()) {
@@ -115,7 +133,7 @@ export default function Profile() {
         return;
       }
 
-      if (!mobile || mobile.trim().length < 10) {
+      if (!mobile?.trim() || mobile.trim().length < 10) {
         Alert.alert("Validation", "Enter valid mobile number");
         return;
       }
@@ -130,18 +148,33 @@ export default function Profile() {
         return;
       }
 
+      // prevent double click / multiple API calls
+      if (saving) return;
+
       setSaving(true);
 
-      const response = await API.post("/driver/update-profile", {
+      const payload = {
         driver_id: driverId,
         name: name.trim(),
         mobile: mobile.trim(),
         vehicle_no: vehicleNo.trim(),
         vehicle_type: vehicleType.trim(),
-      });
+      };
+
+      const response = await API.post(
+        "/driver/update-profile",
+        payload
+      );
 
       if (response?.data?.status === "success") {
         Alert.alert("Success", "Profile updated successfully ✔");
+
+        // small UX improvement
+        console.log("PROFILE UPDATED:", payload);
+
+        // optional future: update AsyncStorage cache
+        // await AsyncStorage.setItem("driver_profile", JSON.stringify(payload));
+
       } else {
         Alert.alert(
           "Error",
@@ -177,94 +210,104 @@ export default function Profile() {
       </View>
     );
   }
-    // =====================================
+   // =====================================
   // UI
   // =====================================
 
   return (
     <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
+  style={styles.container}
+  showsVerticalScrollIndicator={false}
+  keyboardShouldPersistTaps="handled"
+>
+
+  <Text style={styles.title}>
+    👤 Driver Profile
+  </Text>
+
+
+  <View style={styles.card}>
+  <Text style={{ fontWeight: "bold" }}>
+    📄 Documents
+  </Text>
+
+  <Text>
+    License: {documents?.license ? "✔ Uploaded" : "❌ Missing"}
+  </Text>
+  </View>
+
+
+  <View style={styles.card}>
+
+    {/* FULL NAME */}
+    <TextInput
+      style={styles.input}
+      placeholder="Full Name"
+      value={name}
+      onChangeText={setName}
+    />
+
+    {/* MOBILE */}
+    <TextInput
+      style={styles.input}
+      placeholder="Mobile Number"
+      keyboardType="phone-pad"
+      maxLength={10}
+      value={mobile}
+      onChangeText={setMobile}
+    />
+
+    {/* VEHICLE NUMBER */}
+    <TextInput
+      style={styles.input}
+      placeholder="Vehicle Number"
+      value={vehicleNo}
+      onChangeText={setVehicleNo}
+    />
+
+    {/* VEHICLE TYPE */}
+    <TextInput
+      style={styles.input}
+      placeholder="Vehicle Type"
+      value={vehicleType}
+      onChangeText={setVehicleType}
+    />
+
+    {/* SAVE BUTTON */}
+    <TouchableOpacity
+      style={[
+        styles.saveBtn,
+        saving && styles.disabledBtn,
+      ]}
+      onPress={updateProfile}
+      disabled={saving}
+      activeOpacity={0.8}
     >
-      <Text style={styles.title}>
-        👤 Driver Profile
+      {saving ? (
+        <ActivityIndicator color="#FFFFFF" />
+      ) : (
+        <Text style={styles.btnText}>
+          💾 Save Changes
+        </Text>
+      )}
+    </TouchableOpacity>
+
+    {/* BACK BUTTON */}
+    <TouchableOpacity
+      style={styles.backBtn}
+      onPress={() => router.back()}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.btnText}>
+        ⬅ Back
       </Text>
+    </TouchableOpacity>
 
-      <View style={styles.card}>
-
-        {/* FULL NAME */}
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-        />
-
-        {/* MOBILE */}
-        <TextInput
-          style={styles.input}
-          placeholder="Mobile Number"
-          keyboardType="phone-pad"
-          maxLength={10}
-          value={mobile}
-          onChangeText={setMobile}
-        />
-
-        {/* VEHICLE NUMBER */}
-        <TextInput
-          style={styles.input}
-          placeholder="Vehicle Number"
-          value={vehicleNo}
-          onChangeText={setVehicleNo}
-        />
-
-        {/* VEHICLE TYPE */}
-        <TextInput
-          style={styles.input}
-          placeholder="Vehicle Type"
-          value={vehicleType}
-          onChangeText={setVehicleType}
-        />
-
-        {/* SAVE BUTTON */}
-        <TouchableOpacity
-          style={[
-            styles.saveBtn,
-            saving && styles.disabledBtn,
-          ]}
-          onPress={updateProfile}
-          disabled={saving}
-          activeOpacity={0.8}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.btnText}>
-              💾 Save Changes
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        {/* BACK BUTTON */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.btnText}>
-            ⬅ Back
-          </Text>
-        </TouchableOpacity>
-
-      </View>
-    </ScrollView>
+  </View>
+</ScrollView>
   );
 }
-  // =====================================
-  // STYLES
-  // =====================================
-
-const styles = StyleSheet.create({
+ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F3F6FA",
@@ -289,8 +332,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 20,
+    marginBottom: 15,
     elevation: 4,
-    shadowColor: "#000",   // added for iOS consistency
+
+    // iOS shadow (important for smooth UI)
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -304,7 +350,13 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 14,
     fontSize: 16,
-    color: "#111827", // better text visibility
+    color: "#111827",
+
+    // subtle depth for modern feel
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
   },
 
   saveBtn: {

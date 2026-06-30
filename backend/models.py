@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy import Boolean, Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
@@ -159,3 +161,15 @@ class DriverSettings(Base):
     dark_mode = Column(Boolean, default=False)
 
     driver = relationship("Driver", back_populates="settings")
+
+class DriverDocument(Base):
+    __tablename__ = "driver_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    driver_id = Column(Integer, ForeignKey("drivers.id"))
+
+    license_url = Column(String, nullable=True)
+    aadhaar_url = Column(String, nullable=True)
+    pan_url = Column(String, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
 from security import hash_password
 from security import verify_password
+from models import DriverDocument
 import os
 import shutil
 import time
@@ -503,35 +504,187 @@ def admin_dashboard(
 # =========================================
 
 @router.post("/register")
-def register_driver(
-    driver: DriverCreate,
-    db: Session = Depends(get_db)
-):
+def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
 
-    existing_driver = db.query(Driver).filter(
-        Driver.mobile == driver.mobile
-    ).first()
+    try:
+        existing_driver = db.query(Driver).filter(
+            Driver.mobile == driver.mobile
+        ).first()
 
-    if existing_driver:
+        if existing_driver:
+            return {
+                "status": "error",
+                "message": "Mobile number already registered"
+            }
+
+        new_driver = Driver(
+            name=driver.name,
+            mobile=driver.mobile,
+            password=driver.password,
+            vehicle_no=driver.vehicle_no,
+            vehicle_type=driver.vehicle_type
+        )
+
+        db.add(new_driver)
+        db.commit()
+        db.refresh(new_driver)
+
         return {
-            "status": "error",
-            "message": "Mobile number already registered"
+            "status": "success",
+            "driver_id": new_driver.id,
+            "message": "Driver registered successfully"
         }
 
-    new_driver = Driver(
-        name=driver.name,
-        mobile=driver.mobile,
-        password=hash_password(driver.password),
-        vehicle_no=driver.vehicle_no,
-        vehicle_type=driver.vehicle_type
-    )
+    except Exception as e:
+        db.rollback()
+        print("🔥 REGISTER ERROR:", str(e))  # VERY IMPORTANT
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+    
+@router.post("/upload-license/{driver_id}")
+def upload_license(driver_id: int, file: UploadFile = File(...)):
+    folder = "uploads/licenses"
+    os.makedirs(folder, exist_ok=True)
 
-    db.add(new_driver)
-    db.commit()
-    db.refresh(new_driver)
+    filename = f"{driver_id}_license_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
 
     return {
         "status": "success",
-        "driver_id": new_driver.id,
-        "message": "Driver registered successfully"
+        "file_url": f"{BASE_URL}/uploads/licenses/{filename}"
+    }
+
+@router.post("/upload-aadhaar/{driver_id}")
+def upload_aadhaar(driver_id: int, file: UploadFile = File(...)):
+    folder = "uploads/aadhaar"
+    os.makedirs(folder, exist_ok=True)
+
+    filename = f"{driver_id}_aadhaar_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "status": "success",
+        "file_url": f"{BASE_URL}/uploads/aadhaar/{filename}"
+    }
+    
+@router.post("/upload-pan/{driver_id}")
+def upload_pan(driver_id: int, file: UploadFile = File(...)):
+    folder = "uploads/pan"
+    os.makedirs(folder, exist_ok=True)
+
+    filename = f"{driver_id}_pan_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "status": "success",
+        "file_url": f"{BASE_URL}/uploads/pan/{filename}"
+    }
+    
+@router.post("/documents/license/{driver_id}")
+def upload_license(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    folder = "uploads/licenses"
+    filename = f"{driver_id}_license_{int(time.time())}_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc = db.query(DriverDocument).filter(
+        DriverDocument.driver_id == driver_id
+    ).first()
+
+    if not doc:
+        doc = DriverDocument(driver_id=driver_id)
+
+    doc.license_url = f"{BASE_URL}/uploads/licenses/{filename}"
+
+    db.add(doc)
+    db.commit()
+
+    return {
+        "status": "success",
+        "url": doc.license_url
+    }
+    
+@router.post("/documents/aadhaar/{driver_id}")
+def upload_aadhaar(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    folder = "uploads/aadhaar"
+    filename = f"{driver_id}_aadhaar_{int(time.time())}_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc = db.query(DriverDocument).filter(
+        DriverDocument.driver_id == driver_id
+    ).first()
+
+    if not doc:
+        doc = DriverDocument(driver_id=driver_id)
+
+    doc.aadhaar_url = f"{BASE_URL}/uploads/aadhaar/{filename}"
+
+    db.add(doc)
+    db.commit()
+
+    return {
+        "status": "success",
+        "url": doc.aadhaar_url
+    }
+    
+@router.post("/documents/pan/{driver_id}")
+def upload_pan(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    folder = "uploads/pan"
+    filename = f"{driver_id}_pan_{int(time.time())}_{file.filename}"
+    path = os.path.join(folder, filename)
+
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    doc = db.query(DriverDocument).filter(
+        DriverDocument.driver_id == driver_id
+    ).first()
+
+    if not doc:
+        doc = DriverDocument(driver_id=driver_id)
+
+    doc.pan_url = f"{BASE_URL}/uploads/pan/{filename}"
+
+    db.add(doc)
+    db.commit()
+
+    return {
+        "status": "success",
+        "url": doc.pan_url
+    }
+    
+@router.get("/documents/{driver_id}")
+def get_documents(driver_id: int, db: Session = Depends(get_db)):
+
+    driver = db.query(Driver).filter(Driver.id == driver_id).first()
+
+    if not driver:
+        return {"status": "error", "message": "Driver not found"}
+
+    return {
+        "status": "success",
+        "documents": {
+            "license": driver.license_path,
+            "aadhaar": driver.aadhaar_path,
+            "pan": driver.pan_path
+        }
     }
