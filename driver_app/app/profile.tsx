@@ -19,10 +19,12 @@ import { router } from "expo-router";
 // =====================================
 
 interface DriverProfile {
+  id?: number;
   name: string;
   mobile: string;
   vehicle_no: string;
   vehicle_type: string;
+  earnings?: number;
 }
 
 export default function Profile() {
@@ -38,7 +40,6 @@ export default function Profile() {
     useState("");
   const [vehicleType, setVehicleType] =
     useState("");
-
   // =====================================
   // LOAD PROFILE
   // =====================================

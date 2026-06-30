@@ -1,299 +1,122 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
   Alert,
-  ActivityIndicator,
-  ScrollView,
 } from "react-native";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import API from "../services/api";
 
-// =====================================
-// TYPES
-// =====================================
+export default function SettingsScreen() {
 
-interface DriverCreate {
-  name: string;
-  mobile: string;
-  password: string;
-  vehicle_no: string;
-  vehicle_type: string;
-}
+  const logout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem("token");
+            await AsyncStorage.removeItem("driver_id");
+            await AsyncStorage.removeItem("driver_name");
 
-export default function Register() {
-  const [loading, setLoading] = useState(false);
-
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [vehicleNo, setVehicleNo] = useState("");
-  const [vehicleType, setVehicleType] = useState("");
-
-  // =====================================
-  // REGISTER DRIVER
-  // =====================================
-
-  const handleRegister = async () => {
-    try {
-      // Validation
-
-      if (
-        !name.trim() ||
-        !mobile.trim() ||
-        !password.trim() ||
-        !vehicleNo.trim() ||
-        !vehicleType.trim()
-      ) {
-        Alert.alert(
-          "Validation",
-          "All fields are required"
-        );
-        return;
-      }
-
-      if (mobile.trim().length !== 10) {
-        Alert.alert(
-          "Validation",
-          "Enter a valid 10-digit mobile number"
-        );
-        return;
-      }
-
-      if (password.trim().length < 6) {
-        Alert.alert(
-          "Validation",
-          "Password must be at least 6 characters"
-        );
-        return;
-      }
-
-      setLoading(true);
-
-      const payload: DriverCreate = {
-        name: name.trim(),
-        mobile: mobile.trim(),
-        password: password.trim(),
-        vehicle_no: vehicleNo.trim(),
-        vehicle_type: vehicleType.trim(),
-      };
-
-      console.log(
-        "Register Payload:",
-        payload
-      );
-
-      const response = await API.post(
-        "/driver/register",
-        payload
-      );
-
-      console.log(
-        "Register Response:",
-        response.data
-      );
-
-      if (
-        response.data.status === "success"
-      ) {
-        Alert.alert(
-          "Success",
-          "Driver registered successfully",
-          [
-            {
-              text: "OK",
-              onPress: () =>
-                router.replace("/login"),
-            },
-          ]
-        );
-      } else {
-        Alert.alert(
-          "Registration Failed",
-          response.data.message ||
-            "Unable to register driver"
-        );
-      }
-
-    } catch (error: any) {
-      console.log(
-        "REGISTER ERROR:",
-        error?.response?.data || error
-      );
-
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message ||
-          "Cannot connect to server"
-      );
-
-    } finally {
-      setLoading(false);
-    }
+            router.replace("/login");
+          },
+        },
+      ]
+    );
   };
 
-  // =====================================
-  // UI
-  // =====================================
-
   return (
-    <ScrollView
-      contentContainerStyle={
-        styles.container
-      }
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.card}>
-        <Text style={styles.title}>
-          🚚 Driver Registration
-        </Text>
+    <View style={styles.container}>
 
-        <Text style={styles.subtitle}>
-          Create your Golden Transport account
-        </Text>
+      <Text style={styles.title}>⚙ Settings</Text>
 
-        <TextInput
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-        />
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => router.push("/profile")}
+      >
+        <Text style={styles.text}>👤 Profile</Text>
+      </TouchableOpacity>
 
-        <TextInput
-          placeholder="Mobile Number"
-          value={mobile}
-          onChangeText={setMobile}
-          keyboardType="phone-pad"
-          maxLength={10}
-          style={styles.input}
-        />
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => router.push("/notifications")}
+      >
+        <Text style={styles.text}>🔔 Notifications</Text>
+      </TouchableOpacity>
 
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => router.push("/trip-history")}
+      >
+        <Text style={styles.text}>📜 Trip History</Text>
+      </TouchableOpacity>
 
-        <TextInput
-          placeholder="Vehicle Number"
-          value={vehicleNo}
-          onChangeText={setVehicleNo}
-          style={styles.input}
-        />
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => router.push("/earnings")}
+      >
+        <Text style={styles.text}>💰 Earnings</Text>
+      </TouchableOpacity>
 
-        <TextInput
-          placeholder="Vehicle Type (Truck, Tempo, Pickup, etc.)"
-          value={vehicleType}
-          onChangeText={setVehicleType}
-          style={styles.input}
-        />
+      <TouchableOpacity
+        style={styles.logout}
+        onPress={logout}
+      >
+        <Text style={styles.logoutText}>🚪 Logout</Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            loading &&
-              styles.buttonDisabled,
-          ]}
-          onPress={handleRegister}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator
-              color="#FFFFFF"
-            />
-          ) : (
-            <Text style={styles.buttonText}>
-              Register Driver
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() =>
-            router.replace("/login")
-          }
-        >
-          <Text style={styles.loginText}>
-            Already have an account?
-            Login
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 
-// =====================================
-// STYLES
-// =====================================
-
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
+    flex: 1,
     backgroundColor: "#F3F6FA",
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 25,
-    borderRadius: 20,
-    elevation: 5,
+    padding: 20,
   },
 
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    textAlign: "center",
+    marginBottom: 30,
     color: "#111827",
   },
 
-  subtitle: {
-    textAlign: "center",
-    color: "#6B7280",
-    marginTop: 5,
-    marginBottom: 25,
-  },
-
-  input: {
+  item: {
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
+    padding: 18,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 14,
-    fontSize: 16,
+    marginBottom: 15,
+    elevation: 3,
   },
 
-  button: {
-    backgroundColor: "#16A34A",
-    padding: 16,
+  text: {
+    fontSize: 18,
+    color: "#111827",
+  },
+
+  logout: {
+    marginTop: 30,
+    backgroundColor: "#DC2626",
+    padding: 18,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 10,
   },
 
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-
-  buttonText: {
+  logoutText: {
     color: "#FFFFFF",
+    fontSize: 18,
     fontWeight: "bold",
-    fontSize: 16,
-  },
-
-  loginText: {
-    textAlign: "center",
-    marginTop: 18,
-    color: "#2563EB",
-    fontWeight: "600",
   },
 });

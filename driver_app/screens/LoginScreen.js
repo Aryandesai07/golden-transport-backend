@@ -24,97 +24,97 @@ export default function LoginScreen() {
   // =====================================
 
   const login = async () => {
-    try {
-      // Validation
+  try {
+    // Validation
+    if (!mobile.trim() || !password.trim()) {
+      Alert.alert(
+        "Validation",
+        "Enter Mobile Number & Password"
+      );
+      return;
+    }
 
-      if (!mobile.trim() || !password.trim()) {
-        Alert.alert(
-          "Validation",
-          "Enter Mobile Number & Password"
-        );
-        return;
-      }
+    if (mobile.trim().length !== 10) {
+      Alert.alert(
+        "Validation",
+        "Enter a valid 10 digit mobile number"
+      );
+      return;
+    }
 
-      if (mobile.trim().length !== 10) {
-        Alert.alert(
-          "Validation",
-          "Enter valid 10 digit mobile number"
-        );
-        return;
-      }
+    setLoading(true);
 
-      setLoading(true);
+    const response = await API.post("/driver/login", {
+      mobile: mobile.trim(),
+      password: password.trim(),
+    });
 
-      const response = await API.post(
-        "/driver/login",
+    console.log("Login Response:", response.data);
+
+    if (
+      response.data?.status === "success" &&
+      response.data?.driver &&
+      response.data?.token
+    ) {
+      const driver = response.data.driver;
+
+      if (response.data.token) {
+      await AsyncStorage.setItem(
+        "token",
+        response.data.token
+      );
+    }
+
+      await AsyncStorage.setItem(
+        "driver_id",
+        String(driver.id)
+      );
+
+      await AsyncStorage.setItem(
+        "driver_name",
+        driver.name ?? ""
+      );
+
+      // Verify Saved Session
+      const savedToken =
+        await AsyncStorage.getItem("token");
+
+      const savedDriverId =
+        await AsyncStorage.getItem("driver_id");
+
+      console.log("AFTER LOGIN TOKEN:", savedToken);
+      console.log("AFTER LOGIN DRIVER:", savedDriverId);
+
+      Alert.alert(
+      "Success",
+      `Welcome ${driver.name}`,
+      [
         {
-          mobile: mobile.trim(),
-          password: password.trim(),
-        }
+          text: "OK",
+          onPress: () => {
+            router.replace("/dashboard");
+          },
+        },
+      ]
+    );
+    } else {
+      Alert.alert(
+        "Login Failed",
+        response.data?.message ??
+          "Invalid Mobile Number or Password"
       );
+    }
+  } catch (error) {
+    console.log("LOGIN ERROR:", error);
 
-      console.log(
-        "Login Response:",
-        response.data
-      );
-
-      if (
-        response.data?.status === "success" &&
-        response.data?.driver
-      ) {
-        const driver =
-          response.data.driver;
-
-        await AsyncStorage.setItem(
-          "driver_id",
-          String(driver.id)
-        );
-
-        await AsyncStorage.setItem(
-          "driver_name",
-          driver.name || ""
-        );
-
-        if (response.data.token) {
-          await AsyncStorage.setItem(
-            "token",
-            response.data.token
-          );
-        }
-
-        Alert.alert(
-          "Success",
-          `Welcome ${driver.name}`
-        );
-
-        router.replace("/dashboard");
-
-      } else {
-        Alert.alert(
-          "Login Failed",
-          response.data?.message ||
-            "Invalid Mobile Number or Password"
-        );
-      }
-
-    } catch (error) {
-
-  console.log(
-    "LOGIN ERROR:",
-    error
-  );
-
-  Alert.alert(
-    "Error",
-    "Cannot connect to server"
-  );
-
-} finally {
-
-  setLoading(false);
-
-}
-  };
+    Alert.alert(
+      "Error",
+      "Cannot connect to server."
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <ScrollView

@@ -9,19 +9,28 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
+    <ThemeProvider
+      value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+    >
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        {/* Startup */}
+        <Stack.Screen name="index" />
 
         {/* Authentication */}
-        <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
         <Stack.Screen name="terms" />
 
-        {/* Bottom Tabs */}
-        <Stack.Screen name="(tabs)" />
+        {/* Main Dashboard */}
+        <Stack.Screen name="dashboard" />
 
         {/* Other Screens */}
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="notifications" />
         <Stack.Screen name="location" />
         <Stack.Screen name="fuel-bill" />
         <Stack.Screen name="delivery-proof" />
@@ -29,11 +38,18 @@ export default function RootLayout() {
         <Stack.Screen name="trip-history" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="sos" />
-        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
 
+        <Stack.Screen
+          name="modal"
+          options={{
+            presentation: "modal",
+          }}
+        />
       </Stack>
 
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar
+        style={colorScheme === "dark" ? "light" : "dark"}
+      />
     </ThemeProvider>
   );
 }

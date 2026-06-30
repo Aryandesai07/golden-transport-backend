@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -9,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-
 import { router } from "expo-router";
 import API from "../services/api";
 
@@ -164,36 +164,149 @@ const logout = async () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>
-        🚚 Golden Transport
-      </Text>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 10,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 26,
+            fontWeight: "bold",
+            color: "#1E3A8A",
+          }}
+        >
+          🚚 Golden Transport
+        </Text>
+
+        <View style={{ flexDirection: "row" }}>
+
+  <TouchableOpacity
+    onPress={() => router.push("/notifications")}
+    activeOpacity={0.7}
+  >
+    <Ionicons
+      name="notifications-outline"
+      size={28}
+      color="#1E3A8A"
+    />
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    onPress={() => router.push("/profile")}
+    activeOpacity={0.7}
+    style={{ marginLeft: 18 }}
+  >
+    <Ionicons
+      name="person-circle-outline"
+      size={30}
+      color="#1E3A8A"
+    />
+  </TouchableOpacity>
+
+</View>
+      </View>
 
       {driver ? (
-        <View style={styles.profileCard}>
-          <Text style={styles.driverName}>
-            👤 {driver.name}
-          </Text>
+        <View
+          style={{
+            backgroundColor: "#FFFFFF",
+            borderRadius: 18,
+            padding: 20,
+            marginBottom: 20,
+            elevation: 5,
+          }}
+        >
+          <Text
+  style={{
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+  }}
+>
+  👤 {driver.name}
+</Text>
 
-          <Text>
-            📱 {driver.mobile}
-          </Text>
+<Text
+  style={{
+    marginTop: 12,
+    fontSize: 16,
+    color: "#374151",
+  }}
+>
+  📱 {driver.mobile}
+</Text>
 
-          <Text>
-            🚛 Vehicle :
-            {" "}
-            {driver.vehicle_no}
-          </Text>
+<Text
+  style={{
+    marginTop: 5,
+    fontSize: 16,
+    color: "#374151",
+  }}
+>
+  🚚 {driver.vehicle_no}
+</Text>
 
-          <Text>
-            📦 Type :
-            {" "}
-            {driver.vehicle_type}
-          </Text>
+<Text
+  style={{
+    marginTop: 5,
+    fontSize: 16,
+    color: "#374151",
+  }}
+>
+  🚛 {driver.vehicle_type}
+</Text>
 
-          <Text>
-            💰 Earnings :
-            ₹{driver.earnings}
-          </Text>
+<View
+  style={{
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+  }}
+>
+  <View
+    style={{
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: "#10B981",
+      marginRight: 8,
+    }}
+  />
+  <Text
+    style={{
+      color: "#10B981",
+      fontWeight: "bold",
+    }}
+  >
+    ONLINE
+  </Text>
+</View>
+
+<Text
+  style={{
+    marginTop: 18,
+    fontSize: 14,
+    color: "#6B7280",
+  }}
+>
+  Today&apos;s Earnings
+</Text>
+
+<Text
+  style={{
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#F59E0B",
+  }}
+>
+  ₹{driver.earnings}
+</Text>
         </View>
       ) : (
         <View
@@ -279,15 +392,13 @@ const logout = async () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() =>
-            router.push("/notifications")
-          }
-        >
-          <Text style={styles.actionText}>
-            🔔 Notifications
-          </Text>
-        </TouchableOpacity>
+        style={styles.actionBtn}
+        onPress={() => router.push("/settings")}
+      >
+        <Text style={styles.actionText}>
+          ⚙️ Settings
+        </Text>
+      </TouchableOpacity>
       </View>
 
       {/* Row 4 */}

@@ -4,7 +4,6 @@ import {
   Text,
   ActivityIndicator,
   StyleSheet,
-  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -13,37 +12,36 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    startApp();
+    checkSession();
   }, []);
 
-  const startApp = async () => {
+  const checkSession = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const driverId = await AsyncStorage.getItem("driver_id");
       const termsAccepted = await AsyncStorage.getItem("termsAccepted");
 
-      // First-time user
+      console.log("========== APP START ==========");
+      console.log("TOKEN:", token);
+      console.log("DRIVER:", driverId);
+      console.log("TERMS:", termsAccepted);
+      console.log("===============================");
+
       if (termsAccepted !== "true") {
         router.replace("/terms");
         return;
       }
 
-      // Already logged in
       if (token && driverId) {
-        router.replace("/(tabs)/index");
+        console.log("AUTO LOGIN SUCCESS");
+        router.replace("/dashboard");
         return;
       }
 
-      // Login
+      console.log("OPEN LOGIN");
       router.replace("/login");
     } catch (error) {
       console.log("APP START ERROR:", error);
-
-      Alert.alert(
-        "Error",
-        "Something went wrong. Redirecting to login."
-      );
-
       router.replace("/login");
     } finally {
       setLoading(false);
@@ -65,7 +63,7 @@ export default function Index() {
         />
 
         <Text style={styles.text}>
-          Loading system...
+          Loading...
         </Text>
       </View>
     );
@@ -88,7 +86,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "700",
     color: "#0F172A",
     marginBottom: 20,
