@@ -83,7 +83,7 @@ def login_driver(
             "message": "Driver not found"
         }
 
-    if not verify_password(data.password, driver.password):
+    if driver.password != data.password:
         return {
             "status": "error",
             "message": "Invalid password"
