@@ -2,50 +2,27 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# ==========================================
-# DATABASE URL
-# ==========================================
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./transport.db")
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./transport.db"
-)
-
-
-print("=" * 60)
+print("=" * 70)
 print("DATABASE_URL =", DATABASE_URL)
-print("=" * 60)
-# Railway PostgreSQL uses postgres://
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace(
-        "postgres://",
-        "postgresql://",
-        1
-    )
+print("=" * 70)
 
-# ==========================================
-# ENGINE
-# ==========================================
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+print("FINAL DATABASE_URL =", DATABASE_URL)
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
         DATABASE_URL,
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
     )
 else:
     engine = create_engine(
         DATABASE_URL,
-        pool_pre_ping=True
+        pool_pre_ping=True,
     )
 
-# ==========================================
-# SESSION
-# ==========================================
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
