@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import Base, engine
+from database import DATABASE_URL, Base, engine
 from routes.driver import router as driver_router
 
 # =====================================
@@ -52,8 +52,10 @@ app.include_router(driver_router, prefix="/driver")
 # =====================================
 @app.get("/")
 def home():
-    return {"message": "🚚 Golden Transport API Working"}
-
+    return {
+        "message": "🚚 Golden Transport API Working",
+        "database": DATABASE_URL
+    }
 @app.get("/test")
 def test():
     return {"status": "OK"}
