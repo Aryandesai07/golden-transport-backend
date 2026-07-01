@@ -688,3 +688,22 @@ def get_documents(driver_id: int, db: Session = Depends(get_db)):
             "pan": driver.pan_path
         }
     }
+    
+@router.get("/admin/drivers")
+def get_all_drivers(db: Session = Depends(get_db)):
+    drivers = db.query(Driver).all()
+
+    return {
+        "status": "success",
+        "count": len(drivers),
+        "drivers": [
+            {
+                "id": d.id,
+                "name": d.name,
+                "mobile": d.mobile,
+                "vehicle_no": d.vehicle_no,
+                "vehicle_type": d.vehicle_type,
+            }
+            for d in drivers
+        ],
+    }
