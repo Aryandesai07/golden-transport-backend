@@ -11,8 +11,10 @@ DATABASE_URL = os.getenv(
     "sqlite:///./transport.db"
 )
 
-print("DATABASE_URL =", DATABASE_URL)
 
+print("=" * 60)
+print("DATABASE_URL =", DATABASE_URL)
+print("=" * 60)
 # Railway PostgreSQL uses postgres://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(

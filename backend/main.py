@@ -1,4 +1,5 @@
 import os
+import models
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,7 +26,6 @@ os.makedirs("uploads/pan", exist_ok=True)
 # STATIC FILES
 # =====================================
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 # =====================================
 # CORS
 # =====================================
