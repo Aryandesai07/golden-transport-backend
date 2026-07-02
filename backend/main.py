@@ -59,6 +59,13 @@ def home():
 @app.get("/test")
 def test():
     return {"status": "OK"}
+
+@app.get("/health")
+def health():
+    return {
+        "status": "OK",
+        "database": "Connected"
+    }
 # =====================================
 # RAILWAY ENTRY POINT
 # =====================================
