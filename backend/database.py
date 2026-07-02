@@ -1,11 +1,15 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///./transport.db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+print("=" * 60)
+print("DATABASE_URL =", DATABASE_URL)
+print("=" * 60)
+
+if DATABASE_URL is None:
+    raise Exception("DATABASE_URL NOT FOUND!")
 
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
@@ -14,16 +18,7 @@ if DATABASE_URL.startswith("postgres://"):
         1
     )
 
-if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-else:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True
-    )
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(
     autocommit=False,
