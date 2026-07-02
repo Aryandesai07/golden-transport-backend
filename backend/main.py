@@ -59,16 +59,6 @@ def home():
 @app.get("/test")
 def test():
     return {"status": "OK"}
-
-
-@app.get("/db-check")
-def db_check():
-    return {
-        "DATABASE_URL_EXISTS": os.getenv("DATABASE_URL") is not None,
-        "DATABASE_URL_START": (
-            os.getenv("DATABASE_URL", "")[:20]
-        )
-    }
 # =====================================
 # RAILWAY ENTRY POINT
 # =====================================
