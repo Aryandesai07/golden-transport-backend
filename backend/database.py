@@ -9,7 +9,7 @@ print("DATABASE_URL =", DATABASE_URL)
 print("=" * 60)
 
 if DATABASE_URL is None:
-    raise Exception("DATABASE_URL NOT FOUND")
+    raise Exception("DATABASE_URL environment variable not found!")
 
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
