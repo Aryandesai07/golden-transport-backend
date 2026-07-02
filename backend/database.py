@@ -9,7 +9,7 @@ print("DATABASE_URL =", DATABASE_URL)
 print("=" * 60)
 
 if DATABASE_URL is None:
-    raise Exception("DATABASE_URL NOT FOUND!")
+    raise Exception("DATABASE_URL NOT FOUND")
 
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace(
@@ -18,7 +18,10 @@ if DATABASE_URL.startswith("postgres://"):
         1
     )
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
