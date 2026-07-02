@@ -66,6 +66,13 @@ def health():
         "status": "OK",
         "database": "Connected"
     }
+    
+@app.post("/ping")
+def ping():
+    return {
+        "status": "success",
+        "message": "POST is working"
+    }
 # =====================================
 # RAILWAY ENTRY POINT
 # =====================================
