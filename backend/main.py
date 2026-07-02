@@ -54,7 +54,7 @@ app.include_router(driver_router, prefix="/driver")
 def home():
     return {
         "message": "🚚 Golden Transport API Working",
-        "database": DATABASE_URL
+        "status": "Running"
     }
 @app.get("/test")
 def test():
