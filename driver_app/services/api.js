@@ -6,6 +6,11 @@ import axios from "axios";
 const BASE_URL =
   "https://golden-transport-backend-production.up.railway.app";
 
+console.log("=================================");
+console.log("🚀 API STARTING");
+console.log("BASE URL:", BASE_URL);
+console.log("=================================");
+
 // =====================================
 // AXIOS INSTANCE
 // =====================================
@@ -17,6 +22,8 @@ const API = axios.create({
     Accept: "application/json",
   },
 });
+
+console.log("✅ AXIOS INSTANCE CREATED");
 
 // =====================================
 // REQUEST LOGGER

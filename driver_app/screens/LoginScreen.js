@@ -44,10 +44,29 @@ export default function LoginScreen() {
 
     setLoading(true);
 
-    const response = await API.post("/driver/login", {
-      mobile: mobile.trim(),
-      password: password.trim(),
-    });
+    const res = await fetch(
+      "https://golden-transport-backend-production.up.railway.app/driver/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobile: mobile.trim(),
+          password: password.trim(),
+        }),
+      }
+    );
+
+    console.log("STATUS:", res.status);
+
+    const text = await res.text();
+    console.log("RAW RESPONSE:", text);
+
+    const response = {
+      data: JSON.parse(text),
+    };
+    console.log("BASE URL FROM API:", API.defaults.baseURL);
     try {
       const t = await API.get("/test");
       console.log("TEST:", t.data);

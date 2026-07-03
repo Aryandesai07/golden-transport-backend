@@ -31,8 +31,13 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # =====================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔒 Replace with frontend domain in production
-    allow_credentials=True,
+    allow_origins=[
+        "*",
+        "exp://192.168.31.182:8081",
+        "http://localhost:8081",
+        "http://localhost:19006",
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
