@@ -1,20 +1,18 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import React from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { ThemeProvider, useTheme } from "../context/ThemeContext";
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function AppNavigator() {
+  const { darkMode } = useTheme();
 
   return (
-    <ThemeProvider
-      value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-    >
+    <>
       <Stack
         screenOptions={{
           headerShown: false,
+          animation: "slide_from_right",
         }}
       >
         {/* Startup */}
@@ -25,10 +23,10 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="terms" />
 
-        {/* Main Dashboard */}
+        {/* Main */}
         <Stack.Screen name="dashboard" />
 
-        {/* Other Screens */}
+        {/* Driver */}
         <Stack.Screen name="profile" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="location" />
@@ -39,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="sos" />
 
+        {/* Modal */}
         <Stack.Screen
           name="modal"
           options={{
@@ -48,8 +47,16 @@ export default function RootLayout() {
       </Stack>
 
       <StatusBar
-        style={colorScheme === "dark" ? "light" : "dark"}
+        style={darkMode ? "light" : "dark"}
       />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppNavigator />
     </ThemeProvider>
   );
 }

@@ -48,6 +48,12 @@ export default function LoginScreen() {
       mobile: mobile.trim(),
       password: password.trim(),
     });
+    try {
+      const t = await API.get("/test");
+      console.log("TEST:", t.data);
+    } catch (e) {
+      console.log("TEST FAILED:", e);
+    }
 
     console.log("Login Response:", response.data);
 
