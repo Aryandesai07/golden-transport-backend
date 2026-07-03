@@ -3,50 +3,56 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
-  ScrollView,
+  Alert,
+  Image,
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import API from "../services/api";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
-// =====================================
-// TYPES
-// =====================================
+import API from "../services/api";
+import { useTheme } from "../context/ThemeContext";
 
 interface DriverProfile {
-  id?: number;
+  id: number;
   name: string;
   mobile: string;
   vehicle_no: string;
   vehicle_type: string;
-  earnings?: number;
+  earnings: number;
 }
 
-// =====================================
-// MAIN COMPONENT
-// =====================================
+interface DriverDocuments {
+  license: string | null;
+  aadhaar: string | null;
+  pan: string | null;
+}
 
 export default function Profile() {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
+  const { theme } = useTheme();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [driverId, setDriverId] = useState<number | null>(null);
 
-  const [name, setName] = useState<string>("");
-  const [mobile, setMobile] = useState<string>("");
-  const [vehicleNo, setVehicleNo] = useState<string>("");
-  const [vehicleType, setVehicleType] = useState<string>("");
+  const [name, setName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [vehicleNo, setVehicleNo] = useState("");
+  const [vehicleType, setVehicleType] = useState("");
+  const [earnings, setEarnings] = useState(0);
 
-
-  const [documents, setDocuments] = useState<any>(null);
-  // =====================================
-  // LOAD PROFILE
-  // =====================================
+  const [documents, setDocuments] =
+    useState<DriverDocuments>({
+      license: null,
+      aadhaar: null,
+      pan: null,
+    });
 
   useEffect(() => {
     loadProfile();
@@ -56,261 +62,450 @@ export default function Profile() {
     try {
       setLoading(true);
 
-      const storedId = await AsyncStorage.getItem("driver_id");
+      const id = await AsyncStorage.getItem("driver_id");
 
-      if (!storedId) {
-        Alert.alert("Session Expired", "Please login again");
+      if (!id) {
+        Alert.alert("Session Expired");
         router.replace("/");
         return;
       }
 
-      const id = Number(storedId);
+      setDriverId(Number(id));
 
-      if (isNaN(id)) {
-        Alert.alert("Error", "Invalid driver session");
-        router.replace("/");
-        return;
-      }
+      const profileRes = await API.get(
+        `/driver/profile/${id}`
+      );
 
-      setDriverId(id);
+      if (
+        profileRes.data.status === "success"
+      ) {
+        const driver: DriverProfile = profileRes.data.driver;
 
-      // =========================
-      // PROFILE API CALL
-      // =========================
-      const response = await API.get(`/driver/profile/${id}`);
-
-      if (response?.data?.status === "success") {
-        const driver: DriverProfile = response.data.driver;
-
-        setName(driver?.name ?? "");
-        setMobile(driver?.mobile ?? "");
-        setVehicleNo(driver?.vehicle_no ?? "");
-        setVehicleType(driver?.vehicle_type ?? "");
-      } else {
-        Alert.alert(
-          "Error",
-          response?.data?.message || "Failed to load profile"
+        setName(driver.name);
+        setMobile(driver.mobile);
+        setVehicleNo(driver.vehicle_no);
+        setVehicleType(driver.vehicle_type);
+        setEarnings(
+          driver.earnings || 0
         );
       }
 
-      // =========================
-      // DOCUMENT API CALL (NEW)
-      // =========================
-      const docRes = await API.get(`/driver/documents/${id}`);
+      const docRes = await API.get(
+        `/driver/documents/${id}`
+      );
 
-      if (docRes?.data?.status === "success") {
-        setDocuments(docRes.data.documents);
+      if (
+        docRes.data.status === "success"
+      ) {
+        setDocuments(
+          docRes.data.documents
+        );
       }
-
-    } catch (error: any) {
-      console.log("PROFILE LOAD ERROR:", error?.response?.data || error);
+    } catch (err) {
+      console.log(err);
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message || "Failed to load profile"
+        "Unable to load profile."
       );
-
     } finally {
       setLoading(false);
     }
-  };  // =====================================
-  // UPDATE PROFILE
-  // =====================================
+  };
 
   const updateProfile = async () => {
     try {
-      if (!driverId) {
-        Alert.alert("Error", "Driver not found");
-        return;
-      }
-
-      // =========================
-      // VALIDATION (IMPROVED)
-      // =========================
-
-      if (!name?.trim()) {
-        Alert.alert("Validation", "Please enter full name");
-        return;
-      }
-
-      if (!mobile?.trim() || mobile.trim().length < 10) {
-        Alert.alert("Validation", "Enter valid mobile number");
-        return;
-      }
-
-      if (!vehicleNo?.trim()) {
-        Alert.alert("Validation", "Vehicle number is required");
-        return;
-      }
-
-      if (!vehicleType?.trim()) {
-        Alert.alert("Validation", "Vehicle type is required");
-        return;
-      }
-
-      // prevent double click / multiple API calls
-      if (saving) return;
+      if (!driverId) return;
 
       setSaving(true);
 
-      const payload = {
-        driver_id: driverId,
-        name: name.trim(),
-        mobile: mobile.trim(),
-        vehicle_no: vehicleNo.trim(),
-        vehicle_type: vehicleType.trim(),
-      };
-
       const response = await API.post(
         "/driver/update-profile",
-        payload
+        {
+          driver_id: driverId,
+          name,
+          mobile,
+          vehicle_no: vehicleNo,
+          vehicle_type: vehicleType,
+        }
       );
 
-      if (response?.data?.status === "success") {
-        Alert.alert("Success", "Profile updated successfully ✔");
-
-        // small UX improvement
-        console.log("PROFILE UPDATED:", payload);
-
-        // optional future: update AsyncStorage cache
-        // await AsyncStorage.setItem("driver_profile", JSON.stringify(payload));
-
+      if (
+        response.data.status ===
+        "success"
+      ) {
+        Alert.alert(
+          "Success",
+          "Profile Updated Successfully"
+        );
       } else {
         Alert.alert(
           "Error",
-          response?.data?.message || "Update failed"
+          response.data.message
         );
       }
-
-    } catch (error: any) {
-      console.log("UPDATE ERROR:", error?.response?.data || error);
+    } catch (err) {
+      console.log(err);
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message || "Failed to update profile"
+        "Update Failed"
       );
-
     } finally {
       setSaving(false);
     }
   };
 
-  // =====================================
-  // LOADING SCREEN
-  // =====================================
-
   if (loading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View
+        style={[
+          styles.loader,
+          {
+            backgroundColor:
+              theme.colors.background,
+          },
+        ]}
+      >
+        <ActivityIndicator
+          size="large"
+          color={theme.colors.primary}
+        />
 
-        <Text style={{ marginTop: 10 }}>
+        <Text
+          style={{
+            color: theme.colors.text,
+            marginTop: 15,
+            fontSize: 16,
+          }}
+        >
           Loading Profile...
         </Text>
       </View>
     );
   }
-   // =====================================
-  // UI
-  // =====================================
 
   return (
     <ScrollView
-  style={styles.container}
-  showsVerticalScrollIndicator={false}
-  keyboardShouldPersistTaps="handled"
->
-
-  <Text style={styles.title}>
-    👤 Driver Profile
-  </Text>
-
-
-  <View style={styles.card}>
-  <Text style={{ fontWeight: "bold" }}>
-    📄 Documents
-  </Text>
-
-  <Text>
-    License: {documents?.license ? "✔ Uploaded" : "❌ Missing"}
-  </Text>
-  </View>
-
-
-  <View style={styles.card}>
-
-    {/* FULL NAME */}
-    <TextInput
-      style={styles.input}
-      placeholder="Full Name"
-      value={name}
-      onChangeText={setName}
-    />
-
-    {/* MOBILE */}
-    <TextInput
-      style={styles.input}
-      placeholder="Mobile Number"
-      keyboardType="phone-pad"
-      maxLength={10}
-      value={mobile}
-      onChangeText={setMobile}
-    />
-
-    {/* VEHICLE NUMBER */}
-    <TextInput
-      style={styles.input}
-      placeholder="Vehicle Number"
-      value={vehicleNo}
-      onChangeText={setVehicleNo}
-    />
-
-    {/* VEHICLE TYPE */}
-    <TextInput
-      style={styles.input}
-      placeholder="Vehicle Type"
-      value={vehicleType}
-      onChangeText={setVehicleType}
-    />
-
-    {/* SAVE BUTTON */}
-    <TouchableOpacity
       style={[
-        styles.saveBtn,
-        saving && styles.disabledBtn,
+        styles.container,
+        {
+          backgroundColor:
+            theme.colors.background,
+        },
       ]}
-      onPress={updateProfile}
-      disabled={saving}
-      activeOpacity={0.8}
+      showsVerticalScrollIndicator={false}
     >
-      {saving ? (
-        <ActivityIndicator color="#FFFFFF" />
-      ) : (
-        <Text style={styles.btnText}>
-          💾 Save Changes
+            {/* ================= HEADER ================= */}
+
+      <View style={styles.headerCard}>
+        <Image
+          source={{
+            uri:
+              "https://ui-avatars.com/api/?name=" +
+              encodeURIComponent(name),
+          }}
+          style={styles.avatar}
+        />
+
+        <Text
+          style={[
+            styles.driverName,
+            {
+              color: theme.colors.text,
+            },
+          ]}
+        >
+          {name}
         </Text>
-      )}
-    </TouchableOpacity>
 
-    {/* BACK BUTTON */}
-    <TouchableOpacity
-      style={styles.backBtn}
-      onPress={() => router.back()}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.btnText}>
-        ⬅ Back
-      </Text>
-    </TouchableOpacity>
+        <Text
+          style={[
+            styles.driverMobile,
+            {
+              color: theme.colors.secondary,
+            },
+          ]}
+        >
+          {mobile}
+        </Text>
 
-  </View>
-</ScrollView>
+        <View style={styles.vehicleBadge}>
+          <MaterialCommunityIcons
+            name="truck-fast"
+            size={18}
+            color="#FFF"
+          />
+
+          <Text style={styles.vehicleBadgeText}>
+            {vehicleType}
+          </Text>
+        </View>
+      </View>
+
+      {/* ================= PROFILE ================= */}
+
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.colors.card,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: theme.colors.text,
+            },
+          ]}
+        >
+          Personal Information
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Driver Name"
+          value={name}
+          onChangeText={setName}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile Number"
+          value={mobile}
+          onChangeText={setMobile}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      {/* ================= VEHICLE ================= */}
+
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.colors.card,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: theme.colors.text,
+            },
+          ]}
+        >
+          Vehicle Details
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Number"
+          value={vehicleNo}
+          onChangeText={setVehicleNo}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Type"
+          value={vehicleType}
+          onChangeText={setVehicleType}
+        />
+      </View>
+
+      {/* ================= DOCUMENTS ================= */}
+
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.colors.card,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.sectionTitle,
+            {
+              color: theme.colors.text,
+            },
+          ]}
+        >
+          Documents
+        </Text>
+
+        <View style={styles.docRow}>
+          <MaterialCommunityIcons
+            name="card-account-details"
+            size={24}
+            color="#2563EB"
+          />
+
+          <Text
+            style={[
+              styles.docText,
+              {
+                color: theme.colors.text,
+              },
+            ]}
+          >
+            Driving Licence
+          </Text>
+
+          <Text
+            style={{
+              color: documents.license
+                ? "#16A34A"
+                : "#EF4444",
+              fontWeight: "700",
+            }}
+          >
+            {documents.license
+              ? "Uploaded"
+              : "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <MaterialCommunityIcons
+            name="card-account-details-outline"
+            size={24}
+            color="#2563EB"
+          />
+
+          <Text
+            style={[
+              styles.docText,
+              {
+                color: theme.colors.text,
+              },
+            ]}
+          >
+            Aadhaar Card
+          </Text>
+
+          <Text
+            style={{
+              color: documents.aadhaar
+                ? "#16A34A"
+                : "#EF4444",
+              fontWeight: "700",
+            }}
+          >
+            {documents.aadhaar
+              ? "Uploaded"
+              : "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <MaterialCommunityIcons
+            name="card-text-outline"
+            size={24}
+            color="#2563EB"
+          />
+
+          <Text
+            style={[
+              styles.docText,
+              {
+                color: theme.colors.text,
+              },
+            ]}
+          >
+            PAN Card
+          </Text>
+
+          <Text
+            style={{
+              color: documents.pan
+                ? "#16A34A"
+                : "#EF4444",
+              fontWeight: "700",
+            }}
+          >
+            {documents.pan
+              ? "Uploaded"
+              : "Missing"}
+          </Text>
+        </View>
+      </View>
+
+      {/* ================= EARNINGS ================= */}
+
+      <View
+        style={[
+          styles.earningCard,
+          {
+            backgroundColor: "#16A34A",
+          },
+        ]}
+      >
+        <MaterialCommunityIcons
+          name="cash-multiple"
+          size={42}
+          color="#FFF"
+        />
+
+        <Text style={styles.earningTitle}>
+          Total Earnings
+        </Text>
+
+        <Text style={styles.earningAmount}>
+          ₹ {earnings}
+        </Text>
+      </View>
+            {/* ================= BUTTONS ================= */}
+
+      <TouchableOpacity
+        style={styles.saveButton}
+        onPress={updateProfile}
+        disabled={saving}
+      >
+        {saving ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <>
+            <MaterialCommunityIcons
+              name="content-save"
+              size={22}
+              color="#FFF"
+            />
+
+            <Text style={styles.saveText}>
+              Save Changes
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
+        <MaterialCommunityIcons
+          name="arrow-left"
+          size={22}
+          color="#FFF"
+        />
+
+        <Text style={styles.backText}>
+          Back
+        </Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+
+    </ScrollView>
   );
 }
- const styles = StyleSheet.create({
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F3F6FA",
     padding: 20,
   },
 
@@ -320,68 +515,139 @@ export default function Profile() {
     alignItems: "center",
   },
 
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginTop: 20,
+  headerCard: {
+    alignItems: "center",
+    backgroundColor: "#2563EB",
+    borderRadius: 24,
+    paddingVertical: 30,
+    marginTop: 15,
     marginBottom: 20,
-    color: "#111827",
+  },
+
+  avatar: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 3,
+    borderColor: "#FFF",
+  },
+
+  driverName: {
+    marginTop: 15,
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+
+  driverMobile: {
+    marginTop: 5,
+    fontSize: 15,
+  },
+
+  vehicleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#16A34A",
+    marginTop: 15,
+    borderRadius: 30,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+
+  vehicleBadgeText: {
+    color: "#FFF",
+    marginLeft: 8,
+    fontWeight: "700",
+    fontSize: 15,
   },
 
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 15,
-    elevation: 4,
+    marginBottom: 18,
+    elevation: 3,
+  },
 
-    // iOS shadow (important for smooth UI)
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 18,
   },
 
   input: {
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 12,
+    backgroundColor: "#FFF",
     padding: 15,
-    marginBottom: 14,
     fontSize: 16,
-    color: "#111827",
-
-    // subtle depth for modern feel
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
+    marginBottom: 15,
   },
 
-  saveBtn: {
-    backgroundColor: "#16A34A",
-    padding: 15,
-    borderRadius: 12,
+  docRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    justifyContent: "space-between",
+    marginBottom: 18,
   },
 
-  disabledBtn: {
-    opacity: 0.6,
+  docText: {
+    flex: 1,
+    marginLeft: 15,
+    fontSize: 16,
+    fontWeight: "600",
   },
 
-  backBtn: {
-    backgroundColor: "#6B7280",
-    padding: 15,
-    borderRadius: 12,
+  earningCard: {
+    borderRadius: 22,
     alignItems: "center",
+    padding: 30,
+    marginBottom: 25,
+  },
+
+  earningTitle: {
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "700",
     marginTop: 12,
   },
 
-  btnText: {
-    color: "#FFFFFF",
+  earningAmount: {
+    color: "#FFF",
+    fontSize: 34,
     fontWeight: "bold",
-    fontSize: 16,
+    marginTop: 10,
+  },
+
+  saveButton: {
+    backgroundColor: "#2563EB",
+    height: 56,
+    borderRadius: 14,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+
+  saveText: {
+    color: "#FFF",
+    fontSize: 17,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+
+  backButton: {
+    backgroundColor: "#6B7280",
+    height: 56,
+    borderRadius: 14,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  backText: {
+    color: "#FFF",
+    fontSize: 17,
+    fontWeight: "bold",
+    marginLeft: 10,
   },
 });
