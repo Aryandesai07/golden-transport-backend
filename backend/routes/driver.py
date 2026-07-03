@@ -675,17 +675,36 @@ def upload_pan(driver_id: int, file: UploadFile = File(...), db: Session = Depen
 @router.get("/documents/{driver_id}")
 def get_documents(driver_id: int, db: Session = Depends(get_db)):
 
-    driver = db.query(Driver).filter(Driver.id == driver_id).first()
+    driver = db.query(Driver).filter(
+        Driver.id == driver_id
+    ).first()
 
     if not driver:
-        return {"status": "error", "message": "Driver not found"}
+        return {
+            "status": "error",
+            "message": "Driver not found"
+        }
+
+    document = db.query(DriverDocument).filter(
+        DriverDocument.driver_id == driver_id
+    ).first()
+
+    if not document:
+        return {
+            "status": "success",
+            "documents": {
+                "license": None,
+                "aadhaar": None,
+                "pan": None
+            }
+        }
 
     return {
         "status": "success",
         "documents": {
-            "license": driver.license_path,
-            "aadhaar": driver.aadhaar_path,
-            "pan": driver.pan_path
+            "license": document.license_url,
+            "aadhaar": document.aadhaar_url,
+            "pan": document.pan_url
         }
     }
     
