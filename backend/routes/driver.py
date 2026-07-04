@@ -76,34 +76,6 @@ def login_driver(
     driver = db.query(Driver).filter(
         Driver.mobile == data.mobile
     ).first()
-
-    if not driver:
-        return {
-            "status": "error",
-            "message": "Driver not found"
-        }
-
-    if driver.password != data.password:
-        return {
-            "status": "error",
-            "message": "Invalid password"
-        }
-
-    token = create_access_token(
-        {"driver_id": driver.id}
-    )
-
-    return {
-        "status": "success",
-        "token": token,
-        "driver": {
-            "id": driver.id,
-            "name": driver.name,
-            "mobile": driver.mobile,
-            "vehicle_no": driver.vehicle_no,
-            "vehicle_type": driver.vehicle_type
-        }
-    }
 # =========================================
 # GET DRIVER TRIPS
 # =========================================

@@ -1,9 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
-import API from "../services/api";
 import {
   View,
- Text,
+  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -24,185 +23,189 @@ export default function LoginScreen() {
   // =====================================
 
   const login = async () => {
-  try {
-    if (!mobile.trim() || !password.trim()) {
-      Alert.alert("Validation", "Enter Mobile Number & Password");
-      return;
+    try {
+      // ===============================
+      // VALIDATION
+      // ===============================
+      if (!mobile.trim() || !password.trim()) {
+        Alert.alert("Validation", "Enter Mobile Number & Password");
+        return;
+      }
+
+      if (mobile.trim().length !== 10) {
+        Alert.alert("Validation", "Enter a valid 10 digit mobile number");
+        return;
+      }
+
+      setLoading(true);
+
+      const API_URL =
+        "https://golden-transport-backend-production.up.railway.app";
+
+      console.log("================================");
+      console.log("LOGIN URL :", `${API_URL}/driver/login`);
+      console.log("MOBILE    :", mobile.trim());
+      console.log("================================");
+
+      const res = await fetch(`${API_URL}/driver/login`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobile: mobile.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      console.log("STATUS :", res.status);
+      console.log("OK     :", res.ok);
+
+      const responseText = await res.text();
+
+      console.log("RAW RESPONSE:");
+      console.log(responseText);
+
+      if (!res.ok) {
+        setLoading(false);
+        throw new Error(responseText || "Server Error");
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        console.log("JSON PARSE ERROR:", err);
+        setLoading(false);
+        throw new Error("Invalid JSON received from server");
+      }
+
+      console.log("DATA:", data);
+
+      if (data.status !== "success") {
+        setLoading(false);
+
+        Alert.alert(
+          "Login Failed",
+          data.message || "Invalid Mobile Number or Password"
+        );
+
+        return;
+      }
+        // ===============================
+    // SAVE SESSION
+    // ===============================
+    const driver = data.driver;
+
+    if (!driver) {
+      throw new Error("Driver data not found.");
     }
 
-    if (mobile.trim().length !== 10) {
-      Alert.alert("Validation", "Enter a valid 10 digit mobile number");
-      return;
-    }
+    await AsyncStorage.setItem("token", data.token || "");
+    await AsyncStorage.setItem("driver_id", String(driver.id));
+    await AsyncStorage.setItem("driver_name", driver.name || "");
+    await AsyncStorage.setItem("driver_mobile", driver.mobile || "");
+    await AsyncStorage.setItem("vehicle_no", driver.vehicle_no || "");
+    await AsyncStorage.setItem("vehicle_type", driver.vehicle_type || "");
 
-    setLoading(true);
-
-    const API_URL =
-      "https://golden-transport-backend-production.up.railway.app";
-
-    console.log("LOGIN URL:", API_URL + "/driver/login");
-
-    const res = await fetch(
-  "https://golden-transport-backend-production.up.railway.app/driver/login",
-  {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      mobile: mobile.trim(),
-      password: password.trim(),
-    }),
-  }
-);
-
-// Check server response
-if (!res.ok) {
-  throw new Error("Server error");
-}
-
-// Safe JSON parse
-let data;
-
-try {
-  data = await res.json();
-} catch (e) {
-  console.log(e);
-  throw new Error("Invalid response from server");
-}
-
-
-console.log("RESPONSE:", data);
-
-// Login failed
-if (data.status !== "success") {
-  setLoading(false);
-  Alert.alert(
-    "Login Failed",
-    data.message || "Invalid credentials"
-  );
-  return;
-}
-
-const driver = data.driver;
-
-// ================= SAVE SESSION =================
-await AsyncStorage.setItem("token", data.token || "");
-await AsyncStorage.setItem("driver_id", String(driver.id));
-await AsyncStorage.setItem("driver_name", driver.name || "");
-await AsyncStorage.setItem("driver_mobile", driver.mobile || "");
-await AsyncStorage.setItem("vehicle_no", driver.vehicle_no || "");
-await AsyncStorage.setItem("vehicle_type", driver.vehicle_type || "");
-
-console.log("SESSION SAVED");
-
-setLoading(false);
-
-Alert.alert(
-  "Success",
-  `Welcome ${driver.name}`,
-  [
-    {
-      text: "OK",
-      onPress: () => {
-        console.log("GOING TO DASHBOARD...");
-        router.replace("/dashboard");
-      },
-    },
-  ]
-);
-
-  } catch (error) {
-    setLoading(false);
-
-    console.log("LOGIN ERROR:", error);
+    console.log("================================");
+    console.log("SESSION SAVED");
+    console.log("Driver ID   :", driver.id);
+    console.log("Driver Name :", driver.name);
+    console.log("================================");
 
     Alert.alert(
-      "Error",
-      "Cannot connect to server"
+      "Success",
+      `Welcome ${driver.name}`,
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            console.log("Opening Dashboard...");
+            router.replace("/dashboard");
+          },
+        },
+      ]
     );
+
+  } catch (error) {
+    console.log("================================");
+    console.log("LOGIN ERROR");
+    console.log(error);
+    console.log("================================");
+
+    Alert.alert(
+      "Connection Error",
+      error?.message || "Unable to connect to the server."
+    );
+  } finally {
+    setLoading(false);
   }
 };
 
-  return (
-    <ScrollView
-      contentContainerStyle={
-        styles.container
-      }
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.card}>
-        <Text style={styles.logo}>
-          🚚
-        </Text>
+return (
+  <ScrollView
+    contentContainerStyle={styles.container}
+    keyboardShouldPersistTaps="handled"
+  >
+    <View style={styles.card}>
+      <Text style={styles.logo}>🚚</Text>
 
-        <Text style={styles.title}>
-          Golden Transport
-        </Text>
+      <Text style={styles.title}>
+        Golden Transport
+      </Text>
 
-        <Text style={styles.subtitle}>
-          Driver Login
-        </Text>
+      <Text style={styles.subtitle}>
+        Driver Login
+      </Text>
 
-        <TextInput
-          placeholder="Mobile Number"
-          value={mobile}
-          onChangeText={setMobile}
-          keyboardType="phone-pad"
-          maxLength={10}
-          style={styles.input}
-        />
+      <TextInput
+        placeholder="Mobile Number"
+        value={mobile}
+        onChangeText={setMobile}
+        keyboardType="phone-pad"
+        maxLength={10}
+        style={styles.input}
+      />
 
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
+      <TextInput
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.input}
+      />
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            loading &&
-              styles.disabledButton,
-          ]}
-          onPress={login}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator
-              color="#FFFFFF"
-            />
-          ) : (
-            <Text
-              style={
-                styles.buttonText
-              }
-            >
-              Login
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() =>
-            router.push("/register")
-          }
-          style={{ marginTop: 18 }}
-        >
-          <Text
-            style={
-              styles.registerText
-            }
-          >
-            New Driver? Register Here
+      <TouchableOpacity
+        style={[
+          styles.button,
+          loading && styles.disabledButton,
+        ]}
+        onPress={login}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.buttonText}>
+            Login
           </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+        )}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => router.push("/register")}
+        style={{ marginTop: 18 }}
+      >
+        <Text style={styles.registerText}>
+          New Driver? Register Here
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </ScrollView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -217,7 +220,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 25,
     borderRadius: 20,
+
     elevation: 5,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
   },
 
   logo: {
@@ -255,6 +267,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: "center",
+    elevation: 3,
   },
 
   disabledButton: {
@@ -263,8 +276,8 @@ const styles = StyleSheet.create({
 
   buttonText: {
     color: "#FFFFFF",
-    fontWeight: "bold",
     fontSize: 16,
+    fontWeight: "bold",
   },
 
   registerText: {
