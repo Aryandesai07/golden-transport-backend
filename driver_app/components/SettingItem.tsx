@@ -22,7 +22,6 @@ interface Props {
 
   danger?: boolean;
 
-  // NEW
   rightComponent?: React.ReactNode;
   iconColor?: string;
   titleColor?: string;
@@ -37,6 +36,9 @@ export default function SettingItem({
   switchValue = false,
   onSwitchChange,
   danger = false,
+  rightComponent,
+  iconColor,
+  titleColor,
 }: Props) {
   const { theme } = useTheme();
 
@@ -58,9 +60,8 @@ export default function SettingItem({
           name={icon}
           size={24}
           color={
-            danger
-              ? theme.colors.danger
-              : theme.colors.primary
+            iconColor ??
+            (danger ? theme.colors.danger : theme.colors.primary)
           }
         />
 
@@ -69,9 +70,9 @@ export default function SettingItem({
             style={[
               styles.title,
               {
-                color: danger
-                  ? theme.colors.danger
-                  : theme.colors.text,
+                color:
+                  titleColor ??
+                  (danger ? theme.colors.danger : theme.colors.text),
               },
             ]}
           >
@@ -83,8 +84,7 @@ export default function SettingItem({
               style={[
                 styles.subtitle,
                 {
-                  color:
-                    theme.colors.secondary,
+                  color: theme.colors.secondary,
                 },
               ]}
             >
@@ -103,6 +103,8 @@ export default function SettingItem({
             true: theme.colors.primary,
           }}
         />
+      ) : rightComponent ? (
+        rightComponent
       ) : (
         <MaterialCommunityIcons
           name="chevron-right"
@@ -119,19 +121,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
     padding: 16,
     marginBottom: 12,
-
     borderRadius: 18,
     borderWidth: 1,
-
     elevation: 3,
   },
 
   left: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
 
   title: {
@@ -143,5 +143,4 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontSize: 13,
   },
-  
 });

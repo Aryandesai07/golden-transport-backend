@@ -1,28 +1,27 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import React from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  ThemeProvider,
+  useTheme,
+} from "../context/ThemeContext";
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function RootNavigator() {
+  const { darkMode } = useTheme();
 
   return (
-    <ThemeProvider
-      value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-    >
-      <Stack screenOptions={{ headerShown: false }}>
-        
-        {/* STARTUP */}
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
         <Stack.Screen name="index" />
-
-        {/* AUTH FLOW */}
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
         <Stack.Screen name="terms" />
-
-        {/* MAIN APP */}
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="notifications" />
@@ -34,17 +33,47 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="sos" />
 
-        {/* MODAL */}
+        
+        <Stack.Screen name="settings/profile" />
+        <Stack.Screen name="settings/documents" />
+        <Stack.Screen name="settings/vehicle" />
+
+        <Stack.Screen name="settings/appearance" />
+        <Stack.Screen name="settings/notifications" />
+        <Stack.Screen name="settings/live-location" />
+        <Stack.Screen name="settings/language" />
+
+        <Stack.Screen name="settings/change-password" />
+        <Stack.Screen name="settings/privacy" />
+
+        <Stack.Screen name="settings/updates" />
+        <Stack.Screen name="settings/rate-app" />
+        <Stack.Screen name="settings/share-app" />
+        <Stack.Screen name="settings/contact-support" />
+
+        <Stack.Screen name="settings/privacy-policy" />
+        <Stack.Screen name="settings/terms" />
+        <Stack.Screen name="settings/about" />
+
+        
         <Stack.Screen
           name="modal"
-          options={{ presentation: "modal" }}
+          options={{
+            presentation: "modal",
+          }}
+          
         />
-
       </Stack>
 
-      <StatusBar
-        style={colorScheme === "dark" ? "light" : "dark"}
-      />
+      <StatusBar style={darkMode ? "light" : "dark"} />
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootNavigator />
     </ThemeProvider>
   );
 }

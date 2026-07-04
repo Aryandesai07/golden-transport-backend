@@ -26,7 +26,11 @@ interface Driver {
 }
 
 export default function SettingsScreen() {
-  const { theme } = useTheme();
+  const ctx = useTheme();
+
+  console.log("THEME CONTEXT =", ctx);
+
+  const { theme } = ctx;
 
   const [loading, setLoading] = useState(true);
 
@@ -226,18 +230,21 @@ export default function SettingsScreen() {
           icon="account-circle"
           title="Profile"
           subtitle="View and edit profile"
+          onPress={() => router.push("/settings/profile")}
         />
 
         <SettingItem
           icon="card-account-details"
           title="Documents"
           subtitle="Driving Licence, Aadhaar & PAN"
+          onPress={() => router.push("/settings/documents")}
         />
 
         <SettingItem
           icon="truck"
           title="Vehicle Details"
           subtitle="Vehicle information"
+          onPress={() => router.push("/settings/vehicle")}
         />
 
       </SettingSection>
@@ -249,6 +256,7 @@ export default function SettingsScreen() {
           icon="theme-light-dark"
           title="Appearance"
           subtitle="Light / Dark Mode"
+          onPress={() => router.push("/settings/appearance")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -262,6 +270,7 @@ export default function SettingsScreen() {
           icon="bell-outline"
           title="Notifications"
           subtitle="Manage notification preferences"
+          onPress={() => router.push("/settings/notifications")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -275,6 +284,7 @@ export default function SettingsScreen() {
           icon="crosshairs-gps"
           title="Live Location"
           subtitle="Location sharing settings"
+          onPress={() => router.push("/settings/live-location")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -288,6 +298,7 @@ export default function SettingsScreen() {
           icon="translate"
           title="Language"
           subtitle="English"
+          onPress={() => router.push("/settings/language")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -307,6 +318,7 @@ export default function SettingsScreen() {
           icon="lock-reset"
           title="Change Password"
           subtitle="Update your login password"
+          onPress={() => router.push("/settings/change-password")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -320,6 +332,7 @@ export default function SettingsScreen() {
           icon="shield-check-outline"
           title="Privacy"
           subtitle="Privacy & security options"
+          onPress={() => router.push("/settings/privacy")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -338,6 +351,7 @@ export default function SettingsScreen() {
           icon="cellphone-arrow-down"
           title="Check for Updates"
           subtitle="Current Version 1.0.0"
+          onPress={() => router.push("/settings/updates")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -351,6 +365,7 @@ export default function SettingsScreen() {
           icon="star-outline"
           title="Rate App"
           subtitle="Rate Golden Transport"
+          onPress={() => router.push("/settings/rate-app")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -364,6 +379,7 @@ export default function SettingsScreen() {
           icon="share-variant"
           title="Share App"
           subtitle="Invite another driver"
+          onPress={() => router.push("/settings/share-app")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -377,6 +393,7 @@ export default function SettingsScreen() {
           icon="lifebuoy"
           title="Contact Support"
           subtitle="Need help?"
+          onPress={() => router.push("/settings/contact-support")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -396,6 +413,7 @@ export default function SettingsScreen() {
           icon="shield-account"
           title="Privacy Policy"
           subtitle="Read our privacy policy"
+          onPress={() => router.push("/settings/privacy-policy")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -409,6 +427,7 @@ export default function SettingsScreen() {
           icon="file-document-outline"
           title="Terms & Conditions"
           subtitle="Application terms"
+          onPress={() => router.push("/settings/terms")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
@@ -422,6 +441,7 @@ export default function SettingsScreen() {
           icon="information-outline"
           title="About Golden Transport"
           subtitle="Version 1.0.0"
+          onPress={() => router.push("/settings/about")}
           rightComponent={
             <MaterialCommunityIcons
               name="chevron-right"
