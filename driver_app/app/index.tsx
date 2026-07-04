@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkSession();
-  }, []);
-
+  // ===============================
+  // CHECK SESSION
+  // ===============================
   const checkSession = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -22,17 +21,19 @@ export default function Index() {
       const termsAccepted = await AsyncStorage.getItem("termsAccepted");
 
       console.log("========== APP START ==========");
-      console.log("TOKEN:", token);
+      console.log("TOKEN :", token);
       console.log("DRIVER:", driverId);
-      console.log("TERMS:", termsAccepted);
+      console.log("TERMS :", termsAccepted);
       console.log("===============================");
 
+      // Terms check first
       if (termsAccepted !== "true") {
         router.replace("/terms");
         return;
       }
 
-      if (token && driverId) {
+      // Auto login check
+      if (token?.length && driverId?.length) {
         console.log("AUTO LOGIN SUCCESS");
         router.replace("/dashboard");
         return;
@@ -40,38 +41,40 @@ export default function Index() {
 
       console.log("OPEN LOGIN");
       router.replace("/login");
+
     } catch (error) {
       console.log("APP START ERROR:", error);
       router.replace("/login");
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.logo}>🚚</Text>
+  useEffect(() => {
+    checkSession();
+  }, []);
 
-        <Text style={styles.title}>
-          Golden Transport
-        </Text>
+  return (
+    <View style={styles.container}>
+      <Text style={styles.logo}>🚚</Text>
 
-        <ActivityIndicator
-          size="large"
-          color="#F59E0B"
-        />
+      <Text style={styles.title}>
+        Golden Transport
+      </Text>
 
-        <Text style={styles.text}>
-          Loading...
-        </Text>
-      </View>
-    );
-  }
+      <ActivityIndicator
+        size="large"
+        color="#F59E0B"
+      />
 
-  return null;
+      <Text style={styles.text}>
+        Loading...
+      </Text>
+    </View>
+  );
 }
 
+// ===============================
+// STYLES
+// ===============================
 const styles = StyleSheet.create({
   container: {
     flex: 1,

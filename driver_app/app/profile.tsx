@@ -42,8 +42,8 @@ export default function Profile() {
   const [vehicleNo, setVehicleNo] = useState<string>("");
   const [vehicleType, setVehicleType] = useState<string>("");
 
-
   const [documents, setDocuments] = useState<any>(null);
+
   // =====================================
   // LOAD PROFILE
   // =====================================
@@ -60,15 +60,15 @@ export default function Profile() {
 
       if (!storedId) {
         Alert.alert("Session Expired", "Please login again");
-        router.replace("/");
+        router.replace("/login");
         return;
       }
 
       const id = Number(storedId);
 
-      if (isNaN(id)) {
+      if (Number.isNaN(id)) {
         Alert.alert("Error", "Invalid driver session");
-        router.replace("/");
+        router.replace("/login");
         return;
       }
 
@@ -94,7 +94,7 @@ export default function Profile() {
       }
 
       // =========================
-      // DOCUMENT API CALL (NEW)
+      // DOCUMENT API CALL
       // =========================
       const docRes = await API.get(`/driver/documents/${id}`);
 
@@ -102,18 +102,21 @@ export default function Profile() {
         setDocuments(docRes.data.documents);
       }
 
-    } catch (error: any) {
-      console.log("PROFILE LOAD ERROR:", error?.response?.data || error);
+    } catch (error: unknown) {
+        const err = error as { response?: { data?: any } };
+
+      console.log("PROFILE LOAD ERROR:", err?.response?.data || error);
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message || "Failed to load profile"
+        err?.response?.data?.message || "Failed to load profile"
       );
 
     } finally {
       setLoading(false);
     }
-  };  // =====================================
+  };
+    // =====================================
   // UPDATE PROFILE
   // =====================================
 
@@ -125,7 +128,7 @@ export default function Profile() {
       }
 
       // =========================
-      // VALIDATION (IMPROVED)
+      // VALIDATION
       // =========================
 
       if (!name?.trim()) {
@@ -133,7 +136,7 @@ export default function Profile() {
         return;
       }
 
-      if (!mobile?.trim() || mobile.trim().length < 10) {
+      if (!mobile?.trim() || !/^[0-9]{10}$/.test(mobile.trim())) {
         Alert.alert("Validation", "Enter valid mobile number");
         return;
       }
@@ -148,7 +151,7 @@ export default function Profile() {
         return;
       }
 
-      // prevent double click / multiple API calls
+      // prevent multiple clicks
       if (saving) return;
 
       setSaving(true);
@@ -161,20 +164,28 @@ export default function Profile() {
         vehicle_type: vehicleType.trim(),
       };
 
+      console.log("UPDATE PAYLOAD:", payload);
+
       const response = await API.post(
         "/driver/update-profile",
         payload
       );
 
       if (response?.data?.status === "success") {
-        Alert.alert("Success", "Profile updated successfully ✔");
+        Alert.alert(
+          "Success",
+          "Profile updated successfully ✔",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                console.log("Profile update confirmed");
+              },
+            },
+          ]
+        );
 
-        // small UX improvement
-        console.log("PROFILE UPDATED:", payload);
-
-        // optional future: update AsyncStorage cache
-        // await AsyncStorage.setItem("driver_profile", JSON.stringify(payload));
-
+        console.log("PROFILE UPDATED SUCCESS:", response?.data);
       } else {
         Alert.alert(
           "Error",
@@ -182,20 +193,21 @@ export default function Profile() {
         );
       }
 
-    } catch (error: any) {
-      console.log("UPDATE ERROR:", error?.response?.data || error);
+    } catch (error: unknown) {
+      const err = error as any;
+
+      console.log("UPDATE ERROR:", err?.response?.data || error);
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message || "Failed to update profile"
+        err?.response?.data?.message || "Failed to update profile"
       );
 
     } finally {
       setSaving(false);
     }
   };
-
-  // =====================================
+    // =====================================
   // LOADING SCREEN
   // =====================================
 
@@ -210,112 +222,106 @@ export default function Profile() {
       </View>
     );
   }
-   // =====================================
+
+  // =====================================
   // UI
   // =====================================
 
   return (
     <ScrollView
-  style={styles.container}
-  showsVerticalScrollIndicator={false}
-  keyboardShouldPersistTaps="handled"
->
-
-  <Text style={styles.title}>
-    👤 Driver Profile
-  </Text>
-
-
-  <View style={styles.card}>
-  <Text style={{ fontWeight: "bold" }}>
-    📄 Documents
-  </Text>
-
-  <Text>
-  License: {documents?.license_url ? "✔ Uploaded" : "❌ Missing"}
-  </Text>
-
-  <Text>
-    Aadhaar: {documents?.aadhaar_url ? "✔ Uploaded" : "❌ Missing"}
-  </Text>
-
-  <Text>
-    PAN: {documents?.pan_url ? "✔ Uploaded" : "❌ Missing"}
-  </Text>
-  </View>
-
-
-  <View style={styles.card}>
-
-    {/* FULL NAME */}
-    <TextInput
-      style={styles.input}
-      placeholder="Full Name"
-      value={name}
-      onChangeText={setName}
-    />
-
-    {/* MOBILE */}
-    <TextInput
-      style={styles.input}
-      placeholder="Mobile Number"
-      keyboardType="phone-pad"
-      maxLength={10}
-      value={mobile}
-      onChangeText={setMobile}
-    />
-
-    {/* VEHICLE NUMBER */}
-    <TextInput
-      style={styles.input}
-      placeholder="Vehicle Number"
-      value={vehicleNo}
-      onChangeText={setVehicleNo}
-    />
-
-    {/* VEHICLE TYPE */}
-    <TextInput
-      style={styles.input}
-      placeholder="Vehicle Type"
-      value={vehicleType}
-      onChangeText={setVehicleType}
-    />
-
-    {/* SAVE BUTTON */}
-    <TouchableOpacity
-      style={[
-        styles.saveBtn,
-        saving && styles.disabledBtn,
-      ]}
-      onPress={updateProfile}
-      disabled={saving}
-      activeOpacity={0.8}
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
-      {saving ? (
-        <ActivityIndicator color="#FFFFFF" />
-      ) : (
-        <Text style={styles.btnText}>
-          💾 Save Changes
-        </Text>
-      )}
-    </TouchableOpacity>
-
-    {/* BACK BUTTON */}
-    <TouchableOpacity
-      style={styles.backBtn}
-      onPress={() => router.back()}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.btnText}>
-        ⬅ Back
+      <Text style={styles.title}>
+        👤 Driver Profile
       </Text>
-    </TouchableOpacity>
 
-  </View>
-</ScrollView>
+      {/* ================= DOCUMENT CARD ================= */}
+      <View style={styles.card}>
+        <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
+          📄 Documents
+        </Text>
+
+        <Text>
+          License:{" "}
+          {documents?.license
+            ? "✔ Uploaded"
+            : "❌ Missing"}
+        </Text>
+      </View>
+
+      {/* ================= PROFILE CARD ================= */}
+      <View style={styles.card}>
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          value={name}
+          onChangeText={setName}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile Number"
+          keyboardType="phone-pad"
+          maxLength={10}
+          value={mobile}
+          onChangeText={setMobile}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Number"
+          value={vehicleNo}
+          onChangeText={setVehicleNo}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Vehicle Type"
+          value={vehicleType}
+          onChangeText={setVehicleType}
+        />
+
+        {/* ================= SAVE BUTTON ================= */}
+        <TouchableOpacity
+          style={[
+            styles.saveBtn,
+            saving && styles.disabledBtn,
+          ]}
+          onPress={updateProfile}
+          disabled={saving}
+          activeOpacity={0.8}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.btnText}>
+              💾 Save Changes
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        {/* ================= BACK BUTTON ================= */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.btnText}>
+            ⬅ Back
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
- const styles = StyleSheet.create({
+
+// =====================================
+// STYLES
+// =====================================
+
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F3F6FA",
@@ -343,7 +349,6 @@ export default function Profile() {
     marginBottom: 15,
     elevation: 4,
 
-    // iOS shadow (important for smooth UI)
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -359,12 +364,6 @@ export default function Profile() {
     marginBottom: 14,
     fontSize: 16,
     color: "#111827",
-
-    // subtle depth for modern feel
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 2,
   },
 
   saveBtn: {

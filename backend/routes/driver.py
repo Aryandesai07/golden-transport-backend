@@ -73,9 +73,57 @@ def login_driver(
     data: DriverLogin,
     db: Session = Depends(get_db)
 ):
+    print("===================================")
+    print("LOGIN REQUEST")
+    print("Mobile :", data.mobile)
+    print("Password :", data.password)
+
     driver = db.query(Driver).filter(
         Driver.mobile == data.mobile
     ).first()
+
+    if driver is None:
+        print("❌ Driver not found")
+        return {
+            "status": "error",
+            "message": "Driver not found"
+        }
+
+    print("✅ Driver Found :", driver.name)
+    print("Stored Hash :", driver.password)
+
+    password_ok = verify_password(
+        data.password,
+        driver.password
+    )
+
+    print("Password Match :", password_ok)
+
+    if not password_ok:
+        print("❌ Invalid Password")
+        return {
+            "status": "error",
+            "message": "Invalid password"
+        }
+
+    token = create_access_token(
+        {"driver_id": driver.id}
+    )
+
+    print("✅ Login Success")
+    print("===================================")
+
+    return {
+        "status": "success",
+        "token": token,
+        "driver": {
+            "id": driver.id,
+            "name": driver.name,
+            "mobile": driver.mobile,
+            "vehicle_no": driver.vehicle_no,
+            "vehicle_type": driver.vehicle_type
+        }
+    }
 # =========================================
 # GET DRIVER TRIPS
 # =========================================
@@ -489,10 +537,11 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
                 "message": "Mobile number already registered"
             }
 
+        # ✅ FIX APPLIED HERE
         new_driver = Driver(
             name=driver.name,
             mobile=driver.mobile,
-            password=driver.password,
+            password=hash_password(driver.password),
             vehicle_no=driver.vehicle_no,
             vehicle_type=driver.vehicle_type
         )
@@ -509,139 +558,10 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
 
     except Exception as e:
         db.rollback()
-        print("🔥 REGISTER ERROR:", str(e))  # VERY IMPORTANT
         return {
             "status": "error",
             "message": str(e)
         }
-@router.post("/upload-aadhaar/{driver_id}")
-def upload_aadhaar(
-    driver_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-):
-    # Create folder if it doesn't exist
-    folder = "uploads/aadhaar"
-    os.makedirs(folder, exist_ok=True)
-
-    # Create unique filename
-    filename = f"{driver_id}_aadhaar_{int(time.time())}_{file.filename}"
-    filepath = os.path.join(folder, filename)
-
-    # Save file
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    # File URL
-    file_url = f"{BASE_URL}/uploads/aadhaar/{filename}"
-
-    # Save/Update database
-    document = (
-        db.query(DriverDocument)
-        .filter(DriverDocument.driver_id == driver_id)
-        .first()
-    )
-
-    if not document:
-        document = DriverDocument(driver_id=driver_id)
-        db.add(document)
-
-    document.aadhaar_url = file_url
-
-    db.commit()
-    db.refresh(document)
-
-    return {
-        "status": "success",
-        "message": "Aadhaar uploaded successfully",
-        "url": file_url,
-    }
-@router.post("/upload-pan/{driver_id}")
-def upload_pan(
-    driver_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-):
-    # Create folder if it doesn't exist
-    folder = "uploads/pan"
-    os.makedirs(folder, exist_ok=True)
-
-    # Create unique filename
-    filename = f"{driver_id}_pan_{int(time.time())}_{file.filename}"
-    filepath = os.path.join(folder, filename)
-
-    # Save file
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    # File URL
-    file_url = f"{BASE_URL}/uploads/pan/{filename}"
-
-    # Save/Update database
-    document = (
-        db.query(DriverDocument)
-        .filter(DriverDocument.driver_id == driver_id)
-        .first()
-    )
-
-    if not document:
-        document = DriverDocument(driver_id=driver_id)
-        db.add(document)
-
-    document.pan_url = file_url
-
-    db.commit()
-    db.refresh(document)
-
-    return {
-        "status": "success",
-        "message": "PAN uploaded successfully",
-        "url": file_url,
-    }
-    
-@router.post("/upload-license/{driver_id}")
-def upload_license(
-    driver_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-):
-    # Create folder if it doesn't exist
-    folder = "uploads/licenses"
-    os.makedirs(folder, exist_ok=True)
-
-    # Create unique filename
-    filename = f"{driver_id}_license_{int(time.time())}_{file.filename}"
-    filepath = os.path.join(folder, filename)
-
-    # Save file
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    # File URL
-    file_url = f"{BASE_URL}/uploads/licenses/{filename}"
-
-    # Save/update database
-    document = (
-        db.query(DriverDocument)
-        .filter(DriverDocument.driver_id == driver_id)
-        .first()
-    )
-
-    if not document:
-        document = DriverDocument(driver_id=driver_id)
-        db.add(document)
-
-    document.license_url = file_url
-
-    db.commit()
-    db.refresh(document)
-
-    return {
-        "status": "success",
-        "message": "License uploaded successfully",
-        "url": file_url,
-    }
-    
 @router.post("/documents/aadhaar/{driver_id}")
 def upload_aadhaar(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
 
@@ -699,38 +619,56 @@ def upload_pan(driver_id: int, file: UploadFile = File(...), db: Session = Depen
 @router.get("/documents/{driver_id}")
 def get_documents(driver_id: int, db: Session = Depends(get_db)):
 
-    driver = db.query(Driver).filter(
-        Driver.id == driver_id
-    ).first()
+    try:
+        # CHECK DRIVER EXISTS
+        driver = db.query(Driver).filter(Driver.id == driver_id).first()
 
-    if not driver:
-        return {
-            "status": "error",
-            "message": "Driver not found"
-        }
+        if not driver:
+            return {
+                "status": "error",
+                "message": "Driver not found",
+                "documents": {
+                    "license": None,
+                    "aadhaar": None,
+                    "pan": None
+                }
+            }
 
-    document = db.query(DriverDocument).filter(
-        DriverDocument.driver_id == driver_id
-    ).first()
+        # FETCH DOCUMENTS
+        document = db.query(DriverDocument).filter(
+            DriverDocument.driver_id == driver_id
+        ).first()
 
-    if not document:
+        # SAFE RESPONSE
+        if not document:
+            return {
+                "status": "success",
+                "documents": {
+                    "license": None,
+                    "aadhaar": None,
+                    "pan": None
+                }
+            }
+
         return {
             "status": "success",
+            "documents": {
+                "license": document.license_url,
+                "aadhaar": document.aadhaar_url,
+                "pan": document.pan_url
+            }
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
             "documents": {
                 "license": None,
                 "aadhaar": None,
                 "pan": None
             }
         }
-
-    return {
-        "status": "success",
-        "documents": {
-            "license": document.license_url,
-            "aadhaar": document.aadhaar_url,
-            "pan": document.pan_url
-        }
-    }
     
 @router.get("/admin/drivers")
 def get_all_drivers(db: Session = Depends(get_db)):

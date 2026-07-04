@@ -39,6 +39,26 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // ======================================
+  // FETCH TRIPS
+  // ======================================
+
+  const fetchTrips = useCallback(async (driverId: number, token: string) => {
+  try {
+    const response = await API.get(`/driver/trips/${driverId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.data?.status === "success") {
+      setTrips(response.data.trips || []);
+    } else {
+      setTrips([]);
+    }
+  } catch (error: any) {
+    console.log("Fetch Trips Error:", error);
+    setTrips([]);
+  }
+}, []);
+  // ======================================
   // LOAD DASHBOARD
   // ======================================
 
@@ -56,53 +76,27 @@ export default function Dashboard() {
 
     const driverId = Number(storedDriverId);
 
-    // Profile
     const profileRes = await API.get(`/driver/profile/${driverId}`, {
-      headers: { Authorization: `Bearer ${storedToken}` }
+      headers: { Authorization: `Bearer ${storedToken}` },
     });
 
-    if (profileRes.data.status === "success") {
+    if (profileRes.data?.status === "success") {
       setDriver(profileRes.data.driver);
     }
 
-    // Trips
     await fetchTrips(driverId, storedToken);
 
   } catch (error: any) {
     console.log("Dashboard Error:", error);
-    Alert.alert("Error", error?.response?.data?.message || "Failed to load dashboard");
   } finally {
     setLoading(false);
   }
-}, []);
+}, [fetchTrips]);
 
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // ======================================
-  // FETCH TRIPS
-  // ======================================
-
-  const fetchTrips = async (driverId: number, token: string) => {
-  try {
-    const response = await API.get(`/driver/trips/${driverId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (response.data.status === "success") {
-      setTrips(response.data.trips);
-    } else {
-      setTrips([]);
-    }
-  } catch (error: any) {
-    console.log("Fetch Trips Error:", error);
-    Alert.alert("Error", error?.response?.data?.message || "Failed to fetch trips");
-    setTrips([]);
-  }
-};
-
 
   const updateStatus = async (tripId: number, status: string) => {
   try {

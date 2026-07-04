@@ -97,9 +97,7 @@ export default function Register() {
         response.data
       );
 
-      if (
-        response.data.status === "success"
-      ) {
+      if (response?.data?.status?.toLowerCase() === "success") {
         Alert.alert(
           "Success",
           "Driver registered successfully",
@@ -107,7 +105,7 @@ export default function Register() {
             {
               text: "OK",
               onPress: () =>
-                router.replace("/login"),
+                router.push("/login"),
             },
           ]
         );
@@ -119,18 +117,24 @@ export default function Register() {
         );
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+      };
+
       console.log(
         "REGISTER ERROR:",
-        error?.response?.data || error
+        err?.response?.data || error
       );
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message ||
-          "Cannot connect to server"
+        err?.response?.data?.message ?? "Cannot connect to server"
       );
-
     } finally {
       setLoading(false);
     }
@@ -216,7 +220,7 @@ export default function Register() {
 
         <TouchableOpacity
           onPress={() =>
-            router.replace("/login")
+            router.push("/login")
           }
         >
           <Text style={styles.loginText}>

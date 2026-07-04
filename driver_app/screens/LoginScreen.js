@@ -13,199 +13,177 @@ import {
 
 import { router } from "expo-router";
 
+// ===============================
+// API CONFIG
+// ===============================
+const API_URL =
+  "https://golden-transport-backend-production.up.railway.app";
+
 export default function LoginScreen() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // =====================================
-  // LOGIN
-  // =====================================
-
-  const login = async () => {
-    try {
-      // ===============================
-      // VALIDATION
-      // ===============================
-      if (!mobile.trim() || !password.trim()) {
-        Alert.alert("Validation", "Enter Mobile Number & Password");
-        return;
-      }
-
-      if (mobile.trim().length !== 10) {
-        Alert.alert("Validation", "Enter a valid 10 digit mobile number");
-        return;
-      }
-
-      setLoading(true);
-
-      const API_URL =
-        "https://golden-transport-backend-production.up.railway.app";
-
-      console.log("================================");
-      console.log("LOGIN URL :", `${API_URL}/driver/login`);
-      console.log("MOBILE    :", mobile.trim());
-      console.log("================================");
-
-      const res = await fetch(`${API_URL}/driver/login`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mobile: mobile.trim(),
-          password: password.trim(),
-        }),
-      });
-
-      console.log("STATUS :", res.status);
-      console.log("OK     :", res.ok);
-
-      const responseText = await res.text();
-
-      console.log("RAW RESPONSE:");
-      console.log(responseText);
-
-      if (!res.ok) {
-        setLoading(false);
-        throw new Error(responseText || "Server Error");
-      }
-
-      let data;
-
+    // ===============================
+    // LOGIN FUNCTION
+    // ===============================
+    const login = async () => {
       try {
-        data = JSON.parse(responseText);
-      } catch (err) {
-        console.log("JSON PARSE ERROR:", err);
-        setLoading(false);
-        throw new Error("Invalid JSON received from server");
-      }
+        // Validation
+        if (!mobile.trim() || !password.trim()) {
+          Alert.alert("Validation", "Enter Mobile Number & Password");
+          return;
+        }
 
-      console.log("DATA:", data);
+        if (mobile.trim().length !== 10) {
+          Alert.alert("Validation", "Enter a valid 10 digit mobile number");
+          return;
+        }
 
-      if (data.status !== "success") {
-        setLoading(false);
+        setLoading(true);
+
+        console.log("LOGIN URL:", `${API_URL}/driver/login`);
+
+        // ===============================
+        // LOGIN REQUEST
+        // ===============================
+        const response = await fetch(`${API_URL}/driver/login`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mobile: mobile.trim(),
+            password: password.trim(),
+          }),
+        });
+
+        // Read response only once
+        const responseText = await response.text();
+
+        console.log("RAW RESPONSE:", responseText);
+
+        let data = {};
+
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          throw new Error("Invalid response received from server.");
+        }
+
+        console.log("HTTP STATUS:", response.status);
+        console.log("SERVER DATA:", data);
+
+        // HTTP Error
+        if (!response.ok) {
+          throw new Error(
+            data.message || `Server Error (${response.status})`
+          );
+        }
+
+        // API Error
+        if (data.status !== "success") {
+          Alert.alert(
+            "Login Failed",
+            data.message || "Invalid Mobile Number or Password"
+          );
+          return;
+        }
+
+        // Driver Check
+        if (!data.driver) {
+          throw new Error("Driver information not found.");
+        }
+
+        const driver = data.driver;
+
+        // ===============================
+        // SAVE SESSION
+        // ===============================
+        await AsyncStorage.multiSet([
+          ["driver_id", String(driver.id || "")],
+          ["driver_name", driver.name || ""],
+          ["driver_mobile", driver.mobile || ""],
+          ["vehicle_no", driver.vehicle_no || ""],
+          ["vehicle_type", driver.vehicle_type || ""],
+          ["token", data.token || ""],
+        ]);
+
+        console.log("SESSION SAVED");
+
+        Alert.alert("Success", "Login Successful");
+
+        router.replace("/dashboard");
+      } catch (error) {
+        console.log("LOGIN ERROR:", error);
 
         Alert.alert(
-          "Login Failed",
-          data.message || "Invalid Mobile Number or Password"
+          "Error",
+          error instanceof Error
+            ? error.message
+            : "Unable to connect to server"
         );
-
-        return;
+      } finally {
+        setLoading(false);
       }
-        // ===============================
-    // SAVE SESSION
-    // ===============================
-    const driver = data.driver;
+    };
 
-    if (!driver) {
-      throw new Error("Driver data not found.");
-    }
+  return (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.card}>
+        <Text style={styles.logo}>🚚</Text>
 
-    await AsyncStorage.setItem("token", data.token || "");
-    await AsyncStorage.setItem("driver_id", String(driver.id));
-    await AsyncStorage.setItem("driver_name", driver.name || "");
-    await AsyncStorage.setItem("driver_mobile", driver.mobile || "");
-    await AsyncStorage.setItem("vehicle_no", driver.vehicle_no || "");
-    await AsyncStorage.setItem("vehicle_type", driver.vehicle_type || "");
+        <Text style={styles.title}>Golden Transport</Text>
 
-    console.log("================================");
-    console.log("SESSION SAVED");
-    console.log("Driver ID   :", driver.id);
-    console.log("Driver Name :", driver.name);
-    console.log("================================");
+        <Text style={styles.subtitle}>Driver Login</Text>
 
-    Alert.alert(
-      "Success",
-      `Welcome ${driver.name}`,
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            console.log("Opening Dashboard...");
-            router.replace("/dashboard");
-          },
-        },
-      ]
-    );
+        <TextInput
+          placeholder="Mobile Number"
+          value={mobile}
+          onChangeText={setMobile}
+          keyboardType="phone-pad"
+          maxLength={10}
+          style={styles.input}
+        />
 
-  } catch (error) {
-    console.log("================================");
-    console.log("LOGIN ERROR");
-    console.log(error);
-    console.log("================================");
+        <TextInput
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          style={styles.input}
+        />
 
-    Alert.alert(
-      "Connection Error",
-      error?.message || "Unable to connect to the server."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+        <TouchableOpacity
+          style={[
+            styles.button,
+            loading && styles.disabledButton,
+          ]}
+          onPress={login}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
 
-return (
-  <ScrollView
-    contentContainerStyle={styles.container}
-    keyboardShouldPersistTaps="handled"
-  >
-    <View style={styles.card}>
-      <Text style={styles.logo}>🚚</Text>
-
-      <Text style={styles.title}>
-        Golden Transport
-      </Text>
-
-      <Text style={styles.subtitle}>
-        Driver Login
-      </Text>
-
-      <TextInput
-        placeholder="Mobile Number"
-        value={mobile}
-        onChangeText={setMobile}
-        keyboardType="phone-pad"
-        maxLength={10}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-
-      <TouchableOpacity
-        style={[
-          styles.button,
-          loading && styles.disabledButton,
-        ]}
-        onPress={login}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.buttonText}>
-            Login
+        <TouchableOpacity
+          onPress={() => router.push("/register")}
+          style={{ marginTop: 18 }}
+        >
+          <Text style={styles.registerText}>
+            New Driver? Register Here
           </Text>
-        )}
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => router.push("/register")}
-        style={{ marginTop: 18 }}
-      >
-        <Text style={styles.registerText}>
-          New Driver? Register Here
-        </Text>
-      </TouchableOpacity>
-    </View>
-  </ScrollView>
-);
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -220,16 +198,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 25,
     borderRadius: 20,
-
     elevation: 5,
-
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
+    shadowOffset: { width: 0, height: 3 },
   },
 
   logo: {

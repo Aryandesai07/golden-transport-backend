@@ -12,23 +12,18 @@ export default function RootLayout() {
     <ThemeProvider
       value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
     >
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        {/* Startup */}
+      <Stack screenOptions={{ headerShown: false }}>
+        
+        {/* STARTUP */}
         <Stack.Screen name="index" />
 
-        {/* Authentication */}
+        {/* AUTH FLOW */}
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
         <Stack.Screen name="terms" />
 
-        {/* Main Dashboard */}
+        {/* MAIN APP */}
         <Stack.Screen name="dashboard" />
-
-        {/* Other Screens */}
         <Stack.Screen name="profile" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="location" />
@@ -39,12 +34,12 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="sos" />
 
+        {/* MODAL */}
         <Stack.Screen
           name="modal"
-          options={{
-            presentation: "modal",
-          }}
+          options={{ presentation: "modal" }}
         />
+
       </Stack>
 
       <StatusBar
