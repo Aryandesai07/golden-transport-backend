@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "goldentransport",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
 
     "splash": {
       "image": "./assets/images/splash-icon.png",
@@ -24,17 +24,21 @@
     "android": {
       "package": "com.goldentamilnadu.driver",
       "versionCode": 1,
+
+      "usesCleartextTraffic": true,
+
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundColor": "#0F172A"
       },
+
       "permissions": [
+        "INTERNET",
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
-        "INTERNET",
         "WAKE_LOCK"
       ]
     },
@@ -58,8 +62,8 @@
     ],
 
     "experiments": {
-  "typedRoutes": true
-},
+      "typedRoutes": true
+    },
 
     "extra": {
       "apiUrl": "https://golden-transport-backend-production.up.railway.app",

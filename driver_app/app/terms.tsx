@@ -13,16 +13,37 @@ import { router } from "expo-router";
 
 export default function Terms() {
   const acceptTerms = async () => {
-    await AsyncStorage.setItem("termsAccepted", "true");
-    Alert.alert("✅ Success", "You have accepted the terms");
-    router.replace("/login");
+    try {
+      await AsyncStorage.setItem("termsAccepted", "true");
+
+      Alert.alert(
+        "✅ Success",
+        "You have accepted the terms"
+      );
+
+      router.replace("/login");
+
+    } catch (error) {
+      console.log("Terms Error:", error);
+
+      Alert.alert(
+        "Error",
+        "Failed to save acceptance"
+      );
+    }
   };
 
   return (
     <View style={styles.container}>
+
       {/* HEADER */}
-      <Text style={styles.title}>🚚 Golden Transport</Text>
-      <Text style={styles.subtitle}>Driver Terms & Conditions</Text>
+      <Text style={styles.title}>
+        🚚 Golden Transport
+      </Text>
+
+      <Text style={styles.subtitle}>
+        Driver Terms & Conditions
+      </Text>
 
       {/* TERMS BOX */}
       <ScrollView style={styles.card}>
@@ -37,9 +58,16 @@ export default function Terms() {
       </ScrollView>
 
       {/* BUTTON */}
-      <TouchableOpacity style={styles.button} onPress={acceptTerms}>
-        <Text style={styles.buttonText}>Accept & Continue</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={acceptTerms}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.buttonText}>
+          Accept & Continue
+        </Text>
       </TouchableOpacity>
+
     </View>
   );
 }
@@ -51,6 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F6FA",
     justifyContent: "center",
   },
+
   title: {
     fontSize: 30,
     fontWeight: "bold",
@@ -58,28 +87,29 @@ const styles = StyleSheet.create({
     color: "#111",
     marginBottom: 5,
   },
+
   subtitle: {
     textAlign: "center",
     marginBottom: 20,
     fontSize: 16,
     color: "#555",
   },
+
   card: {
     backgroundColor: "#FFFFFF",
     padding: 20,
     borderRadius: 15,
     height: 320,
     marginBottom: 25,
-    elevation: 4, // shadow for Android
-    shadowColor: "#000", // shadow for iOS
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+    elevation: 4,
   },
+
   text: {
     fontSize: 15,
     lineHeight: 24,
     color: "#333",
   },
+
   button: {
     backgroundColor: "#2563EB",
     paddingVertical: 16,
@@ -87,6 +117,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 3,
   },
+
   buttonText: {
     color: "#fff",
     fontSize: 17,

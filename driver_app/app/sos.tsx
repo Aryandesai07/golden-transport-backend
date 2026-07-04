@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   TouchableOpacity,
@@ -6,36 +6,66 @@ import {
   Alert,
   StyleSheet,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 
 export default function SOS() {
-  const emergencyNumbers = ["9284926533", "8459824625"];
+  const [loading, setLoading] = useState(false);
+
+  const emergencyNumbers = [
+    "9284926533",
+    "8459824625",
+  ];
 
   const sendSOS = async () => {
     try {
-      // Show confirmation alert
-      Alert.alert("🚨 SOS Sent", "Admin and emergency contacts have been notified");
+      if (loading) return; // prevent double click
 
-      // Loop through emergency numbers and open dialer
+      setLoading(true);
+
+      Alert.alert(
+        "🚨 SOS Activated",
+        "Calling emergency contacts..."
+      );
+
       for (const number of emergencyNumbers) {
         const url = `tel:${number}`;
+
         const supported = await Linking.canOpenURL(url);
+
         if (supported) {
           await Linking.openURL(url);
         } else {
-          console.log("Cannot open dialer for:", number);
+          console.log("Cannot open dialer:", number);
         }
       }
     } catch (error) {
       console.log("SOS Error:", error);
-      Alert.alert("Error", "Failed to send SOS");
+
+      Alert.alert(
+        "Error",
+        "Failed to send SOS. Try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.sosButton} onPress={sendSOS}>
-        <Text style={styles.sosText}>SOS</Text>
+      <TouchableOpacity
+        style={[
+          styles.sosButton,
+          loading && { opacity: 0.6 },
+        ]}
+        onPress={sendSOS}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.sosText}>SOS</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -48,18 +78,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F3F6FA",
   },
+
   sosButton: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     backgroundColor: "#DC2626",
     justifyContent: "center",
     alignItems: "center",
-    elevation: 5,
+    elevation: 6,
   },
+
   sosText: {
     color: "#FFFFFF",
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "bold",
   },
 });

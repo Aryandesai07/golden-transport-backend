@@ -232,7 +232,15 @@ export default function Profile() {
   </Text>
 
   <Text>
-    License: {documents?.license ? "✔ Uploaded" : "❌ Missing"}
+  License: {documents?.license_url ? "✔ Uploaded" : "❌ Missing"}
+  </Text>
+
+  <Text>
+    Aadhaar: {documents?.aadhaar_url ? "✔ Uploaded" : "❌ Missing"}
+  </Text>
+
+  <Text>
+    PAN: {documents?.pan_url ? "✔ Uploaded" : "❌ Missing"}
   </Text>
   </View>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { router } from "expo-router";
 import {
   View,
   Text,
@@ -35,7 +36,18 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadDriver();
   }, []);
+  const logout = async () => {
+  await AsyncStorage.multiRemove([
+    "token",
+    "driver_id",
+    "driver_name",
+    "driver_mobile",
+    "vehicle_no",
+    "vehicle_type",
+  ]);
 
+  router.replace("/login");
+};
   const loadDriver = async () => {
     try {
       const name =
@@ -429,12 +441,13 @@ export default function SettingsScreen() {
         }}
       >
         <SettingItem
-          icon="logout"
-          title="Logout"
-          subtitle="Sign out from this device"
-          iconColor="#EF4444"
-          titleColor="#EF4444"
-        />
+        icon="logout"
+        title="Logout"
+        subtitle="Sign out from this device"
+        iconColor="#EF4444"
+        titleColor="#EF4444"
+        onPress={logout}
+      />
       </View>
 
       {/* FOOTER */}

@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState } from "react";
+import API from "../services/api";
 import {
   View,
  Text,
@@ -12,7 +13,6 @@ import {
 } from "react-native";
 
 import { router } from "expo-router";
-import API from "../services/api";
 
 export default function LoginScreen() {
   const [mobile, setMobile] = useState("");
@@ -25,119 +25,103 @@ export default function LoginScreen() {
 
   const login = async () => {
   try {
-    // Validation
     if (!mobile.trim() || !password.trim()) {
-      Alert.alert(
-        "Validation",
-        "Enter Mobile Number & Password"
-      );
+      Alert.alert("Validation", "Enter Mobile Number & Password");
       return;
     }
 
     if (mobile.trim().length !== 10) {
-      Alert.alert(
-        "Validation",
-        "Enter a valid 10 digit mobile number"
-      );
+      Alert.alert("Validation", "Enter a valid 10 digit mobile number");
       return;
     }
 
     setLoading(true);
 
+    const API_URL =
+      "https://golden-transport-backend-production.up.railway.app";
+
+    console.log("LOGIN URL:", API_URL + "/driver/login");
+
     const res = await fetch(
-      "https://golden-transport-backend-production.up.railway.app/driver/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mobile: mobile.trim(),
-          password: password.trim(),
-        }),
-      }
-    );
+  "https://golden-transport-backend-production.up.railway.app/driver/login",
+  {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mobile: mobile.trim(),
+      password: password.trim(),
+    }),
+  }
+);
 
-    console.log("STATUS:", res.status);
+// Check server response
+if (!res.ok) {
+  throw new Error("Server error");
+}
 
-    const text = await res.text();
-    console.log("RAW RESPONSE:", text);
+// Safe JSON parse
+let data;
 
-    const response = {
-      data: JSON.parse(text),
-    };
-    console.log("BASE URL FROM API:", API.defaults.baseURL);
-    try {
-      const t = await API.get("/test");
-      console.log("TEST:", t.data);
-    } catch (e) {
-      console.log("TEST FAILED:", e);
-    }
+try {
+  data = await res.json();
+} catch (e) {
+  console.log(e);
+  throw new Error("Invalid response from server");
+}
 
-    console.log("Login Response:", response.data);
 
-    if (
-      response.data?.status === "success" &&
-      response.data?.driver &&
-      response.data?.token
-    ) {
-      const driver = response.data.driver;
+console.log("RESPONSE:", data);
 
-      if (response.data.token) {
-      await AsyncStorage.setItem(
-        "token",
-        response.data.token
-      );
-    }
+// Login failed
+if (data.status !== "success") {
+  setLoading(false);
+  Alert.alert(
+    "Login Failed",
+    data.message || "Invalid credentials"
+  );
+  return;
+}
 
-      await AsyncStorage.setItem(
-        "driver_id",
-        String(driver.id)
-      );
+const driver = data.driver;
 
-      await AsyncStorage.setItem(
-        "driver_name",
-        driver.name ?? ""
-      );
+// ================= SAVE SESSION =================
+await AsyncStorage.setItem("token", data.token || "");
+await AsyncStorage.setItem("driver_id", String(driver.id));
+await AsyncStorage.setItem("driver_name", driver.name || "");
+await AsyncStorage.setItem("driver_mobile", driver.mobile || "");
+await AsyncStorage.setItem("vehicle_no", driver.vehicle_no || "");
+await AsyncStorage.setItem("vehicle_type", driver.vehicle_type || "");
 
-      // Verify Saved Session
-      const savedToken =
-        await AsyncStorage.getItem("token");
+console.log("SESSION SAVED");
 
-      const savedDriverId =
-        await AsyncStorage.getItem("driver_id");
+setLoading(false);
 
-      console.log("AFTER LOGIN TOKEN:", savedToken);
-      console.log("AFTER LOGIN DRIVER:", savedDriverId);
+Alert.alert(
+  "Success",
+  `Welcome ${driver.name}`,
+  [
+    {
+      text: "OK",
+      onPress: () => {
+        console.log("GOING TO DASHBOARD...");
+        router.replace("/dashboard");
+      },
+    },
+  ]
+);
 
-      Alert.alert(
-      "Success",
-      `Welcome ${driver.name}`,
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            router.replace("/dashboard");
-          },
-        },
-      ]
-    );
-    } else {
-      Alert.alert(
-        "Login Failed",
-        response.data?.message ??
-          "Invalid Mobile Number or Password"
-      );
-    }
   } catch (error) {
+    setLoading(false);
+
     console.log("LOGIN ERROR:", error);
 
     Alert.alert(
       "Error",
-      "Cannot connect to server."
+      "Cannot connect to server"
     );
-  } finally {
-    setLoading(false);
   }
 };
 

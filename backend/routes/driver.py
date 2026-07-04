@@ -542,80 +542,132 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
             "status": "error",
             "message": str(e)
         }
-    
-@router.post("/upload-license/{driver_id}")
-def upload_license(driver_id: int, file: UploadFile = File(...)):
-    folder = "uploads/licenses"
-    os.makedirs(folder, exist_ok=True)
-
-    filename = f"{driver_id}_license_{file.filename}"
-    path = os.path.join(folder, filename)
-
-    with open(path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "status": "success",
-        "file_url": f"{BASE_URL}/uploads/licenses/{filename}"
-    }
-
 @router.post("/upload-aadhaar/{driver_id}")
-def upload_aadhaar(driver_id: int, file: UploadFile = File(...)):
+def upload_aadhaar(
+    driver_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    # Create folder if it doesn't exist
     folder = "uploads/aadhaar"
     os.makedirs(folder, exist_ok=True)
 
-    filename = f"{driver_id}_aadhaar_{file.filename}"
-    path = os.path.join(folder, filename)
+    # Create unique filename
+    filename = f"{driver_id}_aadhaar_{int(time.time())}_{file.filename}"
+    filepath = os.path.join(folder, filename)
 
-    with open(path, "wb") as buffer:
+    # Save file
+    with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    # File URL
+    file_url = f"{BASE_URL}/uploads/aadhaar/{filename}"
+
+    # Save/Update database
+    document = (
+        db.query(DriverDocument)
+        .filter(DriverDocument.driver_id == driver_id)
+        .first()
+    )
+
+    if not document:
+        document = DriverDocument(driver_id=driver_id)
+        db.add(document)
+
+    document.aadhaar_url = file_url
+
+    db.commit()
+    db.refresh(document)
 
     return {
         "status": "success",
-        "file_url": f"{BASE_URL}/uploads/aadhaar/{filename}"
+        "message": "Aadhaar uploaded successfully",
+        "url": file_url,
     }
-    
 @router.post("/upload-pan/{driver_id}")
-def upload_pan(driver_id: int, file: UploadFile = File(...)):
+def upload_pan(
+    driver_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    # Create folder if it doesn't exist
     folder = "uploads/pan"
     os.makedirs(folder, exist_ok=True)
 
-    filename = f"{driver_id}_pan_{file.filename}"
-    path = os.path.join(folder, filename)
+    # Create unique filename
+    filename = f"{driver_id}_pan_{int(time.time())}_{file.filename}"
+    filepath = os.path.join(folder, filename)
 
-    with open(path, "wb") as buffer:
+    # Save file
+    with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    # File URL
+    file_url = f"{BASE_URL}/uploads/pan/{filename}"
+
+    # Save/Update database
+    document = (
+        db.query(DriverDocument)
+        .filter(DriverDocument.driver_id == driver_id)
+        .first()
+    )
+
+    if not document:
+        document = DriverDocument(driver_id=driver_id)
+        db.add(document)
+
+    document.pan_url = file_url
+
+    db.commit()
+    db.refresh(document)
 
     return {
         "status": "success",
-        "file_url": f"{BASE_URL}/uploads/pan/{filename}"
+        "message": "PAN uploaded successfully",
+        "url": file_url,
     }
     
-@router.post("/documents/license/{driver_id}")
-def upload_license(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-
+@router.post("/upload-license/{driver_id}")
+def upload_license(
+    driver_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    # Create folder if it doesn't exist
     folder = "uploads/licenses"
-    filename = f"{driver_id}_license_{int(time.time())}_{file.filename}"
-    path = os.path.join(folder, filename)
+    os.makedirs(folder, exist_ok=True)
 
-    with open(path, "wb") as buffer:
+    # Create unique filename
+    filename = f"{driver_id}_license_{int(time.time())}_{file.filename}"
+    filepath = os.path.join(folder, filename)
+
+    # Save file
+    with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    doc = db.query(DriverDocument).filter(
-        DriverDocument.driver_id == driver_id
-    ).first()
+    # File URL
+    file_url = f"{BASE_URL}/uploads/licenses/{filename}"
 
-    if not doc:
-        doc = DriverDocument(driver_id=driver_id)
+    # Save/update database
+    document = (
+        db.query(DriverDocument)
+        .filter(DriverDocument.driver_id == driver_id)
+        .first()
+    )
 
-    doc.license_url = f"{BASE_URL}/uploads/licenses/{filename}"
+    if not document:
+        document = DriverDocument(driver_id=driver_id)
+        db.add(document)
 
-    db.add(doc)
+    document.license_url = file_url
+
     db.commit()
+    db.refresh(document)
 
     return {
         "status": "success",
-        "url": doc.license_url
+        "message": "License uploaded successfully",
+        "url": file_url,
     }
     
 @router.post("/documents/aadhaar/{driver_id}")

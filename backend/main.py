@@ -1,56 +1,69 @@
 import os
+
 import models
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from database import DATABASE_URL, Base, engine
+from database import Base, engine
 from routes.driver import router as driver_router
 
 # =====================================
-# APP INIT
+# CREATE DATABASE TABLES
 # =====================================
-app = FastAPI(title="Golden Transport API")
+Base.metadata.create_all(bind=engine)
 
 # =====================================
-# FOLDERS
+# CREATE APP
 # =====================================
-os.makedirs("uploads", exist_ok=True)
-os.makedirs("uploads/proofs", exist_ok=True)
-os.makedirs("uploads/fuel_bills", exist_ok=True)
+app = FastAPI(
+    title="Golden Transport API",
+    version="1.0.0"
+)
 
-os.makedirs("uploads/licenses", exist_ok=True)
-os.makedirs("uploads/aadhaar", exist_ok=True)
-os.makedirs("uploads/pan", exist_ok=True)
+# =====================================
+# CREATE UPLOAD FOLDERS
+# =====================================
+folders = [
+    "uploads",
+    "uploads/proofs",
+    "uploads/fuel_bills",
+    "uploads/licenses",
+    "uploads/aadhaar",
+    "uploads/pan",
+]
+
+for folder in folders:
+    os.makedirs(folder, exist_ok=True)
+
 # =====================================
 # STATIC FILES
 # =====================================
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
+)
+
 # =====================================
 # CORS
 # =====================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*",
-        "exp://192.168.31.182:8081",
-        "http://localhost:8081",
-        "http://localhost:19006",
-    ],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # =====================================
-# DATABASE
-# =====================================
-Base.metadata.create_all(bind=engine)
-
-# =====================================
 # ROUTES
 # =====================================
-app.include_router(driver_router, prefix="/driver")
+app.include_router(
+    driver_router,
+    prefix="/driver",
+    tags=["Driver"],
+)
 
 # =====================================
 # HOME
@@ -58,30 +71,48 @@ app.include_router(driver_router, prefix="/driver")
 @app.get("/")
 def home():
     return {
-        "message": "🚚 Golden Transport API Working",
-        "status": "Running"
+        "status": "success",
+        "message": "Golden Transport API Running"
     }
+
+# =====================================
+# TEST
+# =====================================
 @app.get("/test")
 def test():
-    return {"status": "OK"}
+    return {
+        "status": "OK"
+    }
 
+# =====================================
+# HEALTH
+# =====================================
 @app.get("/health")
 def health():
     return {
         "status": "OK",
         "database": "Connected"
     }
-    
+
+# =====================================
+# POST TEST
+# =====================================
 @app.post("/ping")
 def ping():
     return {
         "status": "success",
         "message": "POST is working"
     }
+
 # =====================================
-# RAILWAY ENTRY POINT
+# ENTRY POINT
 # =====================================
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+        reload=False,
+    )
