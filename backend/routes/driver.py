@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
-from security import hash_password
-from security import verify_password
 from models import DriverDocument
 import os
 import shutil
@@ -84,23 +82,21 @@ def login_driver(
 
     if driver is None:
         print("❌ Driver not found")
+
         return {
             "status": "error",
             "message": "Driver not found"
         }
 
     print("✅ Driver Found :", driver.name)
-    print("Stored Hash :", driver.password)
+    print("Stored Password :", driver.password)
 
-    password_ok = verify_password(
-        data.password,
-        driver.password
-    )
-
-    print("Password Match :", password_ok)
-
-    if not password_ok:
+    # =====================================
+    # SIMPLE PASSWORD CHECK
+    # =====================================
+    if data.password != driver.password:
         print("❌ Invalid Password")
+
         return {
             "status": "error",
             "message": "Invalid password"
@@ -115,13 +111,15 @@ def login_driver(
 
     return {
         "status": "success",
+        "message": "Login successful",
         "token": token,
         "driver": {
             "id": driver.id,
             "name": driver.name,
             "mobile": driver.mobile,
             "vehicle_no": driver.vehicle_no,
-            "vehicle_type": driver.vehicle_type
+            "vehicle_type": driver.vehicle_type,
+            "earnings": driver.earnings
         }
     }
 # =========================================
@@ -524,9 +522,21 @@ def admin_dashboard(
 # =========================================
 
 @router.post("/register")
-def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
-
+def register_driver(
+    driver: DriverCreate,
+    db: Session = Depends(get_db)
+):
     try:
+        print("===================================")
+        print("REGISTER REQUEST")
+        print("Name :", driver.name)
+        print("Mobile :", driver.mobile)
+        print("Password :", driver.password)
+        print("Vehicle No :", driver.vehicle_no)
+        print("Vehicle Type :", driver.vehicle_type)
+        print("===================================")
+
+        # Check if mobile already exists
         existing_driver = db.query(Driver).filter(
             Driver.mobile == driver.mobile
         ).first()
@@ -537,27 +547,36 @@ def register_driver(driver: DriverCreate, db: Session = Depends(get_db)):
                 "message": "Mobile number already registered"
             }
 
-        # ✅ FIX APPLIED HERE
+        # Save password as plain text (TEMPORARY)
         new_driver = Driver(
             name=driver.name,
             mobile=driver.mobile,
-            password=hash_password(driver.password),
+            password=driver.password,
             vehicle_no=driver.vehicle_no,
-            vehicle_type=driver.vehicle_type
+            vehicle_type=driver.vehicle_type,
+            earnings=0
         )
 
         db.add(new_driver)
         db.commit()
         db.refresh(new_driver)
 
+        print("✅ Driver Registered Successfully")
+        print("===================================")
+
         return {
             "status": "success",
-            "driver_id": new_driver.id,
-            "message": "Driver registered successfully"
+            "message": "Driver registered successfully",
+            "driver_id": new_driver.id
         }
 
     except Exception as e:
         db.rollback()
+
+        print("REGISTER ERROR")
+        print(str(e))
+        print("===================================")
+
         return {
             "status": "error",
             "message": str(e)

@@ -61,6 +61,8 @@ export default function LoginScreen() {
 
         // Read response only once
         const responseText = await response.text();
+        console.log("STATUS :", response.status);
+        console.log("RAW :", responseText);
 
         console.log("RAW RESPONSE:", responseText);
 
@@ -73,7 +75,8 @@ export default function LoginScreen() {
         }
 
         console.log("HTTP STATUS:", response.status);
-        console.log("SERVER DATA:", data);
+        console.log("SERVER DATA:");
+        console.log(JSON.stringify(data, null, 2));
 
         // HTTP Error
         if (!response.ok) {
@@ -112,18 +115,16 @@ export default function LoginScreen() {
 
         console.log("SESSION SAVED");
 
-        Alert.alert("Success", "Login Successful");
-
-        router.replace("/dashboard");
-      } catch (error) {
-        console.log("LOGIN ERROR:", error);
-
         Alert.alert(
-          "Error",
-          error instanceof Error
-            ? error.message
-            : "Unable to connect to server"
-        );
+  "Success",
+  "Login Successful",
+  [
+    {
+      text: "OK",
+      onPress: () => router.replace("/dashboard"),
+    },
+  ]
+);
       } finally {
         setLoading(false);
       }
