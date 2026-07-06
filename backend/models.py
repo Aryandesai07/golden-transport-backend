@@ -29,6 +29,11 @@ class Driver(Base):
     notifications = relationship("Notification", back_populates="driver")
     payments = relationship("Payment", back_populates="driver")
     settings = relationship("DriverSettings", back_populates="driver", uselist=False)
+    documents = relationship(
+    "DriverDocument",
+    back_populates="driver",
+    uselist=False,
+)
 
 
 # =========================
@@ -164,13 +169,56 @@ class DriverDocument(Base):
     __tablename__ = "driver_documents"
 
     id = Column(Integer, primary_key=True, index=True)
-    driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=False)
+
+    driver_id = Column(
+        Integer,
+        ForeignKey("drivers.id"),
+        nullable=False,
+        unique=True,
+    )
+
+    # =========================
+    # DOCUMENT PATHS
+    # =========================
 
     license_url = Column(String, nullable=True)
     aadhaar_url = Column(String, nullable=True)
     pan_url = Column(String, nullable=True)
 
+    rc_book_url = Column(String, nullable=True)
+    insurance_url = Column(String, nullable=True)
+    puc_url = Column(String, nullable=True)
+
+    # =========================
+    # DOCUMENT STATUS
+    # =========================
+
+    license_status = Column(String, default="Missing")
+    aadhaar_status = Column(String, default="Missing")
+    pan_status = Column(String, default="Missing")
+
+    rc_book_status = Column(String, default="Missing")
+    insurance_status = Column(String, default="Missing")
+    puc_status = Column(String, default="Missing")
+
+    # =========================
+    # ADMIN REMARK
+    # =========================
+
+    rejection_reason = Column(String, nullable=True)
+
+    # =========================
+    # CREATED DATE
+    # =========================
+
     created_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc)
+        default=lambda: datetime.now(timezone.utc),
     )
+
+    # Relationship
+
+    driver = relationship(
+    "Driver",
+    back_populates="documents",
+)

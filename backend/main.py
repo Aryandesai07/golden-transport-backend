@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from database import Base, engine
 from routes.driver import router as driver_router
+from routes.documents import router as documents_router
 
 # =====================================
 # CREATE DATABASE TABLES
@@ -21,6 +22,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.include_router(
+    driver_router,
+    prefix="/driver",
+    tags=["Driver"],
+)
+
+app.include_router(
+    documents_router,
+    prefix="/driver",
+    tags=["Documents"],
+)
+
 # =====================================
 # CREATE UPLOAD FOLDERS
 # =====================================
@@ -28,9 +41,14 @@ folders = [
     "uploads",
     "uploads/proofs",
     "uploads/fuel_bills",
+
     "uploads/licenses",
     "uploads/aadhaar",
     "uploads/pan",
+
+    "uploads/rc_book",
+    "uploads/insurance",
+    "uploads/puc",
 ]
 
 for folder in folders:

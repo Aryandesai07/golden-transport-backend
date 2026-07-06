@@ -636,57 +636,90 @@ def upload_pan(driver_id: int, file: UploadFile = File(...), db: Session = Depen
     }
     
 @router.get("/documents/{driver_id}")
-def get_documents(driver_id: int, db: Session = Depends(get_db)):
-
+def get_documents(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
     try:
-        # CHECK DRIVER EXISTS
-        driver = db.query(Driver).filter(Driver.id == driver_id).first()
+
+        driver = (
+            db.query(Driver)
+            .filter(Driver.id == driver_id)
+            .first()
+        )
 
         if not driver:
             return {
                 "status": "error",
                 "message": "Driver not found",
-                "documents": {
-                    "license": None,
-                    "aadhaar": None,
-                    "pan": None
-                }
             }
 
-        # FETCH DOCUMENTS
-        document = db.query(DriverDocument).filter(
-            DriverDocument.driver_id == driver_id
-        ).first()
+        document = (
+            db.query(DriverDocument)
+            .filter(
+                DriverDocument.driver_id == driver_id
+            )
+            .first()
+        )
 
-        # SAFE RESPONSE
         if not document:
+
             return {
                 "status": "success",
                 "documents": {
-                    "license": None,
-                    "aadhaar": None,
-                    "pan": None
-                }
+                    "license_url": None,
+                    "license_status": "Missing",
+
+                    "aadhaar_url": None,
+                    "aadhaar_status": "Missing",
+
+                    "pan_url": None,
+                    "pan_status": "Missing",
+
+                    "rc_book_url": None,
+                    "rc_book_status": "Missing",
+
+                    "insurance_url": None,
+                    "insurance_status": "Missing",
+
+                    "puc_url": None,
+                    "puc_status": "Missing",
+
+                    "rejection_reason": None,
+                },
             }
 
         return {
             "status": "success",
             "documents": {
-                "license": document.license_url,
-                "aadhaar": document.aadhaar_url,
-                "pan": document.pan_url
-            }
+
+                "license_url": document.license_url,
+                "license_status": document.license_status,
+
+                "aadhaar_url": document.aadhaar_url,
+                "aadhaar_status": document.aadhaar_status,
+
+                "pan_url": document.pan_url,
+                "pan_status": document.pan_status,
+
+                "rc_book_url": document.rc_book_url,
+                "rc_book_status": document.rc_book_status,
+
+                "insurance_url": document.insurance_url,
+                "insurance_status": document.insurance_status,
+
+                "puc_url": document.puc_url,
+                "puc_status": document.puc_status,
+
+                "rejection_reason": document.rejection_reason,
+            },
         }
 
     except Exception as e:
+
         return {
             "status": "error",
             "message": str(e),
-            "documents": {
-                "license": None,
-                "aadhaar": None,
-                "pan": None
-            }
         }
     
 @router.get("/admin/drivers")
