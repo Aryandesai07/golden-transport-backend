@@ -4,7 +4,7 @@ from unittest import result
 import cloudinary.uploader
 from cloudinary_config import *
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi import (
     APIRouter,
     UploadFile,
@@ -29,44 +29,24 @@ def download_document(
 
     document = (
         db.query(DriverDocument)
-        .filter(
-            DriverDocument.driver_id == driver_id
-        )
+        .filter(DriverDocument.driver_id == driver_id)
         .first()
     )
 
     if not document:
-        raise HTTPException(
-            status_code=404,
-            detail="Documents not found",
-        )
+        raise HTTPException(404, "Documents not found")
 
     field = f"{document_type}_url"
 
     if not hasattr(document, field):
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid document type",
-        )
+        raise HTTPException(400, "Invalid document type")
 
-    filepath = getattr(document, field)
+    url = getattr(document, field)
 
-    if not filepath:
-        raise HTTPException(
-            status_code=404,
-            detail="Document not uploaded",
-        )
+    if not url:
+        raise HTTPException(404, "Document not uploaded")
 
-    if not os.path.exists(filepath):
-        raise HTTPException(
-            status_code=404,
-            detail="File missing from server",
-        )
-
-    return FileResponse(
-        path=filepath,
-        filename=os.path.basename(filepath),
-    )
+    return RedirectResponse(url)
 
 @router.post("/documents/upload")
 async def upload_document(
@@ -75,19 +55,18 @@ async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    print("========== NEW CLOUDINARY CODE RUNNING ==========")
+    print("========== CLOUDINARY VERSION ==========")
+    print("Driver:", driver_id)
+    print("Document:", document_type)
 
-    # ==============================
-    # Allowed document types
-    # ==============================
-    allowed = {
-        "license": "uploads/licenses",
-        "aadhaar": "uploads/aadhaar",
-        "pan": "uploads/pan",
-        "rc_book": "uploads/rc_book",
-        "insurance": "uploads/insurance",
-        "puc": "uploads/puc",
-    }
+    allowed = [
+        "license",
+        "aadhaar",
+        "pan",
+        "rc_book",
+        "insurance",
+        "puc",
+    ]
 
     if document_type not in allowed:
         raise HTTPException(
@@ -96,82 +75,47 @@ async def upload_document(
         )
 
     try:
-        # ==============================
-        # Upload to Cloudinary
-        # ==============================
-        filename = f"{driver_id}_{document_type}"
-
         result = cloudinary.uploader.upload(
             file.file,
-            resource_type="auto",      # Automatically detects PDF/JPG/PNG
+            resource_type="auto",
             folder=f"driver_documents/{document_type}",
-            public_id=filename,
+            public_id=f"{driver_id}_{document_type}",
             overwrite=True,
         )
 
-        print("Cloudinary Upload Result:")
+        print("UPLOAD SUCCESS")
         print(result)
 
         file_url = result["secure_url"]
 
     except Exception as e:
-        print("Cloudinary Upload Failed:")
+        print("UPLOAD FAILED")
         print(str(e))
-
         raise HTTPException(
             status_code=500,
-            detail=f"Cloudinary upload failed: {str(e)}",
+            detail=str(e),
         )
 
-    # ==============================
-    # Get or Create Database Record
-    # ==============================
     document = (
         db.query(DriverDocument)
-        .filter(
-            DriverDocument.driver_id == driver_id
-        )
+        .filter(DriverDocument.driver_id == driver_id)
         .first()
     )
 
     if document is None:
-        document = DriverDocument(
-            driver_id=driver_id
-        )
-
+        document = DriverDocument(driver_id=driver_id)
         db.add(document)
-        db.commit()
-        db.refresh(document)
 
-    # ==============================
-    # Save Cloudinary URL
-    # ==============================
-    setattr(
-        document,
-        f"{document_type}_url",
-        file_url,
-    )
-
-    setattr(
-        document,
-        f"{document_type}_status",
-        "Pending Verification",
-    )
+    setattr(document, f"{document_type}_url", file_url)
+    setattr(document, f"{document_type}_status", "Pending Verification")
 
     db.commit()
     db.refresh(document)
 
-    # ==============================
-    # Response
-    # ==============================
     return {
         "status": "success",
-        "message": "Document uploaded successfully.",
-        "document_type": document_type,
-        "file": {
-            "url": file_url,
-            "name": file.filename,
-        },
+        "cloudinary": True,
+        "url": file_url,
     }
         
         
