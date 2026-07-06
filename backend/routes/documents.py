@@ -75,6 +75,7 @@ async def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
+    print("========== NEW CLOUDINARY CODE RUNNING ==========")
 
     # ==============================
     # Allowed document types
@@ -89,55 +90,67 @@ async def upload_document(
     }
 
     if document_type not in allowed:
-        raise HTTPException(status_code=400, detail="Invalid document type")
-    # ==============================
-    # Upload to Cloudinary
-    # ==============================
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid document type",
+        )
 
-    filename = f"{driver_id}_{document_type}"
+    try:
+        # ==============================
+        # Upload to Cloudinary
+        # ==============================
+        filename = f"{driver_id}_{document_type}"
 
-    result = cloudinary.uploader.upload(
-        file.file,
-        resource_type="raw",      # Supports PDF, JPG, PNG
-        folder=f"driver_documents/{document_type}",
-        public_id=filename,
-        overwrite=True,
-    )
-    print("Cloudinary Upload Result:")
-    print(result["secure_url"])
+        result = cloudinary.uploader.upload(
+            file.file,
+            resource_type="auto",      # Automatically detects PDF/JPG/PNG
+            folder=f"driver_documents/{document_type}",
+            public_id=filename,
+            overwrite=True,
+        )
 
-    # Cloudinary URL
-    file_url = result["secure_url"]
+        print("Cloudinary Upload Result:")
+        print(result)
+
+        file_url = result["secure_url"]
+
+    except Exception as e:
+        print("Cloudinary Upload Failed:")
+        print(str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Cloudinary upload failed: {str(e)}",
+        )
+
     # ==============================
-    # CREATE OR GET DB RECORD
+    # Get or Create Database Record
     # ==============================
     document = (
         db.query(DriverDocument)
-        .filter(DriverDocument.driver_id == driver_id)
+        .filter(
+            DriverDocument.driver_id == driver_id
+        )
         .first()
     )
 
     if document is None:
-        document = DriverDocument(driver_id=driver_id)
+        document = DriverDocument(
+            driver_id=driver_id
+        )
+
         db.add(document)
         db.commit()
         db.refresh(document)
 
     # ==============================
-    # BUILD PUBLIC URL (IMPORTANT FIX)
-    # ==============================
-    base_url = "https://golden-transport-backend-production.up.railway.app"
-
-    public_url = f"{base_url}/uploads/{document_type}/{filename}"
-
-    # ==============================
-    # SAVE TO DATABASE (STORE URL NOT FILEPATH)
+    # Save Cloudinary URL
     # ==============================
     setattr(
-    document,
-    f"{document_type}_url",
-    file_url,
-)
+        document,
+        f"{document_type}_url",
+        file_url,
+    )
 
     setattr(
         document,
@@ -146,18 +159,19 @@ async def upload_document(
     )
 
     db.commit()
+    db.refresh(document)
 
     # ==============================
-    # RESPONSE (FRONTEND SAFE)
+    # Response
     # ==============================
     return {
-    "status": "success",
-    "message": "Document uploaded successfully.",
-    "file": {
-        "url": file_url,
-        "name": file.filename,
-    },
-    "document_type": document_type,
-}
+        "status": "success",
+        "message": "Document uploaded successfully.",
+        "document_type": document_type,
+        "file": {
+            "url": file_url,
+            "name": file.filename,
+        },
+    }
         
         
