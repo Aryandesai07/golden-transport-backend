@@ -6,14 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
+  Modal, 
+  Alert,
 } from "react-native";
+
 import API from "../../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useTheme } from "../../context/ThemeContext";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 type DocumentType = {
   id: string;
@@ -660,16 +664,60 @@ function DocumentCard({
 }: any) {
   const { theme } = useTheme();
 
-  const downloadFile = () => {
-    if (!doc.file) {
-      alert("No document uploaded.");
+  const downloadFile = async () => {
+  try {
+    if (!doc?.file) {
+      Alert.alert("Error", "No document uploaded.");
       return;
     }
 
-    console.log("Downloading:", doc.file.name);
+    // ✅ Handle backend format safely
+    const fileUrl =
+      typeof doc.file === "string"
+        ? doc.file
+        : doc.file?.url;
 
-    // Backend download will be added later
-  };
+    if (!fileUrl || typeof fileUrl !== "string") {
+      Alert.alert("Error", "Invalid file URL from backend.");
+      return;
+    }
+
+    console.log("Downloading from:", fileUrl);
+
+    // ✅ Safe file name
+    const fileName =
+      doc?.file?.name ||
+      fileUrl.split("/").pop() ||
+      `document_${Date.now()}.pdf`;
+
+    // ✅ Safe directory (Expo SDK 54 safe usage)
+    const fileUri =
+  (FileSystem as any).cacheDirectory + fileName;
+
+    // ✅ Download file
+    const downloadRes = await FileSystem.downloadAsync(
+      fileUrl,
+      fileUri
+    );
+
+    console.log("Downloaded to:", downloadRes.uri);
+
+    // ✅ Share / Open
+    const canShare = await Sharing.isAvailableAsync();
+
+    if (canShare) {
+      await Sharing.shareAsync(downloadRes.uri);
+    } else {
+      Alert.alert("Success", "File downloaded successfully");
+    }
+  } catch (error) {
+    console.log("Download error:", error);
+    Alert.alert(
+      "Download Failed",
+      "Check backend URL or file access"
+    );
+  }
+};
 
   return (
   <View

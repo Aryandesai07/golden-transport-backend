@@ -1,5 +1,9 @@
 import os
-import shutil
+from unittest import result
+
+import cloudinary.uploader
+from cloudinary_config import *
+
 from fastapi.responses import FileResponse
 from fastapi import (
     APIRouter,
@@ -14,7 +18,6 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import DriverDocument
-
 router = APIRouter()
 
 @router.get("/documents/download/{driver_id}/{document_type}")
@@ -87,19 +90,24 @@ async def upload_document(
 
     if document_type not in allowed:
         raise HTTPException(status_code=400, detail="Invalid document type")
-
     # ==============================
-    # SAVE FILE
+    # Upload to Cloudinary
     # ==============================
-    folder = allowed[document_type]
-    os.makedirs(folder, exist_ok=True)
 
-    filename = f"{driver_id}_{document_type}_{file.filename}"
-    filepath = os.path.join(folder, filename)
+    filename = f"{driver_id}_{document_type}"
 
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    result = cloudinary.uploader.upload(
+        file.file,
+        resource_type="raw",      # Supports PDF, JPG, PNG
+        folder=f"driver_documents/{document_type}",
+        public_id=filename,
+        overwrite=True,
+    )
+    print("Cloudinary Upload Result:")
+    print(result["secure_url"])
 
+    # Cloudinary URL
+    file_url = result["secure_url"]
     # ==============================
     # CREATE OR GET DB RECORD
     # ==============================
@@ -126,10 +134,10 @@ async def upload_document(
     # SAVE TO DATABASE (STORE URL NOT FILEPATH)
     # ==============================
     setattr(
-        document,
-        f"{document_type}_url",
-        public_url,
-    )
+    document,
+    f"{document_type}_url",
+    file_url,
+)
 
     setattr(
         document,
@@ -143,13 +151,13 @@ async def upload_document(
     # RESPONSE (FRONTEND SAFE)
     # ==============================
     return {
-        "status": "success",
-        "message": "Document uploaded successfully",
-        "file": {
-            "url": public_url,
-            "name": filename
-        },
-        "document_type": document_type
-    }
+    "status": "success",
+    "message": "Document uploaded successfully.",
+    "file": {
+        "url": file_url,
+        "name": file.filename,
+    },
+    "document_type": document_type,
+}
         
         
