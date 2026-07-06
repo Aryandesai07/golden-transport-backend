@@ -23,12 +23,6 @@ app = FastAPI(
 )
 
 app.include_router(
-    driver_router,
-    prefix="/driver",
-    tags=["Driver"],
-)
-
-app.include_router(
     documents_router,
     prefix="/driver",
     tags=["Documents"],
