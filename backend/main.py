@@ -19,13 +19,18 @@ Base.metadata.create_all(bind=engine)
 # =====================================
 app = FastAPI(
     title="Golden Transport API",
-    version="1.0.0"
+    version="1.0.0",
 )
 
-app.include_router(
-    documents_router,
-    prefix="/driver",
-    tags=["Documents"],
+# =====================================
+# CORS
+# =====================================
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # =====================================
@@ -35,11 +40,9 @@ folders = [
     "uploads",
     "uploads/proofs",
     "uploads/fuel_bills",
-
     "uploads/licenses",
     "uploads/aadhaar",
     "uploads/pan",
-
     "uploads/rc_book",
     "uploads/insurance",
     "uploads/puc",
@@ -58,23 +61,18 @@ app.mount(
 )
 
 # =====================================
-# CORS
-# =====================================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# =====================================
 # ROUTES
 # =====================================
 app.include_router(
     driver_router,
     prefix="/driver",
     tags=["Driver"],
+)
+
+app.include_router(
+    documents_router,
+    prefix="/driver",
+    tags=["Documents"],
 )
 
 # =====================================
@@ -84,7 +82,7 @@ app.include_router(
 def home():
     return {
         "status": "success",
-        "message": "Golden Transport API Running"
+        "message": "Golden Transport API Running",
     }
 
 # =====================================
@@ -93,7 +91,7 @@ def home():
 @app.get("/test")
 def test():
     return {
-        "status": "OK"
+        "status": "OK",
     }
 
 # =====================================
@@ -103,7 +101,7 @@ def test():
 def health():
     return {
         "status": "OK",
-        "database": "Connected"
+        "database": "Connected",
     }
 
 # =====================================
@@ -113,16 +111,20 @@ def health():
 def ping():
     return {
         "status": "success",
-        "message": "POST is working"
+        "message": "POST is working",
     }
 
+# =====================================
+# VERSION (DEBUG)
+# =====================================
 @app.get("/version")
 def version():
     return {
         "version": "8edfd2a",
         "cloudinary": True,
-        "time": "force-redeploy"
+        "time": "force-redeploy",
     }
+
 # =====================================
 # ENTRY POINT
 # =====================================
