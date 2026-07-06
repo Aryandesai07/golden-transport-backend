@@ -122,6 +122,12 @@ def ping():
         "message": "POST is working"
     }
 
+@app.get("/version")
+def version():
+    return {
+        "version": "457cb06",
+        "cloudinary": True
+    }
 # =====================================
 # ENTRY POINT
 # =====================================
