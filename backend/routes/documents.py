@@ -74,9 +74,8 @@ async def upload_document(
 ):
 
     # ==============================
-    # Allowed Document Types
+    # Allowed document types
     # ==============================
-
     allowed = {
         "license": "uploads/licenses",
         "aadhaar": "uploads/aadhaar",
@@ -87,64 +86,49 @@ async def upload_document(
     }
 
     if document_type not in allowed:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid document type",
-        )
+        raise HTTPException(status_code=400, detail="Invalid document type")
 
     # ==============================
-    # Save File
+    # SAVE FILE
     # ==============================
-
     folder = allowed[document_type]
-
     os.makedirs(folder, exist_ok=True)
 
     filename = f"{driver_id}_{document_type}_{file.filename}"
-
-    filepath = os.path.join(
-        folder,
-        filename,
-    )
+    filepath = os.path.join(folder, filename)
 
     with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(
-            file.file,
-            buffer,
-        )
+        shutil.copyfileobj(file.file, buffer)
 
     # ==============================
-    # Find Driver Document Record
+    # CREATE OR GET DB RECORD
     # ==============================
-
     document = (
         db.query(DriverDocument)
-        .filter(
-            DriverDocument.driver_id == driver_id
-        )
+        .filter(DriverDocument.driver_id == driver_id)
         .first()
     )
 
     if document is None:
-
-        document = DriverDocument(
-            driver_id=driver_id
-        )
-
+        document = DriverDocument(driver_id=driver_id)
         db.add(document)
-
         db.commit()
-
         db.refresh(document)
 
     # ==============================
-    # Update Database
+    # BUILD PUBLIC URL (IMPORTANT FIX)
     # ==============================
+    base_url = "https://golden-transport-backend-production.up.railway.app"
 
+    public_url = f"{base_url}/uploads/{document_type}/{filename}"
+
+    # ==============================
+    # SAVE TO DATABASE (STORE URL NOT FILEPATH)
+    # ==============================
     setattr(
         document,
         f"{document_type}_url",
-        filepath,
+        public_url,
     )
 
     setattr(
@@ -156,14 +140,16 @@ async def upload_document(
     db.commit()
 
     # ==============================
-    # Response
+    # RESPONSE (FRONTEND SAFE)
     # ==============================
-
     return {
         "status": "success",
-        "message": "Document uploaded successfully.",
-        "file": filepath,
-        "document_type": document_type,
+        "message": "Document uploaded successfully",
+        "file": {
+            "url": public_url,
+            "name": filename
+        },
+        "document_type": document_type
     }
-    
-    
+        
+        
