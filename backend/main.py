@@ -119,8 +119,9 @@ def ping():
 @app.get("/version")
 def version():
     return {
-        "version": "457cb06",
-        "cloudinary": True
+        "version": "8edfd2a",
+        "cloudinary": True,
+        "time": "force-redeploy"
     }
 # =====================================
 # ENTRY POINT
