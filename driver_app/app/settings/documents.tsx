@@ -130,8 +130,8 @@ export default function DocumentsScreen() {
               : "#EF4444",
           file: serverDoc.url,
           fileName: serverDoc.url
-            ? serverDoc.url.split("/").pop()
-            : undefined,
+          ? doc.title
+          : undefined,
         };
       })
     );
@@ -708,16 +708,8 @@ function DocumentCard({
 
   const downloadFile = async () => {
   try {
-    if (!doc?.file) {
-      Alert.alert("Error", "No document uploaded.");
-      return;
-    }
-
-    // Get Cloudinary URL
-    const fileUrl =
-      typeof doc.file === "string"
-        ? doc.file
-        : doc.file?.url;
+    // Here doc.file is already the Cloudinary URL string
+    const fileUrl = doc.file;
 
     if (!fileUrl || typeof fileUrl !== "string") {
       Alert.alert("Error", "Invalid document URL.");
@@ -726,20 +718,13 @@ function DocumentCard({
 
     console.log("Opening:", fileUrl);
 
-    const supported = await Linking.canOpenURL(fileUrl);
-
-    if (!supported) {
-      Alert.alert("Error", "Cannot open this document.");
-      return;
-    }
-
     await Linking.openURL(fileUrl);
 
   } catch (error) {
-    console.log("Open document error:", error);
+    console.log(error);
     Alert.alert(
       "Error",
-      "Unable to open the document."
+      "Unable to open document."
     );
   }
 };
