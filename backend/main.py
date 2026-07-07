@@ -124,10 +124,6 @@ def version():
         "cloudinary": True,
         "time": "force-redeploy",
     }
-print("\n===== REGISTERED ROUTES =====")
-
-for route in app.routes:
-    print(route.path)
 
 print("=============================\n")
 # =====================================
