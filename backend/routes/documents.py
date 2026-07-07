@@ -96,4 +96,59 @@ def get_documents(
         },
     }
         
-        
+@router.post("/documents/upload")
+async def upload_document(
+    driver_id: int = Form(...),
+    document_type: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    # Validate document type
+    valid_document_types = [
+        "license",
+        "aadhaar",
+        "pan",
+        "rc_book",
+        "insurance",
+        "puc",
+    ]
+    if document_type not in valid_document_types:
+        raise HTTPException(400, "Invalid document type")
+
+    # Upload file to Cloudinary
+    try:
+        result = cloudinary.uploader.upload(
+            file.file,
+            folder=f"driver_documents/{driver_id}/{document_type}",
+            resource_type="auto",
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Failed to upload document: {str(e)}")
+
+    # Get the uploaded file URL
+    file_url = result.get("secure_url")
+    if not file_url:
+        raise HTTPException(500, "Failed to retrieve uploaded file URL")
+
+    # Update or create DriverDocument record
+    document = (
+        db.query(DriverDocument)
+        .filter(DriverDocument.driver_id == driver_id)
+        .first()
+    )
+
+    if not document:
+        document = DriverDocument(driver_id=driver_id)
+        db.add(document)
+
+    setattr(document, f"{document_type}_url", file_url)
+    setattr(document, f"{document_type}_status", "Pending Verification")
+
+    db.commit()
+    db.refresh(document)
+
+    return {
+        "status": "success",
+        "message": f"{document_type.capitalize()} uploaded successfully",
+        "url": file_url,
+    }    
