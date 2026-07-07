@@ -581,59 +581,7 @@ def register_driver(
             "status": "error",
             "message": str(e)
         }
-@router.post("/documents/aadhaar/{driver_id}")
-def upload_aadhaar(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
 
-    folder = "uploads/aadhaar"
-    filename = f"{driver_id}_aadhaar_{int(time.time())}_{file.filename}"
-    path = os.path.join(folder, filename)
-
-    with open(path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    doc = db.query(DriverDocument).filter(
-        DriverDocument.driver_id == driver_id
-    ).first()
-
-    if not doc:
-        doc = DriverDocument(driver_id=driver_id)
-
-    doc.aadhaar_url = f"{BASE_URL}/uploads/aadhaar/{filename}"
-
-    db.add(doc)
-    db.commit()
-
-    return {
-        "status": "success",
-        "url": doc.aadhaar_url
-    }
-    
-@router.post("/documents/pan/{driver_id}")
-def upload_pan(driver_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
-
-    folder = "uploads/pan"
-    filename = f"{driver_id}_pan_{int(time.time())}_{file.filename}"
-    path = os.path.join(folder, filename)
-
-    with open(path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    doc = db.query(DriverDocument).filter(
-        DriverDocument.driver_id == driver_id
-    ).first()
-
-    if not doc:
-        doc = DriverDocument(driver_id=driver_id)
-
-    doc.pan_url = f"{BASE_URL}/uploads/pan/{filename}"
-
-    db.add(doc)
-    db.commit()
-
-    return {
-        "status": "success",
-        "url": doc.pan_url
-    }
 @router.get("/admin/drivers")
 def get_all_drivers(db: Session = Depends(get_db)):
     drivers = db.query(Driver).all()
