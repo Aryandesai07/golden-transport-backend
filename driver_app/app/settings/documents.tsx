@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Modal, 
   Alert,
+  Linking,
 } from "react-native";
 
 import API from "../../services/api";
@@ -16,7 +17,6 @@ import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useTheme } from "../../context/ThemeContext";
-import * as Linking from "expo-linking";
 type DocumentType = {
   id: string;
   title: string;
@@ -708,24 +708,29 @@ function DocumentCard({
 
   const downloadFile = async () => {
   try {
-    // Here doc.file is already the Cloudinary URL string
+    console.log("DOC OBJECT:", doc);
+
     const fileUrl = doc.file;
 
-    if (!fileUrl || typeof fileUrl !== "string") {
-      Alert.alert("Error", "Invalid document URL.");
+    if (!fileUrl) {
+      Alert.alert("Error", "No document found.");
       return;
     }
 
     console.log("Opening:", fileUrl);
 
+    const supported = await Linking.canOpenURL(fileUrl);
+
+    if (!supported) {
+      Alert.alert("Error", "This device cannot open the document.");
+      return;
+    }
+
     await Linking.openURL(fileUrl);
 
-  } catch (error) {
-    console.log(error);
-    Alert.alert(
-      "Error",
-      "Unable to open document."
-    );
+  } catch (e) {
+    console.log("DOWNLOAD ERROR:", e);
+    Alert.alert("Error", "Failed to open document.");
   }
 };
 

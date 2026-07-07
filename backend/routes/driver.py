@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
-from models import DriverDocument
 import os
 import shutil
 import time

@@ -120,6 +120,8 @@ async def upload_document(
         result = cloudinary.uploader.upload(
             file.file,
             folder=f"driver_documents/{driver_id}/{document_type}",
+            public_id=f"{driver_id}_{document_type}",
+            overwrite=True,
             resource_type="auto",
         )
     except Exception as e:
