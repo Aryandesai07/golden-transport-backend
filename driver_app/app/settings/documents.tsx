@@ -16,9 +16,7 @@ import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { useTheme } from "../../context/ThemeContext";
-import * as FileSystem from "expo-file-system";
-import * as Sharing from "expo-sharing";
-
+import * as Linking from "expo-linking";
 type DocumentType = {
   id: string;
   title: string;
@@ -715,50 +713,33 @@ function DocumentCard({
       return;
     }
 
-    // ✅ Handle backend format safely
+    // Get Cloudinary URL
     const fileUrl =
       typeof doc.file === "string"
         ? doc.file
         : doc.file?.url;
 
     if (!fileUrl || typeof fileUrl !== "string") {
-      Alert.alert("Error", "Invalid file URL from backend.");
+      Alert.alert("Error", "Invalid document URL.");
       return;
     }
 
-    console.log("Downloading from:", fileUrl);
+    console.log("Opening:", fileUrl);
 
-    // ✅ Safe file name
-    const fileName =
-      doc?.file?.name ||
-      fileUrl.split("/").pop() ||
-      `document_${Date.now()}.pdf`;
+    const supported = await Linking.canOpenURL(fileUrl);
 
-    // ✅ Safe directory (Expo SDK 54 safe usage)
-    const fileUri =
-  (FileSystem as any).cacheDirectory + fileName;
-
-    // ✅ Download file
-    const downloadRes = await FileSystem.downloadAsync(
-      fileUrl,
-      fileUri
-    );
-
-    console.log("Downloaded to:", downloadRes.uri);
-
-    // ✅ Share / Open
-    const canShare = await Sharing.isAvailableAsync();
-
-    if (canShare) {
-      await Sharing.shareAsync(downloadRes.uri);
-    } else {
-      Alert.alert("Success", "File downloaded successfully");
+    if (!supported) {
+      Alert.alert("Error", "Cannot open this document.");
+      return;
     }
+
+    await Linking.openURL(fileUrl);
+
   } catch (error) {
-    console.log("Download error:", error);
+    console.log("Open document error:", error);
     Alert.alert(
-      "Download Failed",
-      "Check backend URL or file access"
+      "Error",
+      "Unable to open the document."
     );
   }
 };
