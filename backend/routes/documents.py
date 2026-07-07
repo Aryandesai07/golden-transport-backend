@@ -1,4 +1,6 @@
 import os
+import time
+from time import time
 from unittest import result
 
 import cloudinary.uploader
@@ -122,7 +124,8 @@ async def upload_document(
             folder=f"driver_documents/{driver_id}/{document_type}",
             public_id=f"{driver_id}_{document_type}",
             overwrite=True,
-            resource_type="image",
+            invalidate=True,
+            resource_type="auto",
         )
         print(result)
     except Exception as e:
