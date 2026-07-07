@@ -187,13 +187,16 @@ const uploadDocument = async () => {
         ? "license"
         : selectedDoc.id
     );
-
+    console.log("============ FILE ============");
+    console.log("URI :", selectedDoc.file.uri);
+    console.log("NAME:", selectedDoc.file.name);
+    console.log("TYPE:", selectedDoc.file.mimeType);
+    console.log("FILE:", selectedDoc.file);
+    console.log("==============================");
     formData.append("file", {
       uri: selectedDoc.file.uri,
       name: selectedDoc.file.name,
-      type:
-        selectedDoc.file.mimeType ||
-        "application/octet-stream",
+      type: selectedDoc.file.mimeType || "application/octet-stream",
     } as any);
 
     const response = await API.post(
