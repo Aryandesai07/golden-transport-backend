@@ -48,53 +48,11 @@ def download_document(
 
     return RedirectResponse(url)
 
-@router.post("/documents/upload")
-async def upload_document(
-    driver_id: int = Form(...),
-    document_type: str = Form(...),
-    file: UploadFile = File(...),
+@router.get("/documents/{driver_id}")
+def get_documents(
+    driver_id: int,
     db: Session = Depends(get_db),
 ):
-    print("========== CLOUDINARY VERSION ==========")
-    print("Driver:", driver_id)
-    print("Document:", document_type)
-
-    allowed = [
-        "license",
-        "aadhaar",
-        "pan",
-        "rc_book",
-        "insurance",
-        "puc",
-    ]
-
-    if document_type not in allowed:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid document type",
-        )
-
-    try:
-        result = cloudinary.uploader.upload(
-            file.file,
-            resource_type="auto",
-            folder=f"driver_documents/{document_type}",
-            public_id=f"{driver_id}_{document_type}",
-            overwrite=True,
-        )
-
-        print("UPLOAD SUCCESS")
-        print(result)
-
-        file_url = result["secure_url"]
-
-    except Exception as e:
-        print("UPLOAD FAILED")
-        print(str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=str(e),
-        )
 
     document = (
         db.query(DriverDocument)
@@ -103,19 +61,39 @@ async def upload_document(
     )
 
     if document is None:
-        document = DriverDocument(driver_id=driver_id)
-        db.add(document)
-
-    setattr(document, f"{document_type}_url", file_url)
-    setattr(document, f"{document_type}_status", "Pending Verification")
-
-    db.commit()
-    db.refresh(document)
+        return {
+            "status": "success",
+            "documents": {}
+        }
 
     return {
         "status": "success",
-        "cloudinary": True,
-        "url": file_url,
+        "documents": {
+            "license": {
+                "url": document.license_url,
+                "status": document.license_status,
+            },
+            "aadhaar": {
+                "url": document.aadhaar_url,
+                "status": document.aadhaar_status,
+            },
+            "pan": {
+                "url": document.pan_url,
+                "status": document.pan_status,
+            },
+            "rc_book": {
+                "url": document.rc_book_url,
+                "status": document.rc_book_status,
+            },
+            "insurance": {
+                "url": document.insurance_url,
+                "status": document.insurance_status,
+            },
+            "puc": {
+                "url": document.puc_url,
+                "status": document.puc_status,
+            },
+        },
     }
         
         

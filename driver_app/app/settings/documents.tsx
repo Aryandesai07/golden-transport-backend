@@ -95,10 +95,54 @@ export default function DocumentsScreen() {
   }, []);
 
   const loadData = async () => {
-    const name = (await AsyncStorage.getItem("driver_name")) || "";
+  try {
+    const name =
+      (await AsyncStorage.getItem("driver_name")) || "";
+
+    const driverId =
+      await AsyncStorage.getItem("driver_id");
+
     setDriverName(name);
+
+    if (!driverId) {
+      setLoading(false);
+      return;
+    }
+
+    const res = await API.get(
+      `/driver/documents/${driverId}`
+    );
+
+    const docs = res.data.documents;
+
+    setDocuments((prev) =>
+      prev.map((doc) => {
+        const serverDoc = docs[doc.id];
+
+        if (!serverDoc) return doc;
+
+        return {
+          ...doc,
+          status: serverDoc.status || "Missing",
+          color:
+            serverDoc.status === "Verified"
+              ? "#22C55E"
+              : serverDoc.status === "Pending Verification"
+              ? "#F59E0B"
+              : "#EF4444",
+          file: serverDoc.url,
+          fileName: serverDoc.url
+            ? serverDoc.url.split("/").pop()
+            : undefined,
+        };
+      })
+    );
+  } catch (err) {
+    console.log("Load Documents Error:", err);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   const openUploadModal = (doc: DocumentType) => {
     setSelectedDoc(doc);
