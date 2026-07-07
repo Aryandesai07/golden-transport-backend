@@ -122,8 +122,9 @@ async def upload_document(
             folder=f"driver_documents/{driver_id}/{document_type}",
             public_id=f"{driver_id}_{document_type}",
             overwrite=True,
-            resource_type="auto",
+            resource_type="image",
         )
+        print(result)
     except Exception as e:
         raise HTTPException(500, f"Failed to upload document: {str(e)}")
 
