@@ -67,34 +67,34 @@ def get_documents(
         }
 
     return {
-        "status": "success",
-        "documents": {
-            "license": {
-                "url": document.license_url,
-                "status": document.license_status,
-            },
-            "aadhaar": {
-                "url": document.aadhaar_url,
-                "status": document.aadhaar_status,
-            },
-            "pan": {
-                "url": document.pan_url,
-                "status": document.pan_status,
-            },
-            "rc_book": {
-                "url": document.rc_book_url,
-                "status": document.rc_book_status,
-            },
-            "insurance": {
-                "url": document.insurance_url,
-                "status": document.insurance_status,
-            },
-            "puc": {
-                "url": document.puc_url,
-                "status": document.puc_status,
-            },
+    "status": "success",
+    "documents": {
+        "license": {
+            "url": document.license_url,
+            "status": document.license_status,
         },
-    }
+        "aadhaar": {
+            "url": document.aadhaar_url,
+            "status": document.aadhaar_status,
+        },
+        "pan": {
+            "url": document.pan_url,
+            "status": document.pan_status,
+        },
+        "rc_book": {
+            "url": document.rc_book_url,
+            "status": document.rc_book_status,
+        },
+        "insurance": {
+            "url": document.insurance_url,
+            "status": document.insurance_status,
+        },
+        "puc": {
+            "url": document.puc_url,
+            "status": document.puc_status,
+        },
+    },
+}
         
 @router.post("/documents/upload")
 async def upload_document(
