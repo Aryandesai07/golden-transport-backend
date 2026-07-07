@@ -7,3 +7,5 @@ cloudinary.config(
     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True,
 )
+
+print("Cloudinary:", cloudinary.config().cloud_name)
