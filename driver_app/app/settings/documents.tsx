@@ -166,14 +166,14 @@ export default function DocumentsScreen() {
 const uploadDocument = async () => {
   try {
     if (!selectedDoc?.file) {
-      alert("Please select a file first.");
+      Alert.alert("Error", "Please select a file first.");
       return;
     }
 
     const driverId = await AsyncStorage.getItem("driver_id");
 
     if (!driverId) {
-      alert("Driver not found.");
+      Alert.alert("Error", "Driver not found.");
       return;
     }
 
@@ -197,21 +197,29 @@ const uploadDocument = async () => {
     } as any);
 
     const response = await API.post(
-  "/driver/documents/upload",
-  formData,
-  {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  }
-);
+      "/driver/documents/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     if (response.data.status === "success") {
+
       const updatedDoc = {
         ...selectedDoc,
+
+        // Save Cloudinary URL (IMPORTANT)
+        file: response.data.url,
+
+        // Display original filename
+        fileName: selectedDoc.file.name,
+
         status: "Pending Verification",
         color: "#F59E0B",
-        fileName: selectedDoc.file.name,
+
         uploadedAt: new Date().toLocaleString(),
       };
 
@@ -225,27 +233,37 @@ const uploadDocument = async () => {
         )
       );
 
-      alert("Document uploaded successfully.");
+      Alert.alert(
+        "Success",
+        "Document uploaded successfully."
+      );
 
       setModalVisible(false);
-      setSelectedDoc(null);
+
     } else {
-      alert("Upload failed.");
+      Alert.alert("Error", "Upload failed.");
     }
+
   } catch (error: any) {
-  console.log("UPLOAD ERROR:", error);
 
-  if (error.response) {
-    console.log("STATUS:", error.response.status);
-    console.log("DATA:", error.response.data);
+    console.log("UPLOAD ERROR:", error);
 
-    alert(
-      `Error ${error.response.status}\n${JSON.stringify(error.response.data)}`
-    );
-  } else {
-    alert(error.message);
+    if (error.response) {
+      console.log("STATUS:", error.response.status);
+      console.log("DATA:", error.response.data);
+
+      Alert.alert(
+        "Upload Failed",
+        JSON.stringify(error.response.data)
+      );
+
+    } else {
+      Alert.alert(
+        "Upload Failed",
+        error.message
+      );
+    }
   }
-}
 };
 
 // ==========================
