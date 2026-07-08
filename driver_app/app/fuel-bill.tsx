@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 const BASE_URL =
-  "https://golden-transport-backend-production.up.railway.app";
+  "https://golden-transport-backend.onrender.com";
 
 export default function FuelBill() {
   const [image, setImage] = useState<string | null>(null);

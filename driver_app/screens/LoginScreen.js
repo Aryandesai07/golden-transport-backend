@@ -17,7 +17,7 @@ import { router } from "expo-router";
 // API CONFIG
 // ===============================
 const API_URL =
-  "https://golden-transport-backend-production.up.railway.app";
+  "https://golden-transport-backend.onrender.com";
 
 export default function LoginScreen() {
   const [mobile, setMobile] = useState("");

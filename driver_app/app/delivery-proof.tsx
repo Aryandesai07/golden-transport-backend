@@ -15,7 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, router } from "expo-router";
 
 const BASE_URL =
-  "https://golden-transport-backend-production.up.railway.app";
+  "https://golden-transport-backend.onrender.com";
 
 export default function DeliveryProof() {
   const { tripId } = useLocalSearchParams<{

@@ -65,7 +65,7 @@
     },
 
     "extra": {
-      "apiUrl": "https://golden-transport-backend-production.up.railway.app",
+      "apiUrl": "https://golden-transport-backend.onrender.com",
       "eas": {
         "projectId": "32359c95-82a9-4adc-8f04-e3274889308b"
       }
