@@ -1,5 +1,3 @@
-import os
-import time
 from time import time
 from unittest import result
 
@@ -122,7 +120,7 @@ async def upload_document(
         result = cloudinary.uploader.upload(
             file.file,
             folder=f"driver_documents/{driver_id}/{document_type}",
-            public_id=f"{driver_id}_{document_type}_{int(time.time())}",
+            public_id=f"{driver_id}_{document_type}_{int(time())}",
             overwrite=True,
             invalidate=True,
             resource_type="auto",
