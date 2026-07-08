@@ -4,7 +4,7 @@ import axios from "axios";
 // RAILWAY BACKEND URL
 // =====================================
 const BASE_URL =
-  "https://golden-transport-backend-production.up.railway.app";
+  "https://golden-transport-backend.onrender.com";
 
 console.log("=================================");
 console.log("🚀 API STARTING");
