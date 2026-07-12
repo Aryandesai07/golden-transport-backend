@@ -13,8 +13,21 @@ class Driver(Base):
     mobile = Column(String, unique=True, index=True)
     password = Column(String)
 
+    # Vehicle Information
+
     vehicle_no = Column(String)
+
     vehicle_type = Column(String)
+
+    vehicle_model = Column(String, nullable=True)
+
+    load_capacity = Column(String, nullable=True)
+
+    manufacturer = Column(String, nullable=True)
+
+    fuel_type = Column(String, nullable=True)
+
+    registration_year = Column(String, nullable=True)
     earnings = Column(Integer, default=0)
 
     license_number = Column(String)
@@ -222,3 +235,24 @@ class DriverDocument(Base):
     "Driver",
     back_populates="documents",
 )
+    
+# ==========================================
+# ADMIN TABLE
+# ==========================================
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    username = Column(String, unique=True, nullable=False)
+
+    full_name = Column(String, nullable=False)
+
+    password = Column(String, nullable=False)
+
+    role = Column(String, default="Admin")
+
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

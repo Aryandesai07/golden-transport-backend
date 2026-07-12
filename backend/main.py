@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from admin_routes import router as admin_router
 from database import Base, engine
 from routes.driver import router as driver_router
 from routes.documents import router as documents_router
@@ -75,6 +76,7 @@ app.include_router(
     tags=["Documents"],
 )
 
+app.include_router(admin_router)
 # =====================================
 # HOME
 # =====================================

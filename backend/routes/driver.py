@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
 import os
@@ -43,6 +43,48 @@ def get_db():
     finally:
         db.close()
 
+@router.put("/update-vehicle/{driver_id}")
+def update_vehicle(
+    driver_id:int,
+    data:dict,
+    db:Session=Depends(get_db)
+):
+
+    driver = db.query(Driver).filter(
+        Driver.id==driver_id
+    ).first()
+
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver not found"
+        )
+
+
+    driver.vehicle_type = data.get(
+        "vehicle_type"
+    )
+
+    driver.vehicle_model = data.get(
+        "vehicle_model"
+    )
+
+    driver.load_capacity = data.get(
+        "load_capacity"
+    )
+
+
+    db.commit()
+    db.refresh(driver)
+
+
+    return {
+        "status":"success",
+        "message":"Vehicle updated",
+        "driver":driver
+    }
+    
 @router.post("/update-status")
 def update_status(data: dict, db: Session = Depends(get_db)):
 
