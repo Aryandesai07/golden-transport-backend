@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -38,13 +38,10 @@ def admin_login(
 
     if not admin:
 
-        return {
-
-            "status": "error",
-
-            "message": "Admin not found"
-
-        }
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect password"
+        )
 
     if not verify_password(
 
@@ -54,13 +51,11 @@ def admin_login(
 
     ):
 
-        return {
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect password"
+        )
 
-            "status": "error",
-
-            "message": "Incorrect password"
-
-        }
 
     token = create_admin_token(
 
