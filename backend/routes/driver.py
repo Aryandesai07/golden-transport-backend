@@ -87,7 +87,7 @@ def update_vehicle(
         "driver":driver
     }
     
-@router.post("/update-status")
+@router.post("/update-trip-status")
 def update_status(data: dict, db: Session = Depends(get_db)):
 
     try:

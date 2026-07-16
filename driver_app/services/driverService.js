@@ -4,9 +4,7 @@ import API from "./api";
 // GET DRIVER TRIPS
 // =============================
 export const getDriverTrips = async (driverId) => {
-  const response = await API.get(
-    `/driver/my-trips/${driverId}`
-  );
+  const response = await API.get(`/driver/trips/${driverId}`);
 
   return response.data;
 };

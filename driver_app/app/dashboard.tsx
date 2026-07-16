@@ -45,7 +45,7 @@ export default function Dashboard() {
   const fetchTrips = useCallback(async (driverId: number, token: string) => {
     try {
       const response = await API.get(
-        `/driver/my-trips/${driverId}`,
+        `/driver/trips/${driverId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
