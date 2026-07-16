@@ -169,28 +169,33 @@ def login_driver(
 
 @router.get("/trips/{driver_id}")
 def get_trips(driver_id: int, db: Session = Depends(get_db)):
+    try:
+        trips = db.query(Trip).filter(
+            Trip.driver_id == driver_id
+        ).all()
 
-    trips = db.query(Trip).filter(Trip.driver_id == driver_id).all()
-
-    if not trips:
         return {
             "status": "success",
-            "trips": [],
-            "message": "No trips assigned"
+            "trips": [
+                {
+                    "trip_id": t.id,
+                    "pickup": t.pickup,
+                    "drop": t.drop_location,
+                    "status": t.status,
+                }
+                for t in trips
+            ],
         }
 
-    return {
-        "status": "success",
-        "trips": [
-            {
-                "trip_id": t.id,
-                "pickup": t.pickup,
-                "drop": t.drop_location,
-                "status": t.status
-            }
-            for t in trips
-        ]
-    }
+    except Exception as e:
+        print("========== GET TRIPS ERROR ==========")
+        print(e)
+        print("=====================================")
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 # =========================================
 # UPDATE TRIP STATUS
 # =========================================

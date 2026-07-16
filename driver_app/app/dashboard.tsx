@@ -43,21 +43,26 @@ export default function Dashboard() {
   // ======================================
 
   const fetchTrips = useCallback(async (driverId: number, token: string) => {
-  try {
-    const response = await API.get(`/driver/trips/${driverId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const response = await API.get(
+        `/driver/my-trips/${driverId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    if (response.data?.status === "success") {
-      setTrips(response.data.trips || []);
-    } else {
+      if (response.data.status === "success") {
+        setTrips(response.data.trips);
+      } else {
+        setTrips([]);
+      }
+    } catch (error) {
+      console.log(error);
       setTrips([]);
     }
-  } catch (error: any) {
-    console.log("Fetch Trips Error:", error);
-    setTrips([]);
-  }
-}, []);
+  }, []);
   // ======================================
   // LOAD DASHBOARD
   // ======================================
@@ -103,10 +108,17 @@ export default function Dashboard() {
     const token = await AsyncStorage.getItem("token");  // ✅ get token
 
     const response = await API.post(
-      "/driver/update-status",
-      { trip_id: tripId, status },
-      { headers: { Authorization: `Bearer ${token}` } }  // ✅ secure call
-    );
+    "/driver/update-trip-status",
+    {
+        trip_id: tripId,
+        status,
+    },
+    {
+        headers:{
+            Authorization:`Bearer ${token}`,
+        },
+    }
+);
 
     Alert.alert("Success", response.data.message || `Trip Updated To ${status}`);
 
