@@ -49,42 +49,81 @@ class Driver(Base):
 )
 
 
-# =========================
-# TRIP TABLE
-# =========================
 class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, index=True)
-    driver_id = Column(Integer, ForeignKey("drivers.id"), index=True)
+
+    driver_id = Column(Integer, ForeignKey("drivers.id"))
+
+    trip_number = Column(String, unique=True, index=True)
+
+    customer_name = Column(String)
+
+    customer_mobile = Column(String)
 
     pickup = Column(String)
+
     drop_location = Column(String)
-    status = Column(String)
+
+    material = Column(String)
+
+    load_weight = Column(String)
+
+    amount = Column(Float)
+
+    expected_delivery = Column(DateTime)
+
+    remarks = Column(String, nullable=True)
+
+    status = Column(String, default="ASSIGNED")
 
     proof_image = Column(String, nullable=True)
 
-    # Relationships
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc)
+    )
+
     driver = relationship("Driver", back_populates="trips")
-    payments = relationship("Payment", back_populates="trip")
-    delivery_proofs = relationship("DeliveryProof", back_populates="trip")
 
+    payments = relationship(
+        "Payment",
+        back_populates="trip",
+    )
 
+    delivery_proofs = relationship(
+        "DeliveryProof",
+        back_populates="trip",
+    )
 # =========================
 # DRIVER LIVE LOCATION
 # =========================
+
 class DriverLocation(Base):
     __tablename__ = "driver_locations"
 
     id = Column(Integer, primary_key=True, index=True)
-    driver_id = Column(Integer, ForeignKey("drivers.id"), index=True)
+
+    driver_id = Column(
+        Integer,
+        ForeignKey("drivers.id"),
+        index=True,
+    )
 
     latitude = Column(Float)
+
     longitude = Column(Float)
 
-    driver = relationship("Driver", back_populates="locations")
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
 
-
+    driver = relationship(
+        "Driver",
+        back_populates="locations",
+    )
 # =========================
 # FUEL BILL
 # =========================

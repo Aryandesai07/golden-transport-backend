@@ -5,10 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from admin_routes import router as admin_router
 from database import Base, engine
+
+from admin_routes import router as admin_router
 from routes.driver import router as driver_router
 from routes.documents import router as documents_router
+from routes import admin_trip
 
 # =====================================
 # CREATE DATABASE TABLES
@@ -64,6 +66,7 @@ app.mount(
 # =====================================
 # ROUTES
 # =====================================
+
 app.include_router(
     driver_router,
     prefix="/driver",
@@ -77,9 +80,13 @@ app.include_router(
 )
 
 app.include_router(admin_router)
+
+app.include_router(admin_trip.router)
+
 # =====================================
 # HOME
 # =====================================
+
 @app.get("/")
 def home():
     return {
@@ -87,18 +94,20 @@ def home():
         "message": "Golden Transport API Running",
     }
 
+
 # =====================================
 # TEST
 # =====================================
+
 @app.get("/test")
 def test():
-    return {
-        "status": "OK",
-    }
+    return {"status": "OK"}
+
 
 # =====================================
 # HEALTH
 # =====================================
+
 @app.get("/health")
 def health():
     return {
@@ -106,9 +115,11 @@ def health():
         "database": "Connected",
     }
 
+
 # =====================================
 # POST TEST
 # =====================================
+
 @app.post("/ping")
 def ping():
     return {
@@ -116,9 +127,11 @@ def ping():
         "message": "POST is working",
     }
 
+
 # =====================================
-# VERSION (DEBUG)
+# VERSION
 # =====================================
+
 @app.get("/version")
 def version():
     return {
@@ -127,10 +140,11 @@ def version():
         "time": "force-redeploy",
     }
 
-print("=============================\n")
+
 # =====================================
 # ENTRY POINT
 # =====================================
+
 if __name__ == "__main__":
     import uvicorn
 
