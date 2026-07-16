@@ -1,3 +1,5 @@
+import traceback
+
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
@@ -188,14 +190,9 @@ def get_trips(driver_id: int, db: Session = Depends(get_db)):
         }
 
     except Exception as e:
-        print("========== GET TRIPS ERROR ==========")
-        print(e)
-        print("=====================================")
-
-        raise HTTPException(
-            status_code=500,
-            detail=str(e)
-        )
+        traceback.print_exc()
+        print("ERROR:", repr(e))
+        raise HTTPException(status_code=500, detail=repr(e))
 # =========================================
 # UPDATE TRIP STATUS
 # =========================================
