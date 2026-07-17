@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from models import Driver, Trip, FuelBill, SOSAlert
 from database import SessionLocal
 from models import Driver, Trip
 from schemas import TripCreate
@@ -119,4 +120,84 @@ def create_trip(
 
         },
 
+    }
+    
+@router.get("/dashboard")
+def admin_dashboard(db: Session = Depends(get_db)):
+
+    recent_trips = (
+        db.query(Trip)
+        .order_by(Trip.id.desc())
+        .limit(5)
+        .all()
+    )
+
+    return {
+        "status": "success",
+
+        "stats": {
+            "drivers": db.query(Driver).count(),
+
+            "trips": db.query(Trip).count(),
+
+            "active_trips": db.query(Trip).filter(
+                Trip.status.in_(
+                    [
+                        "ASSIGNED",
+                        "STARTED",
+                        "REACHED_PICKUP",
+                        "LOADED",
+                        "IN_TRANSIT",
+                    ]
+                )
+            ).count(),
+
+            "fuel_bills": db.query(FuelBill).count(),
+
+            "proofs": db.query(Trip).filter(
+                Trip.proof_image.isnot(None)
+            ).count(),
+
+            "sos_alerts": db.query(SOSAlert).filter(
+                SOSAlert.status == "ACTIVE"
+            ).count(),
+        },
+
+        "recent_trips": [
+            {
+                "id": t.id,
+                "trip_number": t.trip_number,
+                "pickup": t.pickup,
+                "drop": t.drop_location,
+                "driver_id": t.driver_id,
+                "status": t.status,
+            }
+            for t in recent_trips
+        ],
+    }
+    
+# =====================================
+# GET ALL TRIPS
+# =====================================
+
+@router.get("/trips")
+def get_all_trips(db: Session = Depends(get_db)):
+
+    trips = db.query(Trip).order_by(Trip.id.desc()).all()
+
+    return {
+        "status": "success",
+        "trips": [
+            {
+                "id": trip.id,
+                "trip_number": trip.trip_number,
+                "customer_name": trip.customer_name,
+                "pickup": trip.pickup,
+                "drop": trip.drop_location,
+                "driver_id": trip.driver_id,
+                "status": trip.status,
+                "amount": trip.amount,
+            }
+            for trip in trips
+        ],
     }

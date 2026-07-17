@@ -45,6 +45,10 @@ def get_db():
     finally:
         db.close()
 
+@router.get("/route-test")
+def route_test():
+    return {"message": "driver router working"}
+
 @router.put("/update-vehicle/{driver_id}")
 def update_vehicle(
     driver_id:int,
