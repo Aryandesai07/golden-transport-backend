@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Driver, DriverDocument
+from models import AdminNotification
 
 router = APIRouter(
     prefix="/admin",
@@ -55,4 +56,34 @@ def get_driver_details(
             "insurance_url": documents.insurance_url if documents else None,
             "puc_url": documents.puc_url if documents else None,
         },
+    }
+# =====================================
+# ADMIN NOTIFICATIONS
+# =====================================
+
+@router.get("/notifications")
+def get_admin_notifications(
+    db: Session = Depends(get_db),
+):
+
+    notifications = (
+        db.query(AdminNotification)
+        .order_by(AdminNotification.id.desc())
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "notifications": [
+            {
+                "id": n.id,
+                "driver_id": n.driver_id,
+                "title": n.title,
+                "message": n.message,
+                "type": n.type,
+                "status": n.status,
+                "created_at": n.created_at,
+            }
+            for n in notifications
+        ],
     }

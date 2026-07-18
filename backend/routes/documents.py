@@ -17,7 +17,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import DriverDocument
+from models import DriverDocument, AdminNotification, Driver
 router = APIRouter()
 
 @router.get("/documents/download/{driver_id}/{document_type}")
@@ -151,8 +151,27 @@ async def upload_document(
     db.commit()
     db.refresh(document)
 
+    # Get driver details
+    driver = (
+        db.query(Driver)
+        .filter(Driver.id == driver_id)
+        .first()
+    )
+
+    # Create admin notification
+    notification = AdminNotification(
+        driver_id=driver_id,
+        title=f"{document_type.capitalize()} Uploaded",
+        message=f"{driver.name} uploaded {document_type.capitalize()} for verification.",
+        type="DOCUMENT",
+        status="UNREAD",
+    )
+
+    db.add(notification)
+    db.commit()
+
     return {
         "status": "success",
         "message": f"{document_type.capitalize()} uploaded successfully",
         "url": file_url,
-    }    
+    }   
