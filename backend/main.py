@@ -12,7 +12,11 @@ from routes.driver import router as driver_router
 from routes.documents import router as documents_router
 from routes import admin_trip
 
+
 from admin_driver_routes import router as admin_driver_router
+
+from admin_document_routes import router as admin_document_router
+
 # =====================================
 # CREATE DATABASE TABLES
 # =====================================
@@ -85,6 +89,8 @@ app.include_router(admin_router)
 app.include_router(admin_trip.router)
 
 app.include_router(admin_driver_router)
+
+app.include_router(admin_document_router)
 # =====================================
 # HOME
 # =====================================
