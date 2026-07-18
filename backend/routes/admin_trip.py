@@ -201,3 +201,43 @@ def get_all_trips(db: Session = Depends(get_db)):
             for trip in trips
         ],
     }
+    
+# =====================================
+# GET SINGLE TRIP DETAILS
+# =====================================
+
+@router.get("/trip/{trip_id}")
+def get_trip_details(
+    trip_id: int,
+    db: Session = Depends(get_db),
+):
+
+    trip = db.query(Trip).filter(
+        Trip.id == trip_id
+    ).first()
+
+    if not trip:
+        raise HTTPException(
+            status_code=404,
+            detail="Trip not found",
+        )
+
+    return {
+        "status": "success",
+        "trip": {
+            "id": trip.id,
+            "trip_number": trip.trip_number,
+            "driver_id": trip.driver_id,
+            "customer_name": trip.customer_name,
+            "customer_mobile": trip.customer_mobile,
+            "pickup": trip.pickup,
+            "drop_location": trip.drop_location,
+            "material": trip.material,
+            "load_weight": trip.load_weight,
+            "amount": trip.amount,
+            "expected_delivery": trip.expected_delivery,
+            "remarks": trip.remarks,
+            "status": trip.status,
+            "created_at": trip.created_at,
+        },
+    }
