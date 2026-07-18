@@ -295,3 +295,29 @@ class Admin(Base):
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+class AdminNotification(Base):
+    __tablename__ = "admin_notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    driver_id = Column(
+        Integer,
+        ForeignKey("drivers.id"),
+        nullable=False,
+    )
+
+    title = Column(String, nullable=False)
+
+    message = Column(String, nullable=False)
+
+    type = Column(String, default="DOCUMENT")
+
+    status = Column(String, default="UNREAD")
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    driver = relationship("Driver")
