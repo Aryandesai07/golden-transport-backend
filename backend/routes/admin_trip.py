@@ -256,11 +256,12 @@ def get_all_drivers(db: Session = Depends(get_db)):
         "drivers": [
             {
                 "id": driver.id,
-                "full_name": driver.full_name,
+                "name": driver.name,
                 "mobile": driver.mobile,
-                "vehicle_number": driver.vehicle_number,
+                "vehicle_no": driver.vehicle_no,
+                "vehicle_type": driver.vehicle_type,
                 "license_number": driver.license_number,
-                "status": driver.status,
+                "earnings": driver.earnings,
             }
             for driver in drivers
         ],
