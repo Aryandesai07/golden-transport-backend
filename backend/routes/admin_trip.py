@@ -241,3 +241,27 @@ def get_trip_details(
             "created_at": trip.created_at,
         },
     }
+    
+# =====================================
+# GET ALL DRIVERS
+# =====================================
+
+@router.get("/drivers")
+def get_all_drivers(db: Session = Depends(get_db)):
+
+    drivers = db.query(Driver).order_by(Driver.id.desc()).all()
+
+    return {
+        "status": "success",
+        "drivers": [
+            {
+                "id": driver.id,
+                "full_name": driver.full_name,
+                "mobile": driver.mobile,
+                "vehicle_number": driver.vehicle_number,
+                "license_number": driver.license_number,
+                "status": driver.status,
+            }
+            for driver in drivers
+        ],
+    }
