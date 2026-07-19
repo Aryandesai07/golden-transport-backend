@@ -94,6 +94,10 @@ def reject_document(
     setattr(document, status_field, "Rejected")
     setattr(document, reason_field, reason)
 
+    print("Reason Field:", reason_field)
+    print("Reason:", reason)
+    print("Value:", getattr(document, reason_field))
+    
     db.commit()
     db.refresh(document)
 
