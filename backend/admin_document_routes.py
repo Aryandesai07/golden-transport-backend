@@ -77,6 +77,7 @@ def reject_document(
 
     status_field = f"{document_type}_status"
     url_field = f"{document_type}_url"
+    reason_field = f"{document_type}_rejection_reason"
 
     if not hasattr(document, status_field):
         raise HTTPException(
@@ -84,7 +85,6 @@ def reject_document(
             detail="Invalid document type",
         )
 
-    # Don't allow rejection if no document is uploaded
     if not getattr(document, url_field):
         raise HTTPException(
             status_code=400,
@@ -92,12 +92,10 @@ def reject_document(
         )
 
     setattr(document, status_field, "Rejected")
-
-    reason_field = f"{document_type}_rejection_reason"
-
     setattr(document, reason_field, reason)
 
     db.commit()
+    db.refresh(document)
 
     return {
         "status": "success",
