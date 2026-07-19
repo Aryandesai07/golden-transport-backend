@@ -33,7 +33,12 @@ def get_driver_details(
         .filter(DriverDocument.driver_id == driver_id)
         .first()
     )
-
+    db.refresh(documents)
+    
+    print("License:", documents.license_rejection_reason)
+    print("Aadhaar:", documents.aadhaar_rejection_reason)
+    print("PAN:", documents.pan_rejection_reason)
+    
     return {
         "status": "success",
 
