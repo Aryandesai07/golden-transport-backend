@@ -51,23 +51,27 @@ def get_driver_details(
         "documents": {
             "license_url": documents.license_url,
             "license_status": documents.license_status,
+            "license_rejection_reason": documents.license_rejection_reason,
 
             "aadhaar_url": documents.aadhaar_url,
             "aadhaar_status": documents.aadhaar_status,
+            "aadhaar_rejection_reason": documents.aadhaar_rejection_reason,
 
             "pan_url": documents.pan_url,
             "pan_status": documents.pan_status,
+            "pan_rejection_reason": documents.pan_rejection_reason,
 
             "rc_book_url": documents.rc_book_url,
             "rc_book_status": documents.rc_book_status,
+            "rc_book_rejection_reason": documents.rc_book_rejection_reason,
 
             "insurance_url": documents.insurance_url,
             "insurance_status": documents.insurance_status,
+            "insurance_rejection_reason": documents.insurance_rejection_reason,
 
             "puc_url": documents.puc_url,
             "puc_status": documents.puc_status,
-
-            "rejection_reason": documents.rejection_reason,
+            "puc_rejection_reason": documents.puc_rejection_reason,
         }
     }
 # =====================================
