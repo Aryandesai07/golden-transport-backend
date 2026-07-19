@@ -9,6 +9,7 @@ router = APIRouter(
     tags=["Admin Documents"],
 )
 
+
 @router.post("/approve")
 def approve_document(
     driver_id: int,
@@ -28,6 +29,7 @@ def approve_document(
         )
 
     status_field = f"{document_type}_status"
+    url_field = f"{document_type}_url"
 
     if not hasattr(document, status_field):
         raise HTTPException(
@@ -35,15 +37,25 @@ def approve_document(
             detail="Invalid document type",
         )
 
-    setattr(document, status_field, "Approved")
+    # Don't allow approval if no document is uploaded
+    if not getattr(document, url_field):
+        raise HTTPException(
+            status_code=400,
+            detail="Document not uploaded",
+        )
+
+    reason_field = f"{document_type}_rejection_reason"
+
+    setattr(document, reason_field, None)
 
     db.commit()
 
     return {
         "status": "success",
-        "message": f"{document_type} approved successfully"
+        "message": f"{document_type} approved successfully",
     }
-    
+
+
 @router.post("/reject")
 def reject_document(
     driver_id: int,
@@ -64,6 +76,7 @@ def reject_document(
         )
 
     status_field = f"{document_type}_status"
+    url_field = f"{document_type}_url"
 
     if not hasattr(document, status_field):
         raise HTTPException(
@@ -71,9 +84,18 @@ def reject_document(
             detail="Invalid document type",
         )
 
+    # Don't allow rejection if no document is uploaded
+    if not getattr(document, url_field):
+        raise HTTPException(
+            status_code=400,
+            detail="Document not uploaded",
+        )
+
     setattr(document, status_field, "Rejected")
 
-    document.rejection_reason = reason
+    reason_field = f"{document_type}_rejection_reason"
+
+    setattr(document, reason_field, reason)
 
     db.commit()
 

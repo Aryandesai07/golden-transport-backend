@@ -252,12 +252,18 @@ class DriverDocument(Base):
     rc_book_status = Column(String, default="Missing")
     insurance_status = Column(String, default="Missing")
     puc_status = Column(String, default="Missing")
-
+    
     # =========================
-    # ADMIN REMARK
+    # REJECTION REASONS
     # =========================
 
-    rejection_reason = Column(String, nullable=True)
+    license_rejection_reason = Column(String, nullable=True)
+    aadhaar_rejection_reason = Column(String, nullable=True)
+    pan_rejection_reason = Column(String, nullable=True)
+
+    rc_book_rejection_reason = Column(String, nullable=True)
+    insurance_rejection_reason = Column(String, nullable=True)
+    puc_rejection_reason = Column(String, nullable=True)
 
     # =========================
     # CREATED DATE
