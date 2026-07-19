@@ -49,13 +49,26 @@ def get_driver_details(
         },
 
         "documents": {
-            "license_url": documents.license_url if documents else None,
-            "aadhaar_url": documents.aadhaar_url if documents else None,
-            "pan_url": documents.pan_url if documents else None,
-            "rc_book_url": documents.rc_book_url if documents else None,
-            "insurance_url": documents.insurance_url if documents else None,
-            "puc_url": documents.puc_url if documents else None,
-        },
+            "license_url": documents.license_url,
+            "license_status": documents.license_status,
+
+            "aadhaar_url": documents.aadhaar_url,
+            "aadhaar_status": documents.aadhaar_status,
+
+            "pan_url": documents.pan_url,
+            "pan_status": documents.pan_status,
+
+            "rc_book_url": documents.rc_book_url,
+            "rc_book_status": documents.rc_book_status,
+
+            "insurance_url": documents.insurance_url,
+            "insurance_status": documents.insurance_status,
+
+            "puc_url": documents.puc_url,
+            "puc_status": documents.puc_status,
+
+            "rejection_reason": documents.rejection_reason,
+        }
     }
 # =====================================
 # ADMIN NOTIFICATIONS
