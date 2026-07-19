@@ -8,6 +8,9 @@ import shutil
 import time
 import folium
 from database import SessionLocal
+import cloudinary.uploader
+import cloudinary_config
+
 from models import (
     Driver,
     Notification,
@@ -245,15 +248,51 @@ def driver_profile(
         return {"status": "error", "message": "Driver not found"}
 
     return {
+    "status": "success",
+    "driver": {
+        "id": driver.id,
+        "name": driver.name,
+        "mobile": driver.mobile,
+        "vehicle_no": driver.vehicle_no,
+        "vehicle_type": driver.vehicle_type,
+        "earnings": driver.earnings,
+        "photo": driver.photo,
+    }
+}
+    
+@router.post("/upload-profile-photo")
+async def upload_profile_photo(
+    driver_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    driver = db.query(Driver).filter(
+        Driver.id == driver_id
+    ).first()
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver not found",
+        )
+
+    upload_result = cloudinary.uploader.upload(
+        file.file,
+        folder=f"driver_profile/{driver_id}",
+        public_id=f"profile_{driver_id}",
+        overwrite=True,
+        resource_type="image",
+    )
+
+    driver.photo = upload_result["secure_url"]
+
+    db.commit()
+    db.refresh(driver)
+
+    return {
         "status": "success",
-        "driver": {
-            "id": driver.id,
-            "name": driver.name,
-            "mobile": driver.mobile,
-            "vehicle_no": driver.vehicle_no,
-            "vehicle_type": driver.vehicle_type,
-            "earnings": driver.earnings
-        }
+        "message": "Profile photo uploaded successfully",
+        "photo": driver.photo,
     }
     
 @router.post("/location")
@@ -663,3 +702,4 @@ def get_all_drivers(db: Session = Depends(get_db)):
             for d in drivers
         ],
     }
+    
