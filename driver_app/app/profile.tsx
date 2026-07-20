@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 import {
   View,
   Text,
@@ -8,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -25,6 +27,7 @@ interface DriverProfile {
   vehicle_no: string;
   vehicle_type: string;
   earnings?: number;
+  photo?: string | null;
 }
 
 // =====================================
@@ -43,6 +46,8 @@ export default function Profile() {
   const [vehicleType, setVehicleType] = useState<string>("");
 
   const [documents, setDocuments] = useState<any>(null);
+
+  const [photo, setPhoto] = useState<string | null>(null);
 
   // =====================================
   // LOAD PROFILE
@@ -86,6 +91,7 @@ export default function Profile() {
         setMobile(driver?.mobile ?? "");
         setVehicleNo(driver?.vehicle_no ?? "");
         setVehicleType(driver?.vehicle_type ?? "");
+        setPhoto(driver?.photo ?? null);
       } else {
         Alert.alert(
           "Error",
@@ -116,7 +122,64 @@ export default function Profile() {
       setLoading(false);
     }
   };
-    // =====================================
+
+
+  const pickProfilePhoto = async () => {
+    if (!driverId) return;
+
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("Gallery permission required");
+      return;
+    }
+
+    const result =
+      await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+    if (result.canceled) return;
+
+    const image = result.assets[0];
+
+    const formData = new FormData();
+
+    formData.append("driver_id", String(driverId));
+
+    formData.append("file", {
+      uri: image.uri,
+      type: "image/jpeg",
+      name: "profile.jpg",
+    } as any);
+
+    try {
+      const response = await API.post(
+        "/driver/upload-profile-photo",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.status === "success") {
+        setPhoto(response.data.photo);
+        Alert.alert("Success", "Profile photo updated");
+      }
+
+    } catch (error: any) {
+        console.log(error);
+        Alert.alert("Error", "Photo upload failed");
+      }
+  };
+
+  // =====================================
   // UPDATE PROFILE
   // =====================================
 
@@ -237,6 +300,26 @@ export default function Profile() {
         👤 Driver Profile
       </Text>
 
+      <View style={styles.photoContainer}>
+        <Image
+          source={
+            photo
+              ? { uri: photo }
+              : require("../assets/profile.png")
+          }
+          style={styles.photo}
+        />
+
+        <TouchableOpacity
+          style={styles.photoButton}
+          onPress={pickProfilePhoto}
+        >
+          <Text style={styles.photoButtonText}>
+            Change Photo
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* ================= DOCUMENT CARD ================= */}
       <View style={styles.card}>
         <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
@@ -245,7 +328,7 @@ export default function Profile() {
 
         <Text>
           License:{" "}
-          {documents?.license
+          {documents?.license_url
             ? "✔ Uploaded"
             : "❌ Missing"}
         </Text>
@@ -391,4 +474,31 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+
+  photoContainer: {
+  alignItems: "center",
+  marginBottom: 20,
+},
+
+photo: {
+  width: 130,
+  height: 130,
+  borderRadius: 65,
+  borderWidth: 3,
+  borderColor: "#2563EB",
+  backgroundColor: "#E5E7EB",
+},
+
+photoButton: {
+  marginTop: 12,
+  backgroundColor: "#2563EB",
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  borderRadius: 10,
+},
+
+photoButtonText: {
+  color: "#FFF",
+  fontWeight: "bold",
+},
 });
