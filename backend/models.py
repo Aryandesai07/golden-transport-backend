@@ -32,7 +32,9 @@ class Driver(Base):
 
     license_number = Column(String)
     address = Column(String)
-    photo = Column(String)
+
+    photo = Column(String, nullable=True)
+    online = Column(Boolean, default=False)
 
     # Relationships
     trips = relationship("Trip", back_populates="driver")
@@ -79,10 +81,6 @@ class Trip(Base):
     status = Column(String, default="ASSIGNED")
 
     proof_image = Column(String, nullable=True)
-    
-    photo = Column(String, nullable=True)
-
-    online = Column(Boolean, default=False)
 
     created_at = Column(
         DateTime,
