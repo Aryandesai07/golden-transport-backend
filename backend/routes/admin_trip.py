@@ -262,6 +262,7 @@ def get_all_drivers(db: Session = Depends(get_db)):
                 "vehicle_type": driver.vehicle_type,
                 "license_number": driver.license_number,
                 "earnings": driver.earnings,
+                "photo": driver.photo,
             }
             for driver in drivers
         ],
