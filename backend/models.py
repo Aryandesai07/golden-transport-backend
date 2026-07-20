@@ -79,6 +79,10 @@ class Trip(Base):
     status = Column(String, default="ASSIGNED")
 
     proof_image = Column(String, nullable=True)
+    
+    photo = Column(String, nullable=True)
+
+    online = Column(Boolean, default=False)
 
     created_at = Column(
         DateTime,

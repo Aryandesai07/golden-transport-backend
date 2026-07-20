@@ -115,7 +115,6 @@ def update_status(data: dict, db: Session = Depends(get_db)):
 # =========================================
 # DRIVER LOGIN
 # =========================================
-
 @router.post("/login")
 def login_driver(
     data: DriverLogin,
@@ -142,8 +141,9 @@ def login_driver(
     print("Stored Password :", driver.password)
 
     # =====================================
-    # SIMPLE PASSWORD CHECK
+    # PASSWORD CHECK
     # =====================================
+
     if data.password != driver.password:
         print("❌ Invalid Password")
 
@@ -151,6 +151,18 @@ def login_driver(
             "status": "error",
             "message": "Invalid password"
         }
+
+    # =====================================
+    # SET DRIVER ONLINE
+    # =====================================
+
+    driver.online = True
+    db.commit()
+    db.refresh(driver)
+
+    # =====================================
+    # CREATE TOKEN
+    # =====================================
 
     token = create_access_token(
         {"driver_id": driver.id}
@@ -169,8 +181,32 @@ def login_driver(
             "mobile": driver.mobile,
             "vehicle_no": driver.vehicle_no,
             "vehicle_type": driver.vehicle_type,
-            "earnings": driver.earnings
+            "earnings": driver.earnings,
+            "photo": driver.photo,
+            "online": driver.online
         }
+    }
+    
+@router.post("/logout")
+def logout_driver(data: dict, db: Session = Depends(get_db)):
+
+    driver = db.query(Driver).filter(
+        Driver.id == data["driver_id"]
+    ).first()
+
+    if not driver:
+        return {
+            "status": "error",
+            "message": "Driver not found"
+        }
+
+    driver.online = False
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Logged out"
     }
 # =========================================
 # GET DRIVER TRIPS
@@ -250,14 +286,15 @@ def driver_profile(
     return {
     "status": "success",
     "driver": {
-        "id": driver.id,
-        "name": driver.name,
-        "mobile": driver.mobile,
-        "vehicle_no": driver.vehicle_no,
-        "vehicle_type": driver.vehicle_type,
-        "earnings": driver.earnings,
-        "photo": driver.photo,
-    }
+    "id": driver.id,
+    "name": driver.name,
+    "mobile": driver.mobile,
+    "vehicle_no": driver.vehicle_no,
+    "vehicle_type": driver.vehicle_type,
+    "earnings": driver.earnings,
+    "photo": driver.photo,
+    "online": driver.online,
+}
 }
     
 @router.post("/upload-profile-photo")
@@ -698,6 +735,8 @@ def get_all_drivers(db: Session = Depends(get_db)):
                 "mobile": d.mobile,
                 "vehicle_no": d.vehicle_no,
                 "vehicle_type": d.vehicle_type,
+                "photo": d.photo,
+                "online": d.online,
             }
             for d in drivers
         ],
