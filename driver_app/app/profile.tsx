@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import {
   View,
   Text,
@@ -49,6 +50,8 @@ export default function Profile() {
 
   const [photo, setPhoto] = useState<string | null>(null);
 
+  const [earnings, setEarnings] = useState<number>(0);
+
   // =====================================
   // LOAD PROFILE
   // =====================================
@@ -92,6 +95,7 @@ export default function Profile() {
         setVehicleNo(driver?.vehicle_no ?? "");
         setVehicleType(driver?.vehicle_type ?? "");
         setPhoto(driver?.photo ?? null);
+        setEarnings(driver?.earnings ?? 0);
       } else {
         Alert.alert(
           "Error",
@@ -296,9 +300,44 @@ export default function Profile() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>
-        👤 Driver Profile
-      </Text>
+      {/* ================= PROFILE HEADER ================= */}
+
+      <LinearGradient
+        colors={["#2563EB", "#3B82F6"]}
+        style={styles.profileHeader}
+      >
+
+        <TouchableOpacity onPress={pickProfilePhoto}>
+
+          <Image
+            source={
+              photo
+                ? { uri: photo }
+                : require("../assets/profile.png")
+            }
+            style={styles.profileImage}
+          />
+
+        </TouchableOpacity>
+
+        <Text style={styles.driverName}>
+          {name || "Driver"}
+        </Text>
+
+        <Text style={styles.driverId}>
+          Driver ID : #{driverId}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.changePhotoButton}
+          onPress={pickProfilePhoto}
+        >
+          <Text style={styles.changePhotoText}>
+            Change Photo
+          </Text>
+        </TouchableOpacity>
+
+      </LinearGradient>
 
       <View style={styles.photoContainer}>
         <Image
@@ -320,82 +359,235 @@ export default function Profile() {
         </TouchableOpacity>
       </View>
 
-      {/* ================= DOCUMENT CARD ================= */}
-      <View style={styles.card}>
-        <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
-          📄 Documents
+      {/* ================= EARNINGS CARD ================= */}
+
+      <View style={styles.earningsCard}>
+
+        <Text style={styles.earningsTitle}>
+          💰 Total Earnings
         </Text>
 
-        <Text>
-          License:{" "}
-          {documents?.license_url
-            ? "✔ Uploaded"
-            : "❌ Missing"}
+        <Text style={styles.earningsAmount}>
+          ₹ {earnings.toLocaleString()}
         </Text>
+
       </View>
 
-      {/* ================= PROFILE CARD ================= */}
+      {/* ================= DOCUMENTS ================= */}
+
       <View style={styles.card}>
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          value={name}
-          onChangeText={setName}
-        />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Mobile Number"
-          keyboardType="phone-pad"
-          maxLength={10}
-          value={mobile}
-          onChangeText={setMobile}
-        />
+        <Text style={styles.cardTitle}>
+          📄 Driver Documents
+        </Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Vehicle Number"
-          value={vehicleNo}
-          onChangeText={setVehicleNo}
-        />
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>🪪 License</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Vehicle Type"
-          value={vehicleType}
-          onChangeText={setVehicleType}
-        />
-
-        {/* ================= SAVE BUTTON ================= */}
-        <TouchableOpacity
-          style={[
-            styles.saveBtn,
-            saving && styles.disabledBtn,
-          ]}
-          onPress={updateProfile}
-          disabled={saving}
-          activeOpacity={0.8}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.btnText}>
-              💾 Save Changes
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        {/* ================= BACK BUTTON ================= */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.btnText}>
-            ⬅ Back
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.license_status === "Approved"
+                ? styles.green
+                : documents?.license_status === "Pending Verification"
+                ? styles.orange
+                : documents?.license_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.license_status ?? "Missing"}
           </Text>
-        </TouchableOpacity>
+        </View>
+
+        {documents?.license_rejection_reason && (
+          <Text style={styles.rejectReason}>
+            Reason : {documents.license_rejection_reason}
+          </Text>
+        )}
+
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>🆔 Aadhaar</Text>
+
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.aadhaar_status === "Approved"
+                ? styles.green
+                : documents?.aadhaar_status === "Pending Verification"
+                ? styles.orange
+                : documents?.aadhaar_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.aadhaar_status ?? "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>💳 PAN</Text>
+
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.pan_status === "Approved"
+                ? styles.green
+                : documents?.pan_status === "Pending Verification"
+                ? styles.orange
+                : documents?.pan_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.pan_status ?? "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>📘 RC Book</Text>
+
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.rc_book_status === "Approved"
+                ? styles.green
+                : documents?.rc_book_status === "Pending Verification"
+                ? styles.orange
+                : documents?.rc_book_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.rc_book_status ?? "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>🛡 Insurance</Text>
+
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.insurance_status === "Approved"
+                ? styles.green
+                : documents?.insurance_status === "Pending Verification"
+                ? styles.orange
+                : documents?.insurance_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.insurance_status ?? "Missing"}
+          </Text>
+        </View>
+
+        <View style={styles.docRow}>
+          <Text style={styles.docName}>🚗 PUC</Text>
+
+          <Text
+            style={[
+              styles.docStatus,
+              documents?.puc_status === "Approved"
+                ? styles.green
+                : documents?.puc_status === "Pending Verification"
+                ? styles.orange
+                : documents?.puc_status === "Rejected"
+                ? styles.red
+                : styles.gray,
+            ]}
+          >
+            {documents?.puc_status ?? "Missing"}
+          </Text>
+        </View>
+
       </View>
+
+            {/* ================= PROFILE CARD ================= */}
+
+            <View style={styles.card}>
+
+              {/* Profile Photo */}
+
+              <View style={styles.photoContainer}>
+
+                <Image
+                  source={
+                    photo
+                      ? { uri: photo }
+                      : require("../assets/profile.png")
+                  }
+                  style={styles.profilePhoto}
+                />
+
+                <TouchableOpacity
+                  style={styles.photoButton}
+                  onPress={pickProfilePhoto}
+                >
+                  <Text style={styles.photoButtonText}>
+                    Change Photo
+                  </Text>
+                </TouchableOpacity>
+
+              </View>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Full Name"
+                value={name}
+                onChangeText={setName}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Mobile Number"
+                keyboardType="phone-pad"
+                maxLength={10}
+                value={mobile}
+                onChangeText={setMobile}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Vehicle Number"
+                value={vehicleNo}
+                onChangeText={setVehicleNo}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Vehicle Type"
+                value={vehicleType}
+                onChangeText={setVehicleType}
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.saveBtn,
+                  saving && styles.disabledBtn,
+                ]}
+                onPress={updateProfile}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.btnText}>
+                    💾 Save Changes
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.btnText}>
+                  ⬅ Back
+                </Text>
+              </TouchableOpacity>
+
+            </View>
     </ScrollView>
   );
 }
@@ -425,6 +617,38 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+    // ==========================
+  // PROFILE PHOTO
+  // ==========================
+
+  photoContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  profilePhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: "#2563EB",
+    backgroundColor: "#E5E7EB",
+  },
+
+  photoButton: {
+    marginTop: 12,
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
+  photoButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
@@ -438,17 +662,142 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 
-  input: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 14,
-    fontSize: 16,
-    color: "#111827",
+  cardTitle: {
+  fontSize: 18,
+  fontWeight: "bold",
+  color: "#111827",
+  marginBottom: 12,
+},
+
+    input: {
+      backgroundColor: "#FFFFFF",
+      borderWidth: 1,
+      borderColor: "#D1D5DB",
+      borderRadius: 12,
+      padding: 15,
+      marginBottom: 14,
+      fontSize: 16,
+      color: "#111827",
+    },
+
+      profileHeader: {
+      borderRadius: 22,
+      paddingVertical: 30,
+      alignItems: "center",
+      marginTop: 20,
+      marginBottom: 20,
+    },
+
+    profileImage: {
+      width: 130,
+      height: 130,
+      borderRadius: 65,
+      borderWidth: 4,
+      borderColor: "#FFFFFF",
+      backgroundColor: "#E5E7EB",
+    },
+
+    driverName: {
+      color: "#FFFFFF",
+      fontSize: 24,
+      fontWeight: "bold",
+      marginTop: 15,
+    },
+
+    docRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
   },
 
+  docName: {
+    fontSize: 16,
+    color: "#111827",
+    fontWeight: "600",
+  },
+
+  docStatus: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  green: {
+    color: "#16A34A",
+  },
+
+  orange: {
+    color: "#F59E0B",
+  },
+
+  red: {
+    color: "#DC2626",
+  },
+
+  gray: {
+    color: "#6B7280",
+  },
+
+  rejectReason: {
+    color: "#DC2626",
+    fontSize: 13,
+    marginBottom: 10,
+    marginLeft: 5,
+    fontStyle: "italic",
+  },
+
+    earningsCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 18,
+    alignItems: "center",
+
+    elevation: 4,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+
+  earningsTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#6B7280",
+  },
+
+  earningsAmount: {
+    fontSize: 34,
+    fontWeight: "bold",
+    color: "#16A34A",
+    marginTop: 10,
+  },
+
+  driverId: {
+    color: "#E5E7EB",
+    fontSize: 15,
+    marginTop: 4,
+  },
+
+  changePhotoButton: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 30,
+    marginTop: 18,
+  },
+
+  changePhotoText: {
+    color: "#2563EB",
+    fontWeight: "700",
+    fontSize: 15,
+  },
   saveBtn: {
     backgroundColor: "#16A34A",
     padding: 15,
@@ -475,11 +824,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  photoContainer: {
-  alignItems: "center",
-  marginBottom: 20,
-},
-
 photo: {
   width: 130,
   height: 130,
@@ -487,18 +831,5 @@ photo: {
   borderWidth: 3,
   borderColor: "#2563EB",
   backgroundColor: "#E5E7EB",
-},
-
-photoButton: {
-  marginTop: 12,
-  backgroundColor: "#2563EB",
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-  borderRadius: 10,
-},
-
-photoButtonText: {
-  color: "#FFF",
-  fontWeight: "bold",
 },
 });
