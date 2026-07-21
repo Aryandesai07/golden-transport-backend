@@ -212,9 +212,12 @@ def get_trip_details(
     db: Session = Depends(get_db),
 ):
 
-    trip = db.query(Trip).filter(
-        Trip.id == trip_id
-    ).first()
+    trip = (
+        db.query(Trip)
+        .join(Driver, Driver.id == Trip.driver_id)
+        .filter(Trip.id == trip_id)
+        .first()
+    )
 
     if not trip:
         raise HTTPException(
@@ -239,6 +242,7 @@ def get_trip_details(
             "remarks": trip.remarks,
             "status": trip.status,
             "created_at": trip.created_at,
+            "driver_name": trip.driver.name,
         },
     }
     
