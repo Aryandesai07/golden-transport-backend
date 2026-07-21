@@ -150,7 +150,10 @@ class FuelBill(Base):
     status = Column(String, default="PENDING")
     rejection_reason = Column(String, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(
+    DateTime,
+    default=lambda: datetime.now(timezone.utc),
+)
 
     driver = relationship("Driver", back_populates="fuel_bills")
 
