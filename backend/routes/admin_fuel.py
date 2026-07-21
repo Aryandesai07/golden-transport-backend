@@ -10,11 +10,12 @@ router = APIRouter(
 )
 
 @router.get("/fuel-bills")
-def get_fuel_bills(db: Session = Depends(get_db)):
+def get_all_fuel_bills(db: Session = Depends(get_db)):
 
     bills = (
         db.query(FuelBill)
-        .order_by(FuelBill.id.desc())
+        .join(Driver)
+        .order_by(FuelBill.created_at.desc())
         .all()
     )
 
@@ -22,37 +23,27 @@ def get_fuel_bills(db: Session = Depends(get_db)):
 
     for bill in bills:
 
-        driver = (
-            db.query(Driver)
-            .filter(Driver.id == bill.driver_id)
-            .first()
-        )
-
         result.append({
-
             "id": bill.id,
 
             "driver_id": bill.driver_id,
-
-            "driver_name":
-                driver.name if driver else "Unknown",
+            "driver_name": bill.driver.name,
 
             "trip_id": bill.trip_id,
 
             "amount": bill.amount,
-
             "liters": bill.liters,
 
             "fuel_station": bill.fuel_station,
-
             "location": bill.location,
+
+            "odometer": bill.odometer,
 
             "status": bill.status,
 
-            "image_url": bill.image_path,
+            "image": bill.image_path,
 
-            "created_at": bill.created_at
-
+            "created_at": bill.created_at,
         })
 
     return {
