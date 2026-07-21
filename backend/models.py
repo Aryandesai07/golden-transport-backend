@@ -133,13 +133,26 @@ class FuelBill(Base):
     __tablename__ = "fuel_bills"
 
     id = Column(Integer, primary_key=True, index=True)
+
     driver_id = Column(Integer, ForeignKey("drivers.id"), index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=True)
 
     amount = Column(Integer)
+    liters = Column(Float, nullable=True)
+
+    fuel_station = Column(String, nullable=True)
+    location = Column(String, nullable=True)
+
+    odometer = Column(Integer, nullable=True)
+
     image_path = Column(String)
 
-    driver = relationship("Driver", back_populates="fuel_bills")
+    status = Column(String, default="PENDING")
+    rejection_reason = Column(String, nullable=True)
 
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    driver = relationship("Driver", back_populates="fuel_bills")
 
 # =========================
 # SOS ALERT

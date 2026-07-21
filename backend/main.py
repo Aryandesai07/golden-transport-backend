@@ -11,6 +11,7 @@ from admin_routes import router as admin_router
 from routes.driver import router as driver_router
 from routes.documents import router as documents_router
 from routes import admin_trip
+from routes.admin_fuel import router as adminFuelRouter
 
 
 from admin_driver_routes import router as admin_driver_router
@@ -91,6 +92,8 @@ app.include_router(admin_trip.router)
 app.include_router(admin_driver_router)
 
 app.include_router(admin_document_router)
+
+app.include_router(adminFuelRouter)
 # =====================================
 # HOME
 # =====================================
