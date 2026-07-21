@@ -147,3 +147,40 @@ def fuel_summary(db: Session = Depends(get_db)):
         "status": "success",
         "drivers": result,
     }
+    
+@router.get("/fuel-bills/{driver_id}")
+def get_driver_fuel_bills(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
+
+    bills = (
+        db.query(FuelBill)
+        .filter(FuelBill.driver_id == driver_id)
+        .order_by(FuelBill.created_at.desc())
+        .all()
+    )
+
+    data = []
+
+    for bill in bills:
+
+        data.append({
+            "id": bill.id,
+            "driver_id": bill.driver_id,
+            "driver_name": bill.driver.name,
+            "trip_id": bill.trip_id,
+            "amount": bill.amount,
+            "liters": bill.liters,
+            "fuel_station": bill.fuel_station,
+            "location": bill.location,
+            "odometer": bill.odometer,
+            "status": bill.status,
+            "image": bill.image_path,
+            "created_at": bill.created_at,
+        })
+
+    return {
+        "status": "success",
+        "fuel_bills": data,
+    }
