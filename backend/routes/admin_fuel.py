@@ -184,3 +184,77 @@ def get_driver_fuel_bills(
         "status": "success",
         "fuel_bills": data,
     }
+    
+@router.get("/fuel-analytics")
+def fuel_analytics(db: Session = Depends(get_db)):
+
+    total_cost = (
+        db.query(func.coalesce(func.sum(FuelBill.amount), 0))
+        .scalar()
+    )
+
+    total_liters = (
+        db.query(func.coalesce(func.sum(FuelBill.liters), 0))
+        .scalar()
+    )
+
+    avg_mileage = (
+        db.query(func.coalesce(func.avg(FuelBill.mileage), 0))
+        .scalar()
+    )
+
+    monthly = (
+        db.query(
+            func.to_char(FuelBill.created_at, "Mon").label("month"),
+            func.sum(FuelBill.amount).label("amount"),
+        )
+        .group_by(func.to_char(FuelBill.created_at, "Mon"))
+        .order_by(func.min(FuelBill.created_at))
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "fuel_cost": total_cost,
+        "fuel_used": total_liters,
+        "average_mileage": round(avg_mileage, 2),
+        "monthly": [
+            {
+                "month": m.month,
+                "value": float(m.amount),
+            }
+            for m in monthly
+        ],
+    }
+    
+@router.get("/fuel-dashboard")
+def fuel_dashboard(db: Session = Depends(get_db)):
+
+    total_bills = db.query(FuelBill).count()
+
+    approved = db.query(FuelBill).filter(
+        FuelBill.status == "APPROVED"
+    ).count()
+
+    pending = db.query(FuelBill).filter(
+        FuelBill.status == "PENDING"
+    ).count()
+
+    rejected = db.query(FuelBill).filter(
+        FuelBill.status == "REJECTED"
+    ).count()
+
+    total_amount = db.query(
+        func.coalesce(func.sum(FuelBill.amount), 0)
+    ).scalar()
+
+    return {
+        "status": "success",
+        "dashboard": {
+            "total_bills": total_bills,
+            "approved": approved,
+            "pending": pending,
+            "rejected": rejected,
+            "total_amount": total_amount
+        }
+    }
