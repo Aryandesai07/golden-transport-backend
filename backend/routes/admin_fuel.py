@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, func
 from fastapi import HTTPException
 from fastapi import Body
 from database import get_db
@@ -100,4 +100,49 @@ def reject_fuel_bill(
     return {
         "status": "success",
         "message": "Fuel bill rejected",
+    }
+    
+@router.get("/fuel-summary")
+def fuel_summary(db: Session = Depends(get_db)):
+
+    drivers = db.query(Driver).all()
+
+    result = []
+
+    for driver in drivers:
+
+        pending = db.query(func.count(FuelBill.id)).filter(
+            FuelBill.driver_id == driver.id,
+            FuelBill.status == "PENDING",
+        ).scalar()
+
+        approved = db.query(func.count(FuelBill.id)).filter(
+            FuelBill.driver_id == driver.id,
+            FuelBill.status == "APPROVED",
+        ).scalar()
+
+        rejected = db.query(func.count(FuelBill.id)).filter(
+            FuelBill.driver_id == driver.id,
+            FuelBill.status == "REJECTED",
+        ).scalar()
+
+        total_amount = (
+            db.query(func.coalesce(func.sum(FuelBill.amount), 0))
+            .filter(FuelBill.driver_id == driver.id)
+            .scalar()
+        )
+
+        result.append({
+            "driver_id": driver.id,
+            "driver_name": driver.name,
+            "vehicle_no": driver.vehicle_no,
+            "pending": pending,
+            "approved": approved,
+            "rejected": rejected,
+            "total_amount": total_amount,
+        })
+
+    return {
+        "status": "success",
+        "drivers": result,
     }
