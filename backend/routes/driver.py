@@ -362,32 +362,35 @@ def update_location(
 @router.post("/upload-fuel-bill/{driver_id}")
 def upload_fuel_bill(
     driver_id: int,
+    trip_id: int = Form(...),
     amount: int = Form(...),
+    liters: float = Form(...),
+    fuel_station: str = Form(...),
+    location: str = Form(...),
+    odometer: int = Form(...),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     folder = UPLOAD_FUEL
     os.makedirs(folder, exist_ok=True)
 
-    filename = (
-        f"{driver_id}_{int(time.time())}_{file.filename}"
-    )
+    filename = f"{driver_id}_{int(time.time())}_{file.filename}"
 
-    file_path = os.path.join(
-        folder,
-        filename
-    )
+    file_path = os.path.join(folder, filename)
 
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(
-            file.file,
-            buffer
-        )
+        shutil.copyfileobj(file.file, buffer)
 
     bill = FuelBill(
         driver_id=driver_id,
+        trip_id=trip_id,
         amount=amount,
-        image_path=f"fuel_bills/{filename}"
+        liters=liters,
+        fuel_station=fuel_station,
+        location=location,
+        odometer=odometer,
+        image_path=f"fuel_bills/{filename}",
+        status="PENDING",
     )
 
     db.add(bill)
@@ -397,9 +400,18 @@ def upload_fuel_bill(
     return {
         "status": "success",
         "message": "Fuel bill uploaded successfully",
-        "bill_id": bill.id,
-        "image_url":
-            f"{BASE_URL}/uploads/fuel_bills/{filename}"
+        "bill": {
+            "id": bill.id,
+            "trip_id": bill.trip_id,
+            "driver_id": bill.driver_id,
+            "amount": bill.amount,
+            "liters": bill.liters,
+            "fuel_station": bill.fuel_station,
+            "location": bill.location,
+            "odometer": bill.odometer,
+            "status": bill.status,
+            "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
+        },
     }
 # =========================================
 # ADMIN LIVE MAP
