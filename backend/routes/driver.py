@@ -364,10 +364,6 @@ def upload_fuel_bill(
     driver_id: int,
     trip_id: int = Form(...),
     amount: int = Form(...),
-    liters: float = Form(...),
-    fuel_station: str = Form(...),
-    location: str = Form(...),
-    odometer: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -383,37 +379,29 @@ def upload_fuel_bill(
 
     # Save Fuel Bill
     bill = FuelBill(
-        driver_id=driver_id,
-        trip_id=trip_id,
-        amount=amount,
-        liters=liters,
-        fuel_station=fuel_station,
-        location=location,
-        odometer=odometer,
-        image_path=image_url,
-        status="PENDING",
-    )
+    driver_id=driver_id,
+    trip_id=trip_id,
+    amount=amount,
+    image_path=image_url,
+    status="PENDING",
+)
 
     db.add(bill)
     db.commit()
     db.refresh(bill)
 
     return {
-        "status": "success",
-        "message": "Fuel bill uploaded successfully",
-        "bill": {
-            "id": bill.id,
-            "trip_id": bill.trip_id,
-            "driver_id": bill.driver_id,
-            "amount": bill.amount,
-            "liters": bill.liters,
-            "fuel_station": bill.fuel_station,
-            "location": bill.location,
-            "odometer": bill.odometer,
-            "status": bill.status,
-            "image_url": bill.image_path,
-        },
-    }
+    "status": "success",
+    "message": "Fuel bill uploaded successfully",
+    "bill": {
+        "id": bill.id,
+        "trip_id": bill.trip_id,
+        "driver_id": bill.driver_id,
+        "amount": bill.amount,
+        "status": bill.status,
+        "image_url": bill.image_path,
+    },
+}
 # =========================================
 # ADMIN LIVE MAP
 # =========================================
