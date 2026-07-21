@@ -9,7 +9,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-
+import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -26,10 +26,8 @@ export default function FuelBill() {
   const [cameraGranted, setCameraGranted] = useState(false);
 
   const [tripId, setTripId] = useState("");
-  const [liters, setLiters] = useState("");
-  const [fuelStation, setFuelStation] = useState("");
-  const [location, setLocation] = useState("");
-  const [odometer, setOdometer] = useState("");
+
+  const [trips, setTrips] = useState<any[]>([]);
 
   // =====================================
   // INITIALIZE
@@ -54,6 +52,11 @@ export default function FuelBill() {
       }
 
       setDriverId(Number(id));
+      const response = await axios.get(
+        `${BASE_URL}/driver/trips/${id}`
+      );
+
+      setTrips(response.data.trips);
 
       // Camera Permission
       const permission =
@@ -117,67 +120,33 @@ export default function FuelBill() {
       );
     }
   };
-
   // =====================================
   // UPLOAD FUEL BILL
   // =====================================
 
   const uploadFuelBill = async () => {
     if (!image) {
-      Alert.alert(
-        "Error",
-        "Take a photo first"
-      );
+      Alert.alert("Error", "Take a photo first");
       return;
     }
 
     if (!tripId) {
-      Alert.alert("Error", "Enter Trip ID");
+      Alert.alert("Error", "Select Trip");
       return;
     }
-
-    if (!liters) {
-      Alert.alert("Error", "Enter Liters");
-      return;
-    }
-
-    if (!fuelStation) {
-      Alert.alert("Error", "Enter Fuel Station");
-      return;
-    }
-
-    if (!location) {
-      Alert.alert("Error", "Enter Location");
-      return;
-    }
-
-    if (!odometer) {
-      Alert.alert("Error", "Enter Odometer Reading");
-      return;
-    }
-
 
     if (!amount) {
-      Alert.alert(
-        "Error",
-        "Enter amount"
-      );
+      Alert.alert("Error", "Enter Amount");
       return;
     }
 
     if (isNaN(Number(amount))) {
-      Alert.alert(
-        "Error",
-        "Enter valid amount"
-      );
+      Alert.alert("Error", "Enter valid amount");
       return;
     }
 
     if (!driverId) {
-      Alert.alert(
-        "Error",
-        "Driver not loaded"
-      );
+      Alert.alert("Error", "Driver not loaded");
       return;
     }
 
@@ -187,15 +156,7 @@ export default function FuelBill() {
       const formData = new FormData();
 
       formData.append("trip_id", tripId);
-      formData.append("liters", liters);
-      formData.append("fuel_station", fuelStation);
-      formData.append("location", location);
-      formData.append("odometer", odometer);
-
-      formData.append(
-        "amount",
-        String(Number(amount))
-      );
+      formData.append("amount", amount);
 
       formData.append("file", {
         uri: image,
@@ -208,8 +169,7 @@ export default function FuelBill() {
         formData,
         {
           headers: {
-            "Content-Type":
-              "multipart/form-data",
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -224,10 +184,6 @@ export default function FuelBill() {
       setImage(null);
       setAmount("");
       setTripId("");
-      setLiters("");
-      setFuelStation("");
-      setLocation("");
-      setOdometer("");
 
     } catch (error: any) {
       console.log(
@@ -237,8 +193,7 @@ export default function FuelBill() {
 
       Alert.alert(
         "Error",
-        error?.response?.data?.message ||
-          "Upload failed"
+        error?.response?.data?.message || "Upload failed"
       );
 
     } finally {
@@ -251,88 +206,81 @@ export default function FuelBill() {
   // =====================================
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        ⛽ Fuel Bill Upload
-      </Text>
+  <View style={styles.container}>
 
-      <TextInput
-        placeholder="Enter Amount"
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-        style={styles.input}
-      />
+    <Text style={styles.title}>
+      ⛽ Fuel Bill Upload
+    </Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={pickImage}
-        disabled={loading}
+    <View
+      style={{
+        width: "100%",
+        borderWidth: 1,
+        borderColor: "#DDD",
+        borderRadius: 10,
+        marginBottom: 15,
+        backgroundColor: "#FFF",
+      }}
+    >
+      <Picker
+        selectedValue={tripId}
+        onValueChange={(value) => setTripId(String(value))}
       >
-        <Text style={styles.btnText}>
-          Take Photo
-        </Text>
-      </TouchableOpacity>
-
-      {image && (
-        <Image
-          source={{ uri: image }}
-          style={styles.image}
+        <Picker.Item
+          label="Select Trip"
+          value=""
         />
-      )}
 
-      <TextInput
-        placeholder="Trip ID"
-        keyboardType="numeric"
-        value={tripId}
-        onChangeText={setTripId}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Liters"
-        keyboardType="numeric"
-        value={liters}
-        onChangeText={setLiters}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Fuel Station"
-        value={fuelStation}
-        onChangeText={setFuelStation}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
-        style={styles.input}
-      />
-
-      <TextInput
-        placeholder="Odometer Reading"
-        keyboardType="numeric"
-        value={odometer}
-        onChangeText={setOdometer}
-        style={styles.input}
-      />
-
-      <TouchableOpacity
-        style={styles.uploadBtn}
-        onPress={uploadFuelBill}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.btnText}>
-            Upload Fuel Bill
-          </Text>
-        )}
-      </TouchableOpacity>
+        {trips.map((trip) => (
+          <Picker.Item
+            key={trip.trip_id}
+            label={`${trip.trip_id} • ${trip.pickup} → ${trip.drop}`}
+            value={trip.trip_id}
+          />
+        ))}
+      </Picker>
     </View>
+
+    <TextInput
+      placeholder="Enter Amount"
+      keyboardType="numeric"
+      value={amount}
+      onChangeText={setAmount}
+      style={styles.input}
+    />
+
+    <TouchableOpacity
+      style={styles.button}
+      onPress={pickImage}
+      disabled={loading}
+    >
+      <Text style={styles.btnText}>
+        Take Bill Photo
+      </Text>
+    </TouchableOpacity>
+
+    {image && (
+      <Image
+        source={{ uri: image }}
+        style={styles.image}
+      />
+    )}
+
+    <TouchableOpacity
+      style={styles.uploadBtn}
+      onPress={uploadFuelBill}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color="#FFFFFF" />
+      ) : (
+        <Text style={styles.btnText}>
+          Upload Fuel Bill
+        </Text>
+      )}
+    </TouchableOpacity>
+
+  </View>
   );
 }
 
