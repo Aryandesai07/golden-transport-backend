@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
+from fastapi import HTTPException
+from fastapi import Body
 from database import get_db
 from models import FuelBill, Driver
 
@@ -49,4 +50,54 @@ def get_all_fuel_bills(db: Session = Depends(get_db)):
     return {
         "status": "success",
         "fuel_bills": result
+    }
+
+@router.put("/fuel-bills/{bill_id}/approve")
+def approve_fuel_bill(
+    bill_id: int,
+    db: Session = Depends(get_db),
+):
+    bill = db.query(FuelBill).filter(
+        FuelBill.id == bill_id
+    ).first()
+
+    if not bill:
+        raise HTTPException(
+            status_code=404,
+            detail="Fuel bill not found",
+        )
+
+    bill.status = "APPROVED"
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Fuel bill approved",
+    }
+
+@router.put("/fuel-bills/{bill_id}/reject")
+def reject_fuel_bill(
+    bill_id: int,
+    reason: str = Body(..., embed=True),
+    db: Session = Depends(get_db),
+):
+    bill = db.query(FuelBill).filter(
+        FuelBill.id == bill_id
+    ).first()
+
+    if not bill:
+        raise HTTPException(
+            status_code=404,
+            detail="Fuel bill not found",
+        )
+
+    bill.status = "REJECTED"
+    bill.rejection_reason = reason
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Fuel bill rejected",
     }
