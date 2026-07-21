@@ -25,6 +25,12 @@ export default function FuelBill() {
   const [driverId, setDriverId] = useState<number | null>(null);
   const [cameraGranted, setCameraGranted] = useState(false);
 
+  const [tripId, setTripId] = useState("");
+  const [liters, setLiters] = useState("");
+  const [fuelStation, setFuelStation] = useState("");
+  const [location, setLocation] = useState("");
+  const [odometer, setOdometer] = useState("");
+
   // =====================================
   // INITIALIZE
   // =====================================
@@ -125,6 +131,32 @@ export default function FuelBill() {
       return;
     }
 
+    if (!tripId) {
+      Alert.alert("Error", "Enter Trip ID");
+      return;
+    }
+
+    if (!liters) {
+      Alert.alert("Error", "Enter Liters");
+      return;
+    }
+
+    if (!fuelStation) {
+      Alert.alert("Error", "Enter Fuel Station");
+      return;
+    }
+
+    if (!location) {
+      Alert.alert("Error", "Enter Location");
+      return;
+    }
+
+    if (!odometer) {
+      Alert.alert("Error", "Enter Odometer Reading");
+      return;
+    }
+
+
     if (!amount) {
       Alert.alert(
         "Error",
@@ -153,6 +185,12 @@ export default function FuelBill() {
 
     try {
       const formData = new FormData();
+
+      formData.append("trip_id", tripId);
+      formData.append("liters", liters);
+      formData.append("fuel_station", fuelStation);
+      formData.append("location", location);
+      formData.append("odometer", odometer);
 
       formData.append(
         "amount",
@@ -185,6 +223,11 @@ export default function FuelBill() {
 
       setImage(null);
       setAmount("");
+      setTripId("");
+      setLiters("");
+      setFuelStation("");
+      setLocation("");
+      setOdometer("");
 
     } catch (error: any) {
       console.log(
@@ -237,6 +280,44 @@ export default function FuelBill() {
           style={styles.image}
         />
       )}
+
+      <TextInput
+        placeholder="Trip ID"
+        keyboardType="numeric"
+        value={tripId}
+        onChangeText={setTripId}
+        style={styles.input}
+      />
+
+      <TextInput
+        placeholder="Liters"
+        keyboardType="numeric"
+        value={liters}
+        onChangeText={setLiters}
+        style={styles.input}
+      />
+
+      <TextInput
+        placeholder="Fuel Station"
+        value={fuelStation}
+        onChangeText={setFuelStation}
+        style={styles.input}
+      />
+
+      <TextInput
+        placeholder="Location"
+        value={location}
+        onChangeText={setLocation}
+        style={styles.input}
+      />
+
+      <TextInput
+        placeholder="Odometer Reading"
+        keyboardType="numeric"
+        value={odometer}
+        onChangeText={setOdometer}
+        style={styles.input}
+      />
 
       <TouchableOpacity
         style={styles.uploadBtn}
