@@ -371,16 +371,17 @@ def upload_fuel_bill(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    folder = UPLOAD_FUEL
-    os.makedirs(folder, exist_ok=True)
+    # Upload image directly to Cloudinary
+    result = cloudinary.uploader.upload(
+        file.file,
+        folder=f"fuel_bills/{driver_id}",
+        public_id=f"fuel_{int(time.time())}",
+        resource_type="image",
+    )
 
-    filename = f"{driver_id}_{int(time.time())}_{file.filename}"
+    image_url = result["secure_url"]
 
-    file_path = os.path.join(folder, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
+    # Save Fuel Bill
     bill = FuelBill(
         driver_id=driver_id,
         trip_id=trip_id,
@@ -389,7 +390,7 @@ def upload_fuel_bill(
         fuel_station=fuel_station,
         location=location,
         odometer=odometer,
-        image_path=f"fuel_bills/{filename}",
+        image_path=image_url,
         status="PENDING",
     )
 
@@ -410,7 +411,7 @@ def upload_fuel_bill(
             "location": bill.location,
             "odometer": bill.odometer,
             "status": bill.status,
-            "image_url": f"{BASE_URL}/uploads/fuel_bills/{filename}",
+            "image_url": bill.image_path,
         },
     }
 # =========================================
