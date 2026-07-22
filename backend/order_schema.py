@@ -7,23 +7,17 @@ from pydantic import BaseModel
 class OrderCreate(BaseModel):
     customer_name: str
     customer_phone: str
-
     pickup: str
     drop: str
-
     material: str
     weight: float
 
     vehicle_type: Optional[str] = None
-
     expected_delivery: Optional[date] = None
 
     driver_id: Optional[int] = None
-
     freight: float = 0
-
     advance: float = 0
-
     notes: Optional[str] = None
 
 

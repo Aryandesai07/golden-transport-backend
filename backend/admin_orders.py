@@ -40,10 +40,8 @@ def create_order(
 
     customer_name=data.customer_name,
     customer_phone=data.customer_phone,
-
     pickup=data.pickup,
     drop=data.drop,
-
     material=data.material,
     weight=data.weight,
 
