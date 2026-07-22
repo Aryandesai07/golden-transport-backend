@@ -1,7 +1,8 @@
-from sqlalchemy import Boolean, Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Date, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime,timezone
+
 # =========================
 # DRIVER TABLE
 # =========================
@@ -345,3 +346,52 @@ class AdminNotification(Base):
     )
 
     driver = relationship("Driver")
+    
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    order_number = Column(String, unique=True, index=True)
+
+    customer_name = Column(String, nullable=False)
+    customer_phone = Column(String, nullable=False)
+
+    pickup = Column(String, nullable=False)
+    drop = Column(String, nullable=False)
+
+    material = Column(String, nullable=False)
+    weight = Column(Float, default=0)
+
+    vehicle_type = Column(String, nullable=True)
+
+    expected_delivery = Column(Date, nullable=True)
+
+    status = Column(String, default="PENDING")
+
+    assigned_driver = Column(
+        Integer,
+        ForeignKey("drivers.id"),
+        nullable=True,
+    )
+
+    assigned_trip = Column(
+        Integer,
+        ForeignKey("trips.id"),
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    driver = relationship(
+        "Driver",
+        foreign_keys=[assigned_driver],
+    )
+
+    trip = relationship(
+        "Trip",
+        foreign_keys=[assigned_trip],
+    )

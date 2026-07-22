@@ -17,7 +17,7 @@ from routes.admin_fuel import router as adminFuelRouter
 from admin_driver_routes import router as admin_driver_router
 
 from admin_document_routes import router as admin_document_router
-
+from admin_orders import router as admin_orders_router
 # =====================================
 # CREATE DATABASE TABLES
 # =====================================
@@ -94,6 +94,8 @@ app.include_router(admin_driver_router)
 app.include_router(admin_document_router)
 
 app.include_router(adminFuelRouter)
+
+app.include_router(admin_orders_router)
 # =====================================
 # HOME
 # =====================================
