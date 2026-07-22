@@ -128,8 +128,13 @@ def fuel_summary(db: Session = Depends(get_db)):
         ).scalar()
 
         total_amount = (
-            db.query(func.coalesce(func.sum(FuelBill.amount), 0))
-            .filter(FuelBill.driver_id == driver.id)
+            db.query(
+                func.coalesce(func.sum(FuelBill.amount), 0)
+            )
+            .filter(
+                FuelBill.driver_id == driver.id,
+                FuelBill.status == "APPROVED"
+            )
             .scalar()
         )
 
@@ -189,42 +194,60 @@ def get_driver_fuel_bills(
 def fuel_analytics(db: Session = Depends(get_db)):
 
     total_cost = (
-        db.query(func.coalesce(func.sum(FuelBill.amount), 0))
+        db.query(
+            func.coalesce(func.sum(FuelBill.amount), 0)
+        )
+        .filter(FuelBill.status == "APPROVED")
         .scalar()
     )
 
     total_liters = (
-        db.query(func.coalesce(func.sum(FuelBill.liters), 0))
-        .scalar()
-    )
-
-    avg_mileage = (
-        db.query(func.coalesce(func.avg(FuelBill.mileage), 0))
+        db.query(
+            func.coalesce(func.sum(FuelBill.liters), 0)
+        )
+        .filter(FuelBill.status == "APPROVED")
         .scalar()
     )
 
     monthly = (
         db.query(
-            func.to_char(FuelBill.created_at, "Mon").label("month"),
+            func.extract("month", FuelBill.created_at).label("month_no"),
             func.sum(FuelBill.amount).label("amount"),
         )
-        .group_by(func.to_char(FuelBill.created_at, "Mon"))
-        .order_by(func.min(FuelBill.created_at))
+        .filter(FuelBill.status == "APPROVED")
+        .group_by(func.extract("month", FuelBill.created_at))
+        .order_by(func.extract("month", FuelBill.created_at))
         .all()
     )
 
+    months = [
+        "",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+    ]
+
     return {
         "status": "success",
-        "fuel_cost": total_cost,
-        "fuel_used": total_liters,
-        "average_mileage": round(avg_mileage, 2),
+        "fuel_cost": float(total_cost),
+        "fuel_used": float(total_liters),
+        "average_mileage": 0,
         "monthly": [
             {
-                "month": m.month,
-                "value": float(m.amount),
+                "month": months[int(row.month_no)],
+                "value": float(row.amount)
             }
-            for m in monthly
-        ],
+            for row in monthly
+        ]
     }
     
 @router.get("/fuel-dashboard")
@@ -244,9 +267,13 @@ def fuel_dashboard(db: Session = Depends(get_db)):
         FuelBill.status == "REJECTED"
     ).count()
 
-    total_amount = db.query(
+    total_amount = (
+    db.query(
         func.coalesce(func.sum(FuelBill.amount), 0)
-    ).scalar()
+    )
+    .filter(FuelBill.status == "APPROVED")
+    .scalar()
+)
 
     return {
         "status": "success",
