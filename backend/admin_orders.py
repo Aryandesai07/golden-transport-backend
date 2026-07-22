@@ -48,7 +48,11 @@ def create_order(
     vehicle_type=data.vehicle_type,
     expected_delivery=data.expected_delivery,
 
-    assigned_driver=data.driver_id,
+    assigned_driver=(
+        data.driver_id
+        if data.driver_id and data.driver_id > 0
+        else None
+    ),
 
     freight=data.freight,
     advance=data.advance,
