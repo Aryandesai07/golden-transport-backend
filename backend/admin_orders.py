@@ -36,20 +36,26 @@ def create_order(
         next_number = 1
 
     order = Order(
-        order_number=f"ORD{1000 + next_number}",
+    order_number=f"ORD{1000 + next_number}",
 
-        customer_name=data.customer_name,
-        customer_phone=data.customer_phone,
+    customer_name=data.customer_name,
+    customer_phone=data.customer_phone,
 
-        pickup=data.pickup,
-        drop=data.drop,
+    pickup=data.pickup,
+    drop=data.drop,
 
-        material=data.material,
-        weight=data.weight,
+    material=data.material,
+    weight=data.weight,
 
-        vehicle_type=data.vehicle_type,
-        expected_delivery=data.expected_delivery,
-    )
+    vehicle_type=data.vehicle_type,
+    expected_delivery=data.expected_delivery,
+
+    assigned_driver=data.driver_id,
+
+    freight=data.freight,
+    advance=data.advance,
+    notes=data.notes,
+)
 
     db.add(order)
     db.commit()
@@ -99,6 +105,15 @@ def get_orders(
             "assigned_trip": order.assigned_trip,
 
             "created_at": order.created_at,
+            
+            "expected_delivery": order.expected_delivery,
+
+            "freight": order.freight,
+            "advance": order.advance,
+            "notes": order.notes,
+
+            "driver_name": order.driver.name if order.driver else None,
+            "vehicle_no": order.driver.vehicle_no if order.driver else None,
         })
 
     return {
@@ -149,6 +164,13 @@ def get_order(
             "assigned_trip": order.assigned_trip,
 
             "created_at": order.created_at,
+            
+            "freight": order.freight,
+            "advance": order.advance,
+            "notes": order.notes,
+
+            "driver_name": order.driver.name if order.driver else None,
+            "vehicle_no": order.driver.vehicle_no if order.driver else None,
         }
     }
     

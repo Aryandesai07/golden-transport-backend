@@ -18,6 +18,14 @@ class OrderCreate(BaseModel):
 
     expected_delivery: Optional[date] = None
 
+    driver_id: Optional[int] = None
+
+    freight: float = 0
+
+    advance: float = 0
+
+    notes: Optional[str] = None
+
 
 class OrderUpdate(BaseModel):
     customer_name: Optional[str] = None

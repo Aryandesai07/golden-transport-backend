@@ -366,6 +366,12 @@ class Order(Base):
     vehicle_type = Column(String, nullable=True)
 
     expected_delivery = Column(Date, nullable=True)
+    
+    freight = Column(Float, default=0)
+
+    advance = Column(Float, default=0)
+
+    notes = Column(String, nullable=True)
 
     status = Column(String, default="PENDING")
 
