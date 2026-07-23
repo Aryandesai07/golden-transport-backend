@@ -14,6 +14,7 @@ import cloudinary_config
 from models import (
     Driver,
     Notification,
+    Order,
     Trip,
     DriverLocation,
     FuelBill,
@@ -626,10 +627,6 @@ def get_sos_alerts(
             for a in alerts
         ]
     }
-# =========================================
-# ADMIN DASHBOARD
-# =========================================
-
 @router.get("/admin/dashboard")
 def admin_dashboard(
     db: Session = Depends(get_db)
@@ -643,6 +640,7 @@ def admin_dashboard(
     )
 
     return {
+
         "stats": {
 
             "drivers": db.query(Driver).count(),
@@ -657,43 +655,49 @@ def admin_dashboard(
                 ])
             ).count(),
 
-            "fuel_bills": db.query(
-                FuelBill
-            ).count(),
+            "fuel_bills": db.query(FuelBill).count(),
 
             "proofs": db.query(Trip).filter(
                 Trip.proof_image.isnot(None)
             ).count(),
 
-            "sos_alerts": 0,
+            "sos_alerts": db.query(SOSAlert).count(),
+
         },
 
         "recent_orders": [
 
             {
+
                 "id": order.id,
 
                 "order_number": order.order_number,
 
                 "customer_name": order.customer_name,
 
-                "driver_name":
+                "driver_name": (
                     order.driver.name
-                    if order.driver else None,
+                    if order.driver
+                    else None
+                ),
 
-                "vehicle_no":
+                "vehicle_no": (
                     order.driver.vehicle_no
-                    if order.driver else None,
+                    if order.driver
+                    else None
+                ),
 
                 "freight": order.freight,
 
                 "status": order.status,
+
             }
 
             for order in recent_orders
-        ]
-    }
 
+        ]
+
+    }
 
 # =========================================
 # DRIVER REGISTER
