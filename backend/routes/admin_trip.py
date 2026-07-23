@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from models import Driver, Trip, FuelBill, SOSAlert
+from models import Driver, Order, Trip, FuelBill, SOSAlert
 from database import SessionLocal
 from models import Driver, Trip
 from schemas import TripCreate
@@ -125,9 +125,9 @@ def create_trip(
 @router.get("/dashboard")
 def admin_dashboard(db: Session = Depends(get_db)):
 
-    recent_trips = (
-        db.query(Trip)
-        .order_by(Trip.id.desc())
+    recent_orders = (
+        db.query(Order)
+        .order_by(Order.id.desc())
         .limit(5)
         .all()
     )
@@ -137,19 +137,16 @@ def admin_dashboard(db: Session = Depends(get_db)):
 
         "stats": {
             "drivers": db.query(Driver).count(),
-
             "trips": db.query(Trip).count(),
 
             "active_trips": db.query(Trip).filter(
-                Trip.status.in_(
-                    [
-                        "ASSIGNED",
-                        "STARTED",
-                        "REACHED_PICKUP",
-                        "LOADED",
-                        "IN_TRANSIT",
-                    ]
-                )
+                Trip.status.in_([
+                    "ASSIGNED",
+                    "STARTED",
+                    "REACHED_PICKUP",
+                    "LOADED",
+                    "IN_TRANSIT",
+                ])
             ).count(),
 
             "fuel_bills": db.query(FuelBill).count(),
@@ -163,16 +160,27 @@ def admin_dashboard(db: Session = Depends(get_db)):
             ).count(),
         },
 
-        "recent_trips": [
+        "recent_orders": [
             {
-                "id": t.id,
-                "trip_number": t.trip_number,
-                "pickup": t.pickup,
-                "drop": t.drop_location,
-                "driver_id": t.driver_id,
-                "status": t.status,
+                "id": o.id,
+                "order_number": o.order_number,
+                "customer_name": o.customer_name,
+                "customer_phone": o.customer_phone,
+                "pickup": o.pickup,
+                "drop": o.drop,
+                "material": o.material,
+                "weight": o.weight,
+                "vehicle_type": o.vehicle_type,
+                "expected_delivery": o.expected_delivery,
+                "freight": o.freight,
+                "status": o.status,
+                "assigned_driver": o.assigned_driver,
+                "assigned_trip": o.assigned_trip,
+                "created_at": o.created_at,
+                "driver_name": o.driver.name if o.driver else None,
+                "vehicle_no": o.driver.vehicle_no if o.driver else None,
             }
-            for t in recent_trips
+            for o in recent_orders
         ],
     }
     
