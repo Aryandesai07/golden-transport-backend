@@ -10,6 +10,7 @@ import folium
 from database import SessionLocal
 import cloudinary.uploader
 import cloudinary_config
+from sqlalchemy.orm import joinedload
 
 from models import (
     Driver,
@@ -186,6 +187,43 @@ def login_driver(
             "photo": driver.photo,
             "online": driver.online
         }
+    }
+    
+@router.get("/orders")
+def get_driver_orders(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
+
+    orders = (
+        db.query(Order)
+        .options(joinedload(Order.driver))
+        .filter(Order.assigned_driver == driver_id)
+        .order_by(Order.id.desc())
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "orders": [
+            {
+                "id": o.id,
+                "order_number": o.order_number,
+                "customer_name": o.customer_name,
+                "customer_phone": o.customer_phone,
+                "pickup": o.pickup,
+                "drop": o.drop,
+                "material": o.material,
+                "weight": o.weight,
+                "vehicle_type": o.vehicle_type,
+                "freight": o.freight,
+                "advance": o.advance,
+                "status": o.status,
+                "driver_name": o.driver.name if o.driver else None,
+                "vehicle_no": o.driver.vehicle_no if o.driver else None,
+            }
+            for o in orders
+        ],
     }
     
 @router.post("/logout")
