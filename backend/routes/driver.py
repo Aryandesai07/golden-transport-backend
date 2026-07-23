@@ -698,6 +698,36 @@ def admin_dashboard(
         ]
 
     }
+    
+@router.get("/orders/{driver_id}")
+def get_driver_orders(driver_id: int, db: Session = Depends(get_db)):
+
+    orders = (
+        db.query(Order)
+        .filter(Order.assigned_driver == driver_id)
+        .order_by(Order.id.desc())
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "orders": [
+            {
+                "id": o.id,
+                "order_number": o.order_number,
+                "customer_name": o.customer_name,
+                "pickup": o.pickup,
+                "drop": o.drop,
+                "material": o.material,
+                "weight": o.weight,
+                "vehicle_type": o.vehicle_type,
+                "status": o.status,
+                "driver_name": o.driver.name if o.driver else None,
+                "vehicle_no": o.driver.vehicle_no if o.driver else None,
+            }
+            for o in orders
+        ]
+    }
 
 # =========================================
 # DRIVER REGISTER

@@ -39,6 +39,10 @@ class Driver(Base):
 
     # Relationships
     trips = relationship("Trip", back_populates="driver")
+    orders = relationship(
+    "Order",
+    back_populates="driver",
+)
     locations = relationship("DriverLocation", back_populates="driver")
     fuel_bills = relationship("FuelBill", back_populates="driver")
     sos_alerts = relationship("SOSAlert", back_populates="driver")
@@ -393,9 +397,10 @@ class Order(Base):
     )
 
     driver = relationship(
-        "Driver",
-        foreign_keys=[assigned_driver],
-    )
+    "Driver",
+    foreign_keys=[assigned_driver],
+    back_populates="orders",
+)
 
     trip = relationship(
         "Trip",
