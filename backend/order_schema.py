@@ -22,6 +22,24 @@ class OrderUpdate(BaseModel):
 
     assigned_driver: Optional[int] = None
     assigned_trip: Optional[int] = None
+    
+class OrderCreate(BaseModel):
+    customer_name: str
+    customer_phone: str
+
+    pickup: str
+    drop: str
+
+    material: str
+    weight: float
+
+    vehicle_type: str
+
+    expected_delivery: date
+
+    freight: float
+    advance: float
+    notes: str
 
 
 class OrderAssign(BaseModel):
