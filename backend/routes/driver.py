@@ -635,25 +635,63 @@ def admin_dashboard(
     db: Session = Depends(get_db)
 ):
 
+    recent_orders = (
+        db.query(Order)
+        .order_by(Order.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
     return {
-        "drivers": db.query(Driver).count(),
-        "trips": db.query(Trip).count(),
+        "stats": {
 
-        "active_trips": db.query(Trip).filter(
-            Trip.status.in_([
-                "ASSIGNED",
-                "LOADED",
-                "IN_TRANSIT"
-            ])
-        ).count(),
+            "drivers": db.query(Driver).count(),
 
-        "fuel_bills": db.query(
-            FuelBill
-        ).count(),
+            "trips": db.query(Trip).count(),
 
-        "proofs": db.query(Trip).filter(
-            Trip.proof_image.isnot(None)
-        ).count()
+            "active_trips": db.query(Trip).filter(
+                Trip.status.in_([
+                    "ASSIGNED",
+                    "LOADED",
+                    "IN_TRANSIT"
+                ])
+            ).count(),
+
+            "fuel_bills": db.query(
+                FuelBill
+            ).count(),
+
+            "proofs": db.query(Trip).filter(
+                Trip.proof_image.isnot(None)
+            ).count(),
+
+            "sos_alerts": 0,
+        },
+
+        "recent_orders": [
+
+            {
+                "id": order.id,
+
+                "order_number": order.order_number,
+
+                "customer_name": order.customer_name,
+
+                "driver_name":
+                    order.driver.name
+                    if order.driver else None,
+
+                "vehicle_no":
+                    order.driver.vehicle_no
+                    if order.driver else None,
+
+                "freight": order.freight,
+
+                "status": order.status,
+            }
+
+            for order in recent_orders
+        ]
     }
 
 
