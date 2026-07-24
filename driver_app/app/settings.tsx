@@ -251,7 +251,7 @@ export default function SettingsScreen() {
           icon="truck-plus"
           title="My Trucks"
           subtitle="Manage your fleet"
-          onPress={() => router.push("/settings/my-trucks")}
+          onPress={() => router.push("/settings/my-trucks" as any)}
         />
 
       </SettingSection>
