@@ -54,6 +54,12 @@ class Driver(Base):
     back_populates="driver",
     uselist=False,
 )
+    
+    trucks = relationship(
+    "DriverTruck",
+    back_populates="driver",
+    cascade="all, delete-orphan",
+)
 
 
 class Trip(Base):
@@ -406,3 +412,33 @@ class Order(Base):
         "Trip",
         foreign_keys=[assigned_trip],
     )
+    
+class DriverTruck(Base):
+    __tablename__ = "driver_trucks"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    driver_id = Column(
+        Integer,
+        ForeignKey("drivers.id"),
+        nullable=False,
+    )
+
+    vehicle_no = Column(String, unique=True)
+    vehicle_type = Column(String)
+
+    vehicle_model = Column(String, nullable=True)
+    manufacturer = Column(String, nullable=True)
+    fuel_type = Column(String, nullable=True)
+    registration_year = Column(String, nullable=True)
+    load_capacity = Column(String, nullable=True)
+
+    status = Column(String, default="PENDING")
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    driver = relationship("Driver", back_populates="trucks")
+    
