@@ -390,6 +390,12 @@ class Order(Base):
         ForeignKey("drivers.id"),
         nullable=True,
     )
+    
+    assigned_truck = Column(
+    Integer,
+    ForeignKey("driver_trucks.id"),
+    nullable=True,
+)
 
     assigned_trip = Column(
         Integer,
@@ -406,6 +412,11 @@ class Order(Base):
     "Driver",
     foreign_keys=[assigned_driver],
     back_populates="orders",
+)
+    
+    truck = relationship(
+    "DriverTruck",
+    foreign_keys=[assigned_truck],
 )
 
     trip = relationship(
@@ -424,6 +435,11 @@ class DriverTruck(Base):
         nullable=False,
     )
 
+
+    availability = Column(
+            String,
+            default="AVAILABLE",
+        )
     vehicle_no = Column(String, unique=True)
     vehicle_type = Column(String)
 

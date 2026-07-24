@@ -905,3 +905,33 @@ def add_truck(
         "truck_id": truck.id,
     }
     
+@router.get("/my-trucks")
+def get_my_trucks(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
+    trucks = (
+        db.query(DriverTruck)
+        .filter(DriverTruck.driver_id == driver_id)
+        .order_by(DriverTruck.id.desc())
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "trucks": [
+            {
+                "id": t.id,
+                "vehicle_no": t.vehicle_no,
+                "vehicle_type": t.vehicle_type,
+                "vehicle_model": t.vehicle_model,
+                "manufacturer": t.manufacturer,
+                "fuel_type": t.fuel_type,
+                "registration_year": t.registration_year,
+                "load_capacity": t.load_capacity,
+                "status": t.status,
+            }
+            for t in trucks
+        ],
+    }
+    

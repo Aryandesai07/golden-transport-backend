@@ -11,6 +11,7 @@ import {
 import { router } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../context/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Truck {
   id: number;
@@ -32,15 +33,26 @@ export default function MyTrucks() {
   }, []);
 
   const loadTrucks = async () => {
-    try {
-      // Backend API will come here later
+  try {
+    const driverId = await AsyncStorage.getItem("driver_id");
+
+    const response = await fetch(
+      `https://golden-transport-backend.onrender.com/driver/my-trucks?driver_id=${driverId}`
+    );
+
+    const result = await response.json();
+
+    if (result.status === "success") {
+      setTrucks(result.trucks);
+    } else {
       setTrucks([]);
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (e) {
+    console.log(e);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const statusColor = (status: string) => {
     switch (status) {
