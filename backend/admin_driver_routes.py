@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Driver, DriverDocument
+from models import Driver, DriverDocument, DriverTruck
 from models import AdminNotification
 
 router = APIRouter(
@@ -108,4 +108,63 @@ def get_admin_notifications(
             }
             for n in notifications
         ],
+    }
+    
+@router.get("/fleet-overview")
+def fleet_overview(db: Session = Depends(get_db)):
+
+    total = db.query(DriverTruck).count()
+
+    available = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.status == "APPROVED",
+            DriverTruck.availability == "AVAILABLE",
+        )
+        .count()
+    )
+
+    on_trip = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.availability == "ON_TRIP",
+        )
+        .count()
+    )
+
+    maintenance = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.availability == "MAINTENANCE",
+        )
+        .count()
+    )
+
+    pending = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.status == "PENDING",
+        )
+        .count()
+    )
+
+    rejected = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.status == "REJECTED",
+        )
+        .count()
+    )
+
+    return {
+        "status": "success",
+
+        "summary": {
+            "total": total,
+            "available": available,
+            "on_trip": on_trip,
+            "maintenance": maintenance,
+            "pending": pending,
+            "rejected": rejected,
+        }
     }
