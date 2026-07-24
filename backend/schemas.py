@@ -107,3 +107,24 @@ class TripCreate(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class TruckCreate(BaseModel):
+    vehicle_no: str
+    vehicle_type: str
+
+    vehicle_model: Optional[str] = None
+    manufacturer: Optional[str] = None
+    fuel_type: Optional[str] = None
+    registration_year: Optional[str] = None
+    load_capacity: Optional[str] = None
+
+
+class TruckUpdate(BaseModel):
+    vehicle_no: Optional[str] = None
+    vehicle_type: Optional[str] = None
+
+    vehicle_model: Optional[str] = None
+    manufacturer: Optional[str] = None
+    fuel_type: Optional[str] = None
+    registration_year: Optional[str] = None
+    load_capacity: Optional[str] = None

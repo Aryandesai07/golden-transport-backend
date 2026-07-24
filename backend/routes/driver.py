@@ -14,19 +14,22 @@ from sqlalchemy.orm import joinedload
 
 from models import (
     Driver,
+    DriverTruck,
     Notification,
     Order,
     Trip,
     DriverLocation,
     FuelBill,
     Payment,
-    SOSAlert
+    SOSAlert,
 )
 from schemas import (
     DriverLogin,
     SOSRequest,
     DriverCreate,
-    LocationData
+    LocationData,
+    TruckCreate,
+    TruckUpdate,
 )
 from auth import create_access_token
 from config import (
@@ -851,5 +854,54 @@ def get_all_drivers(db: Session = Depends(get_db)):
             }
             for d in drivers
         ],
+    }
+    
+@router.post("/add-truck")
+def add_truck(
+    driver_id: int,
+    data: TruckCreate,
+    db: Session = Depends(get_db),
+):
+
+    driver = db.query(Driver).filter(
+        Driver.id == driver_id
+    ).first()
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver not found",
+        )
+
+    existing = db.query(DriverTruck).filter(
+        DriverTruck.vehicle_no == data.vehicle_no
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Vehicle already exists",
+        )
+
+    truck = DriverTruck(
+        driver_id=driver.id,
+        vehicle_no=data.vehicle_no,
+        vehicle_type=data.vehicle_type,
+        vehicle_model=data.vehicle_model,
+        manufacturer=data.manufacturer,
+        fuel_type=data.fuel_type,
+        registration_year=data.registration_year,
+        load_capacity=data.load_capacity,
+        status="PENDING",
+    )
+
+    db.add(truck)
+    db.commit()
+    db.refresh(truck)
+
+    return {
+        "status": "success",
+        "message": "Truck submitted for approval",
+        "truck_id": truck.id,
     }
     
