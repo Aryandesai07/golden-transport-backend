@@ -169,7 +169,7 @@ def fleet_overview(db: Session = Depends(get_db)):
         }
     }
     
-@router.get("/admin/trucks")
+@router.get("/trucks")
 def get_all_trucks(
     db: Session = Depends(get_db),
 ):
