@@ -201,3 +201,71 @@ def get_all_trucks(
             for truck in trucks
         ],
     }
+    
+@router.put("/admin/truck/approve/{truck_id}")
+def approve_truck(
+    truck_id: int,
+    db: Session = Depends(get_db),
+):
+
+    truck = (
+        db.query(DriverTruck)
+        .filter(DriverTruck.id == truck_id)
+        .first()
+    )
+
+    if not truck:
+        raise HTTPException(
+            status_code=404,
+            detail="Truck not found",
+        )
+
+    truck.status = "APPROVED"
+    truck.availability = "AVAILABLE"
+
+    db.commit()
+    db.refresh(truck)
+
+    return {
+        "status": "success",
+        "message": "Truck Approved",
+        "truck": {
+            "id": truck.id,
+            "vehicle_no": truck.vehicle_no,
+            "status": truck.status,
+            "availability": truck.availability,
+        },
+    }
+    
+@router.put("/admin/truck/reject/{truck_id}")
+def reject_truck(
+    truck_id: int,
+    db: Session = Depends(get_db),
+):
+
+    truck = (
+        db.query(DriverTruck)
+        .filter(DriverTruck.id == truck_id)
+        .first()
+    )
+
+    if not truck:
+        raise HTTPException(
+            status_code=404,
+            detail="Truck not found",
+        )
+
+    truck.status = "REJECTED"
+
+    db.commit()
+    db.refresh(truck)
+
+    return {
+        "status": "success",
+        "message": "Truck Rejected",
+        "truck": {
+            "id": truck.id,
+            "vehicle_no": truck.vehicle_no,
+            "status": truck.status,
+        },
+    }
