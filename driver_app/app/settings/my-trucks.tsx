@@ -17,7 +17,11 @@ interface Truck {
   id: number;
   vehicle_no: string;
   vehicle_type: string;
-  vehicle_model?: string;
+  vehicle_model: string;
+  manufacturer: string;
+  fuel_type: string;
+  registration_year: string;
+  load_capacity: string;
   status: string;
 }
 
@@ -35,6 +39,7 @@ export default function MyTrucks() {
   const loadTrucks = async () => {
   try {
     const driverId = await AsyncStorage.getItem("driver_id");
+    console.log("Driver ID:", driverId);
 
     const response = await fetch(
       `https://golden-transport-backend.onrender.com/driver/my-trucks?driver_id=${driverId}`
@@ -42,10 +47,12 @@ export default function MyTrucks() {
 
     const result = await response.json();
 
+    console.log("Truck API Response:", result);
+
     if (result.status === "success") {
-      setTrucks(result.trucks);
+    setTrucks(result.trucks);
     } else {
-      setTrucks([]);
+    setTrucks([]);
     }
   } catch (e) {
     console.log(e);
