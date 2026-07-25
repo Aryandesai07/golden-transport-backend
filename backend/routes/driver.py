@@ -478,6 +478,41 @@ def live_map(db: Session = Depends(get_db)):
 
     return HTMLResponse(m._repr_html_())
 
+@router.get("/admin/live-tracking")
+def live_tracking(db: Session = Depends(get_db)):
+
+    drivers = (
+        db.query(DriverLocation, Driver)
+        .join(
+            Driver,
+            Driver.id == DriverLocation.driver_id
+        )
+        .all()
+    )
+
+    data = []
+
+    for location, driver in drivers:
+
+        data.append({
+
+            "driver_id": driver.id,
+
+            "driver_name": driver.name,
+
+            "vehicle_no": driver.vehicle_no,
+
+            "latitude": location.latitude,
+
+            "longitude": location.longitude,
+
+        })
+
+    return {
+        "status": "success",
+        "drivers": data,
+    }
+
 
 # =========================================
 # SOS ALERT
