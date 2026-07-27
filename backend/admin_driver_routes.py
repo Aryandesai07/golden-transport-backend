@@ -175,10 +175,13 @@ def get_all_trucks(
 ):
 
     trucks = (
-        db.query(DriverTruck)
-        .order_by(DriverTruck.id.desc())
-        .all()
+    db.query(DriverTruck)
+    .filter(
+        DriverTruck.status == "APPROVED",
+        DriverTruck.availability == "AVAILABLE",
     )
+    .all()
+)
 
     return {
         "status": "success",
@@ -196,6 +199,34 @@ def get_all_trucks(
                 "registration_year": truck.registration_year,
                 "load_capacity": truck.load_capacity,
                 "status": truck.status,
+                "availability": truck.availability,
+            }
+            for truck in trucks
+        ],
+    }
+    
+@router.get("/drivers/{driver_id}/trucks")
+def get_driver_trucks(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
+    trucks = (
+        db.query(DriverTruck)
+        .filter(
+            DriverTruck.driver_id == driver_id,
+            DriverTruck.status == "APPROVED",
+            DriverTruck.availability == "AVAILABLE",
+        )
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "trucks": [
+            {
+                "id": truck.id,
+                "vehicle_no": truck.vehicle_no,
+                "vehicle_type": truck.vehicle_type,
                 "availability": truck.availability,
             }
             for truck in trucks
