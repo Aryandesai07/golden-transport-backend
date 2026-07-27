@@ -1,3 +1,4 @@
+from datetime import datetime
 import traceback
 
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, File
@@ -387,6 +388,7 @@ def update_location(
     if location:
         location.latitude = data.latitude
         location.longitude = data.longitude
+        location.updated_at = datetime.utcnow()
 
     else:
         location = DriverLocation(
@@ -514,9 +516,9 @@ def live_tracking(db: Session = Depends(get_db)):
     }
     
 @router.get("/admin/live-tracking/{driver_id}")
-def live_tracking_driver(
+def get_driver_live_tracking(
     driver_id: int,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db)
 ):
 
     result = (
@@ -540,16 +542,22 @@ def live_tracking_driver(
     location, driver = result
 
     return {
-        "status": "success",
-        "driver": {
-            "driver_id": driver.id,
-            "driver_name": driver.name,
-            "vehicle_no": driver.vehicle_no,
-            "latitude": location.latitude,
-            "longitude": location.longitude,
-        },
-    }
+    "status": "success",
+    "driver": {
+        "driver_id": driver.id,
+        "driver_name": driver.name,
+        "vehicle_no": driver.vehicle_no,
+        "latitude": location.latitude,
+        "longitude": location.longitude,
 
+        "pickup": None,
+        "drop": None,
+        "pickup_lat": None,
+        "pickup_lng": None,
+        "drop_lat": None,
+        "drop_lng": None,
+    }
+}
 
 # =========================================
 # SOS ALERT
