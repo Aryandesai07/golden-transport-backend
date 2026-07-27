@@ -358,6 +358,7 @@ def assign_driver(
 
     order.assigned_driver = driver.id
     order.status = "ASSIGNED"
+    truck.availability = "ON_TRIP"
 
     db.commit()
 
