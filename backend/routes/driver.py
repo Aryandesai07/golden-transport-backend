@@ -540,21 +540,44 @@ def get_driver_live_tracking(
         )
 
     location, driver = result
+    
+    order = (
+        db.query(Order)
+        .filter(
+            Order.assigned_driver == driver_id,
+            Order.status.in_([
+                "ASSIGNED",
+                "LOADED",
+                "IN_TRANSIT",
+            ])
+        )
+        .first()
+    )
 
     return {
     "status": "success",
     "driver": {
+
         "driver_id": driver.id,
+
         "driver_name": driver.name,
+
         "vehicle_no": driver.vehicle_no,
+
         "latitude": location.latitude,
+
         "longitude": location.longitude,
 
-        "pickup": None,
-        "drop": None,
+        "pickup": order.pickup if order else None,
+
+        "drop": order.drop if order else None,
+
         "pickup_lat": None,
+
         "pickup_lng": None,
+
         "drop_lat": None,
+
         "drop_lng": None,
     }
 }
