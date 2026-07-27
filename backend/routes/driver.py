@@ -545,12 +545,15 @@ def get_driver_live_tracking(
         db.query(Order)
         .filter(
             Order.assigned_driver == driver_id,
+            Order.pickup_lat.isnot(None),
+            Order.drop_lat.isnot(None),
             Order.status.in_([
                 "ASSIGNED",
                 "LOADED",
                 "IN_TRANSIT",
             ])
         )
+        .order_by(Order.id.desc())
         .first()
     )
 
@@ -572,13 +575,13 @@ def get_driver_live_tracking(
 
         "drop": order.drop if order else None,
 
-        "pickup_lat": None,
+        "pickup_lat": order.pickup_lat if order else None,
 
-        "pickup_lng": None,
+        "pickup_lng": order.pickup_lng if order else None,
 
-        "drop_lat": None,
+        "drop_lat": order.drop_lat if order else None,
 
-        "drop_lng": None,
+        "drop_lng": order.drop_lng if order else None,
     }
 }
 
