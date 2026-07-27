@@ -369,6 +369,12 @@ class Order(Base):
 
     pickup = Column(String, nullable=False)
     drop = Column(String, nullable=False)
+    
+    pickup_lat = Column(Float, nullable=True)
+    pickup_lng = Column(Float, nullable=True)
+
+    drop_lat = Column(Float, nullable=True)
+    drop_lng = Column(Float, nullable=True)
 
     material = Column(String, nullable=False)
     weight = Column(Float, default=0)
