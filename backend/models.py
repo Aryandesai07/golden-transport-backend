@@ -66,8 +66,6 @@ class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    driver_id = Column(Integer, ForeignKey("drivers.id"))
     
     driver_id = Column(
         Integer,
@@ -76,7 +74,7 @@ class Trip(Base):
 
     truck_id = Column(
         Integer,
-        ForeignKey("trucks.id"),
+        ForeignKey("driver_trucks.id"),
         nullable=True,
     )
 
@@ -85,8 +83,6 @@ class Trip(Base):
         unique=True,
         index=True,
     )
-
-    trip_number = Column(String, unique=True, index=True)
 
     customer_name = Column(String)
 
@@ -123,9 +119,7 @@ class Trip(Base):
 
     driver = relationship("Driver", back_populates="trips")
     
-    truck = relationship(
-        "Truck"
-    )
+    truck = relationship("DriverTruck")
 
     payments = relationship(
         "Payment",

@@ -50,6 +50,7 @@ class OrderCreate(BaseModel):
 
 class OrderAssign(BaseModel):
     driver_id: int
+    truck_id: int
 
 
 class OrderStatus(BaseModel):

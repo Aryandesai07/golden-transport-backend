@@ -4,7 +4,7 @@ from sqlalchemy import func
 
 from database import get_db
 
-from models import Order, Driver, Trip
+from models import DriverTruck, Order, Driver, Trip
 
 from order_schema import (
     OrderCreate,
@@ -262,6 +262,16 @@ def assign_driver(
     driver = db.query(Driver).filter(
         Driver.id == data.driver_id
     ).first()
+    
+    truck = db.query(DriverTruck).filter(
+        DriverTruck.id == data.truck_id
+    ).first()
+
+    if not truck:
+        raise HTTPException(
+            404,
+            "Truck not found",
+        )
 
     if not driver:
         raise HTTPException(404, "Driver not found")
@@ -281,6 +291,7 @@ def assign_driver(
             raise HTTPException(404, "Trip not found")
 
         trip.driver_id = driver.id
+        trip.truck_id = truck.id
 
         trip.customer_name = order.customer_name
         trip.customer_mobile = order.customer_phone
@@ -314,6 +325,7 @@ def assign_driver(
             trip_number=f"GT{1000 + next_trip}",
 
             driver_id=driver.id,
+            truck_id=truck.id,
 
             customer_name=order.customer_name,
             customer_mobile=order.customer_phone,
