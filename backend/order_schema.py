@@ -29,6 +29,12 @@ class OrderCreate(BaseModel):
 
     pickup: str
     drop: str
+    
+    pickup_lat: float | None = None
+    pickup_lng: float | None = None
+
+    drop_lat: float | None = None
+    drop_lng: float | None = None
 
     material: str
     weight: float

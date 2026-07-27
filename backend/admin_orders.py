@@ -33,30 +33,36 @@ def create_order(
     next_number = last_order.id + 1 if last_order else 1
 
     order = Order(
-        order_number=f"ORD{1000 + next_number}",
+    order_number=f"ORD{1000 + next_number}",
 
-        customer_name=data.customer_name,
-        customer_phone=data.customer_phone,
+    customer_name=data.customer_name,
+    customer_phone=data.customer_phone,
 
-        pickup=data.pickup,
-        drop=data.drop,
+    pickup=data.pickup,
+    drop=data.drop,
 
-        material=data.material,
-        weight=data.weight,
+    pickup_lat=data.pickup_lat,
+    pickup_lng=data.pickup_lng,
 
-        vehicle_type=data.vehicle_type,
+    drop_lat=data.drop_lat,
+    drop_lng=data.drop_lng,
 
-        expected_delivery=data.expected_delivery,
+    material=data.material,
+    weight=data.weight,
 
-        freight=data.freight,
-        advance=data.advance,
-        notes=data.notes,
+    vehicle_type=data.vehicle_type,
 
-        assigned_driver=None,
-        assigned_trip=None,
+    expected_delivery=data.expected_delivery,
 
-        status="PENDING",
-    )
+    freight=data.freight,
+    advance=data.advance,
+    notes=data.notes,
+
+    assigned_driver=None,
+    assigned_trip=None,
+
+    status="PENDING",
+)
 
     db.add(order)
     db.commit()
