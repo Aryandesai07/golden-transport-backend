@@ -512,6 +512,43 @@ def live_tracking(db: Session = Depends(get_db)):
         "status": "success",
         "drivers": data,
     }
+    
+@router.get("/admin/live-tracking/{driver_id}")
+def live_tracking_driver(
+    driver_id: int,
+    db: Session = Depends(get_db),
+):
+
+    result = (
+        db.query(DriverLocation, Driver)
+        .join(
+            Driver,
+            Driver.id == DriverLocation.driver_id,
+        )
+        .filter(
+            Driver.id == driver_id,
+        )
+        .first()
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver location not found",
+        )
+
+    location, driver = result
+
+    return {
+        "status": "success",
+        "driver": {
+            "driver_id": driver.id,
+            "driver_name": driver.name,
+            "vehicle_no": driver.vehicle_no,
+            "latitude": location.latitude,
+            "longitude": location.longitude,
+        },
+    }
 
 
 # =========================================
