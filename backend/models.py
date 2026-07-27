@@ -77,7 +77,13 @@ class Trip(Base):
 
     pickup = Column(String)
 
+    pickup_lat = Column(Float, nullable=True)
+    pickup_lng = Column(Float, nullable=True)
+
     drop_location = Column(String)
+
+    drop_lat = Column(Float, nullable=True)
+    drop_lng = Column(Float, nullable=True)
 
     material = Column(String)
 

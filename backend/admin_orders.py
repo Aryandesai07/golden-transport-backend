@@ -100,6 +100,12 @@ def get_orders(
 
             "pickup": order.pickup,
             "drop": order.drop,
+            
+            "pickup_lat": order.pickup_lat,
+            "pickup_lng": order.pickup_lng,
+
+            "drop_lat": order.drop_lat,
+            "drop_lng": order.drop_lng,
 
             "material": order.material,
             "weight": order.weight,
@@ -157,6 +163,12 @@ def get_order(
 
             "pickup": order.pickup,
             "drop": order.drop,
+            
+            "pickup_lat": order.pickup_lat,
+            "pickup_lng": order.pickup_lng,
+
+            "drop_lat": order.drop_lat,
+            "drop_lng": order.drop_lng,
 
             "material": order.material,
             "weight": order.weight,
@@ -272,11 +284,18 @@ def assign_driver(
 
         trip.customer_name = order.customer_name
         trip.customer_mobile = order.customer_phone
-
+        
         trip.pickup = order.pickup
-        trip.drop_location = order.drop
+        trip.pickup_lat = order.pickup_lat
+        trip.pickup_lng = order.pickup_lng
 
+        trip.drop_location = order.drop
+        trip.drop_lat = order.drop_lat
+        trip.drop_lng = order.drop_lng
+        
+        
         trip.material = order.material
+
         trip.load_weight = str(order.weight)
 
         trip.amount = order.freight
@@ -300,7 +319,12 @@ def assign_driver(
             customer_mobile=order.customer_phone,
 
             pickup=order.pickup,
+            pickup_lat=order.pickup_lat,
+            pickup_lng=order.pickup_lng,
+
             drop_location=order.drop,
+            drop_lat=order.drop_lat,
+            drop_lng=order.drop_lng,
 
             material=order.material,
             load_weight=str(order.weight),
