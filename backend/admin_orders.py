@@ -290,8 +290,20 @@ def assign_driver(
         if not trip:
             raise HTTPException(404, "Trip not found")
 
+        # If changing truck, free the old truck first
+        if trip.truck_id and trip.truck_id != truck.id:
+            old_truck = db.query(DriverTruck).filter(
+                DriverTruck.id == trip.truck_id
+            ).first()
+
+            if old_truck:
+                old_truck.availability = "AVAILABLE"
+
         trip.driver_id = driver.id
         trip.truck_id = truck.id
+
+        # Selected truck is now busy
+        truck.availability = "ON_TRIP"
 
         trip.customer_name = order.customer_name
         trip.customer_mobile = order.customer_phone
@@ -358,7 +370,6 @@ def assign_driver(
 
     order.assigned_driver = driver.id
     order.status = "ASSIGNED"
-    truck.availability = "ON_TRIP"
 
     db.commit()
 
