@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import extract, func
 
 from database import get_db
 
@@ -382,6 +384,72 @@ def assign_driver(
     return {
         "status": "success",
         "message": "Driver Assigned Successfully"
+    }
+    
+@router.get("/order-analytics")
+def order_analytics(db: Session = Depends(get_db)):
+
+    total_orders = db.query(Order).count()
+
+    completed = (
+        db.query(Order)
+        .filter(Order.status == "DELIVERED")
+        .count()
+    )
+
+    pending = (
+        db.query(Order)
+        .filter(Order.status == "PENDING")
+        .count()
+    )
+
+    cancelled = (
+        db.query(Order)
+        .filter(Order.status == "CANCELLED")
+        .count()
+    )
+
+    received = []
+    delivered = []
+
+    current_year = datetime.now().year
+
+    for month in range(1, 7):
+
+        received_count = (
+            db.query(Order)
+            .filter(
+                extract("month", Order.created_at) == month,
+                extract("year", Order.created_at) == current_year,
+            )
+            .count()
+        )
+
+        delivered_count = (
+            db.query(Order)
+            .filter(
+                Order.status == "DELIVERED",
+                extract("month", Order.created_at) == month,
+                extract("year", Order.created_at) == current_year,
+            )
+            .count()
+        )
+
+        received.append(received_count)
+        delivered.append(delivered_count)
+
+    return {
+        "status": "success",
+        "summary": {
+            "total_orders": total_orders,
+            "completed": completed,
+            "pending": pending,
+            "cancelled": cancelled,
+        },
+        "chart": {
+            "received": received,
+            "completed": delivered,
+        }
     }
     
 @router.put("/orders/{order_id}/status")
