@@ -1,3 +1,4 @@
+from calendar import month_abbr
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -421,19 +422,21 @@ def order_analytics(db: Session = Depends(get_db)):
     )
 
     # -----------------------------
-    # Chart (Jan-Jun)
+    # Chart (Last 6 Months)
     # -----------------------------
 
     current_year = datetime.now().year
-
-    received = []
-    delivered = []
-
     current_month = datetime.now().month
 
     start_month = max(1, current_month - 5)
 
+    labels = []
+    received = []
+    completed = []
+
     for month in range(start_month, current_month + 1):
+
+        labels.append(month_abbr[month])
 
         received_count = (
             db.query(Order)
@@ -444,7 +447,7 @@ def order_analytics(db: Session = Depends(get_db)):
             .count()
         )
 
-        delivered_count = (
+        completed_count = (
             db.query(Order)
             .filter(
                 Order.status == "DELIVERED",
@@ -455,25 +458,26 @@ def order_analytics(db: Session = Depends(get_db)):
         )
 
         received.append(received_count)
-        delivered.append(delivered_count)
+        completed.append(completed_count)
 
     # -----------------------------
     # Response
     # -----------------------------
 
     return {
-        "status": "success",
-        "summary": {
-            "total_orders": total_orders,
-            "completed": completed_orders,
-            "pending": pending_orders,
-            "cancelled": cancelled_orders,
-        },
-        "chart": {
-            "received": received,
-            "completed": delivered,
-        },
-    }
+    "status": "success",
+    "summary": {
+        "total_orders": total_orders,
+        "completed": completed_orders,
+        "pending": pending_orders,
+        "cancelled": cancelled_orders,
+    },
+    "chart": {
+        "labels": labels,
+        "received": received,
+        "completed": completed,
+    },
+}
     
 @router.put("/orders/{order_id}/status")
 def change_order_status(
