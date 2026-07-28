@@ -389,38 +389,57 @@ def assign_driver(
 @router.get("/order-analytics")
 def order_analytics(db: Session = Depends(get_db)):
 
+    # -----------------------------
+    # Summary
+    # -----------------------------
+
     total_orders = db.query(Order).count()
 
-    completed = (
+    completed_orders = (
         db.query(Order)
         .filter(Order.status == "DELIVERED")
         .count()
     )
 
-    pending = (
+    pending_orders = (
         db.query(Order)
-        .filter(Order.status == "PENDING")
+        .filter(
+            Order.status.in_([
+                "PENDING",
+                "ASSIGNED",
+                "LOADED",
+                "IN_TRANSIT",
+            ])
+        )
         .count()
     )
 
-    cancelled = (
+    cancelled_orders = (
         db.query(Order)
         .filter(Order.status == "CANCELLED")
         .count()
     )
 
-    received = []
-    delivered = []
+    # -----------------------------
+    # Chart (Jan-Jun)
+    # -----------------------------
 
     current_year = datetime.now().year
 
-    for month in range(1, 7):
+    received = []
+    delivered = []
+
+    current_month = datetime.now().month
+
+    start_month = max(1, current_month - 5)
+
+    for month in range(start_month, current_month + 1):
 
         received_count = (
             db.query(Order)
             .filter(
-                extract("month", Order.created_at) == month,
                 extract("year", Order.created_at) == current_year,
+                extract("month", Order.created_at) == month,
             )
             .count()
         )
@@ -429,8 +448,8 @@ def order_analytics(db: Session = Depends(get_db)):
             db.query(Order)
             .filter(
                 Order.status == "DELIVERED",
-                extract("month", Order.created_at) == month,
                 extract("year", Order.created_at) == current_year,
+                extract("month", Order.created_at) == month,
             )
             .count()
         )
@@ -438,18 +457,22 @@ def order_analytics(db: Session = Depends(get_db)):
         received.append(received_count)
         delivered.append(delivered_count)
 
+    # -----------------------------
+    # Response
+    # -----------------------------
+
     return {
         "status": "success",
         "summary": {
             "total_orders": total_orders,
-            "completed": completed,
-            "pending": pending,
-            "cancelled": cancelled,
+            "completed": completed_orders,
+            "pending": pending_orders,
+            "cancelled": cancelled_orders,
         },
         "chart": {
             "received": received,
             "completed": delivered,
-        }
+        },
     }
     
 @router.put("/orders/{order_id}/status")
