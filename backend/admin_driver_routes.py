@@ -233,7 +233,7 @@ def get_driver_trucks(
         ],
     }
     
-@router.put("/admin/truck/approve/{truck_id}")
+@router.put("/truck/approve/{truck_id}")
 def approve_truck(
     truck_id: int,
     db: Session = Depends(get_db),
@@ -268,7 +268,7 @@ def approve_truck(
         },
     }
     
-@router.put("/admin/truck/reject/{truck_id}")
+@router.put("/truck/reject/{truck_id}")
 def reject_truck(
     truck_id: int,
     db: Session = Depends(get_db),
