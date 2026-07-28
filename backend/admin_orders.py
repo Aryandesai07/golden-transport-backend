@@ -272,6 +272,12 @@ def assign_driver(
             404,
             "Truck not found",
         )
+        
+    if truck.availability == "ON_TRIP":
+        raise HTTPException(
+            status_code=400,
+            detail="Truck is already on another trip",
+        )
 
     if not driver:
         raise HTTPException(404, "Driver not found")
