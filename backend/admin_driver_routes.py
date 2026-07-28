@@ -300,3 +300,37 @@ def reject_truck(
             "status": truck.status,
         },
     }
+    
+@router.get("/fleet")
+def get_all_trucks(
+    db: Session = Depends(get_db),
+):
+
+    trucks = (
+        db.query(DriverTruck)
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "trucks": [
+            {
+                "id": truck.id,
+                "driver_id": truck.driver_id,
+                "driver_name": truck.driver.name,
+
+                "vehicle_no": truck.vehicle_no,
+                "vehicle_type": truck.vehicle_type,
+
+                "vehicle_model": truck.vehicle_model,
+                "manufacturer": truck.manufacturer,
+                "fuel_type": truck.fuel_type,
+                "registration_year": truck.registration_year,
+                "load_capacity": truck.load_capacity,
+
+                "status": truck.status,
+                "availability": truck.availability,
+            }
+            for truck in trucks
+        ]
+    }
