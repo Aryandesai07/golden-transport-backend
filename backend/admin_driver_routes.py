@@ -268,6 +268,43 @@ def approve_truck(
         },
     }
     
+# =====================================
+# DELETE TRUCK
+# =====================================
+
+@router.delete("/truck/{truck_id}")
+def delete_truck(
+    truck_id: int,
+    db: Session = Depends(get_db),
+):
+
+    truck = (
+        db.query(DriverTruck)
+        .filter(DriverTruck.id == truck_id)
+        .first()
+    )
+
+    if not truck:
+        raise HTTPException(
+            status_code=404,
+            detail="Truck not found",
+        )
+
+    # Optional: only allow deleting rejected trucks
+    if truck.status != "REJECTED":
+        raise HTTPException(
+            status_code=400,
+            detail="Only rejected trucks can be deleted",
+        )
+
+    db.delete(truck)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Truck deleted successfully",
+    }
+    
 @router.put("/truck/reject/{truck_id}")
 def reject_truck(
     truck_id: int,
