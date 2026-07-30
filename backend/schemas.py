@@ -128,3 +128,13 @@ class TruckUpdate(BaseModel):
     fuel_type: Optional[str] = None
     registration_year: Optional[str] = None
     load_capacity: Optional[str] = None
+    
+class CustomerLoadRequestCreate(BaseModel):
+    customer_name: str
+    mobile: str
+    from_location: str
+    to_location: str
+    material: str
+    truck_type: str
+    load_weight: str
+    remarks: str | None = None

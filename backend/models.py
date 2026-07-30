@@ -485,3 +485,29 @@ class DriverTruck(Base):
 
     driver = relationship("Driver", back_populates="trucks")
     
+class CustomerLoadRequest(Base):
+    __tablename__ = "customer_load_requests"
+
+    id = Column(Integer, primary_key=True)
+
+    customer_name = Column(String)
+
+    mobile = Column(String)
+
+    from_location = Column(String)
+
+    to_location = Column(String)
+
+    material = Column(String)
+
+    truck_type = Column(String)
+
+    load_weight = Column(String)
+
+    status = Column(String, default="NEW")
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+    )
+    
