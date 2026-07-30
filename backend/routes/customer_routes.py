@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -41,4 +41,62 @@ def create_load_request(
             "customer_name": load.customer_name,
             "status": load.status,
         }
+    }
+    
+@router.get("/admin/load-requests")
+def get_load_requests(db: Session = Depends(get_db)):
+
+    requests = (
+        db.query(CustomerLoadRequest)
+        .order_by(CustomerLoadRequest.id.desc())
+        .all()
+    )
+
+    return {
+        "status": "success",
+        "requests": [
+            {
+                "id": r.id,
+                "customer_name": r.customer_name,
+                "mobile": r.mobile,
+                "from_location": r.from_location,
+                "to_location": r.to_location,
+                "material": r.material,
+                "truck_type": r.truck_type,
+                "load_weight": r.load_weight,
+                "remarks": r.remarks,
+                "status": r.status,
+                "created_at": r.created_at,
+            }
+            for r in requests
+        ]
+    }
+    
+@router.put("/admin/load-request/{request_id}")
+def update_request_status(
+    request_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+):
+
+    request = (
+        db.query(CustomerLoadRequest)
+        .filter(CustomerLoadRequest.id == request_id)
+        .first()
+    )
+
+    if not request:
+        raise HTTPException(
+            status_code=404,
+            detail="Request not found"
+        )
+
+    request.status = status
+
+    db.commit()
+    db.refresh(request)
+
+    return {
+        "status": "success",
+        "message": "Updated successfully"
     }
