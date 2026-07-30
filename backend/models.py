@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Date, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Date, Integer, String, Float, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime,timezone
@@ -510,4 +510,6 @@ class CustomerLoadRequest(Base):
         DateTime,
         default=datetime.utcnow,
     )
+    
+    remarks = Column(Text, nullable=True)
     
