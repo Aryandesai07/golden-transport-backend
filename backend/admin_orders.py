@@ -268,7 +268,35 @@ def delete_order(
             detail="Order not found"
         )
 
+    # ==========================
+    # Free assigned truck
+    # ==========================
+    if order.assigned_truck:
+
+        truck = db.query(DriverTruck).filter(
+            DriverTruck.id == order.assigned_truck
+        ).first()
+
+        if truck:
+            truck.availability = "AVAILABLE"
+
+    # ==========================
+    # Delete assigned trip
+    # ==========================
+    if order.assigned_trip:
+
+        trip = db.query(Trip).filter(
+            Trip.id == order.assigned_trip
+        ).first()
+
+        if trip:
+            db.delete(trip)
+
+    # ==========================
+    # Delete order
+    # ==========================
     db.delete(order)
+
     db.commit()
 
     return {
