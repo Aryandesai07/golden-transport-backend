@@ -94,7 +94,6 @@ def get_orders(
     for order in orders:
 
         driver = None
-        trip = None
         truck = None
 
         if order.assigned_driver:
@@ -102,20 +101,14 @@ def get_orders(
                 Driver.id == order.assigned_driver
             ).first()
 
-        if order.assigned_trip:
-            trip = db.query(Trip).filter(
-                Trip.id == order.assigned_trip
+        if order.assigned_truck:
+            truck = db.query(DriverTruck).filter(
+                DriverTruck.id == order.assigned_truck
             ).first()
-
-            if trip and trip.truck_id:
-                truck = db.query(DriverTruck).filter(
-                    DriverTruck.id == trip.truck_id
-                ).first()
 
         result.append({
 
             "id": order.id,
-
             "order_number": order.order_number,
 
             "customer_name": order.customer_name,
@@ -123,7 +116,7 @@ def get_orders(
 
             "pickup": order.pickup,
             "drop": order.drop,
-            
+
             "pickup_lat": order.pickup_lat,
             "pickup_lng": order.pickup_lng,
 
@@ -138,10 +131,11 @@ def get_orders(
             "status": order.status,
 
             "assigned_driver": order.assigned_driver,
+            "assigned_truck": order.assigned_truck,
             "assigned_trip": order.assigned_trip,
 
             "created_at": order.created_at,
-            
+
             "expected_delivery": order.expected_delivery,
 
             "freight": order.freight,
@@ -174,7 +168,6 @@ def get_order(
         )
 
     driver = None
-    trip = None
     truck = None
 
     if order.assigned_driver:
@@ -182,15 +175,10 @@ def get_order(
             Driver.id == order.assigned_driver
         ).first()
 
-    if order.assigned_trip:
-        trip = db.query(Trip).filter(
-            Trip.id == order.assigned_trip
+    if order.assigned_truck:
+        truck = db.query(DriverTruck).filter(
+            DriverTruck.id == order.assigned_truck
         ).first()
-
-        if trip and trip.truck_id:
-            truck = db.query(DriverTruck).filter(
-                DriverTruck.id == trip.truck_id
-            ).first()
 
     return {
         "status": "success",
@@ -222,6 +210,7 @@ def get_order(
             "status": order.status,
 
             "assigned_driver": order.assigned_driver,
+            "assigned_truck": order.assigned_truck,
             "assigned_trip": order.assigned_trip,
 
             "created_at": order.created_at,
@@ -417,6 +406,7 @@ def assign_driver(
 
 
     order.assigned_driver = driver.id
+    order.assigned_truck = truck.id
     order.status = "ASSIGNED"
 
     db.commit()
