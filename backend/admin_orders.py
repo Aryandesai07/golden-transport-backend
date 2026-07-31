@@ -4,8 +4,6 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
-
-from backend.routes import driver
 from database import get_db
 
 from models import DriverTruck, Order, Driver, Trip
