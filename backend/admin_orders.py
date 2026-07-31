@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 
+from backend.routes import driver
 from database import get_db
 
 from models import DriverTruck, Order, Driver, Trip
@@ -92,6 +93,25 @@ def get_orders(
 
     for order in orders:
 
+        driver = None
+        trip = None
+        truck = None
+
+        if order.assigned_driver:
+            driver = db.query(Driver).filter(
+                Driver.id == order.assigned_driver
+            ).first()
+
+        if order.assigned_trip:
+            trip = db.query(Trip).filter(
+                Trip.id == order.assigned_trip
+            ).first()
+
+            if trip and trip.truck_id:
+                truck = db.query(DriverTruck).filter(
+                    DriverTruck.id == trip.truck_id
+                ).first()
+
         result.append({
 
             "id": order.id,
@@ -128,8 +148,8 @@ def get_orders(
             "advance": order.advance,
             "notes": order.notes,
 
-            "driver_name": order.driver.name if order.driver else None,
-            "vehicle_no": order.driver.vehicle_no if order.driver else None,
+            "driver_name": driver.name if driver else None,
+            "vehicle_no": truck.vehicle_no if truck else None,
         })
 
     return {
@@ -153,6 +173,25 @@ def get_order(
             detail="Order not found",
         )
 
+    driver = None
+    trip = None
+    truck = None
+
+    if order.assigned_driver:
+        driver = db.query(Driver).filter(
+            Driver.id == order.assigned_driver
+        ).first()
+
+    if order.assigned_trip:
+        trip = db.query(Trip).filter(
+            Trip.id == order.assigned_trip
+        ).first()
+
+        if trip and trip.truck_id:
+            truck = db.query(DriverTruck).filter(
+                DriverTruck.id == trip.truck_id
+            ).first()
+
     return {
         "status": "success",
         "order": {
@@ -166,7 +205,7 @@ def get_order(
 
             "pickup": order.pickup,
             "drop": order.drop,
-            
+
             "pickup_lat": order.pickup_lat,
             "pickup_lng": order.pickup_lng,
 
@@ -186,13 +225,13 @@ def get_order(
             "assigned_trip": order.assigned_trip,
 
             "created_at": order.created_at,
-            
+
             "freight": order.freight,
             "advance": order.advance,
             "notes": order.notes,
 
-            "driver_name": order.driver.name if order.driver else None,
-            "vehicle_no": order.driver.vehicle_no if order.driver else None,
+            "driver_name": driver.name if driver else None,
+            "vehicle_no": truck.vehicle_no if truck else None,
         }
     }
     
