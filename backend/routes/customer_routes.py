@@ -100,3 +100,29 @@ def update_request_status(
         "status": "success",
         "message": "Updated successfully"
     }
+    
+@router.delete("/admin/load-request/{request_id}")
+def delete_load_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+):
+
+    request = (
+        db.query(CustomerLoadRequest)
+        .filter(CustomerLoadRequest.id == request_id)
+        .first()
+    )
+
+    if not request:
+        raise HTTPException(
+            status_code=404,
+            detail="Request not found",
+        )
+
+    db.delete(request)
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Customer request deleted successfully",
+    }
