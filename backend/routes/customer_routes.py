@@ -67,6 +67,7 @@ def get_load_requests(db: Session = Depends(get_db)):
                 "remarks": r.remarks,
                 "status": r.status,
                 "created_at": r.created_at,
+                "order_created": r.order_created,
             }
             for r in requests
         ]
@@ -125,4 +126,31 @@ def delete_load_request(
     return {
         "status": "success",
         "message": "Customer request deleted successfully",
+    }
+    
+@router.put("/admin/convert-to-order/{request_id}")
+def convert_to_order(
+    request_id: int,
+    db: Session = Depends(get_db),
+):
+
+    request = (
+        db.query(CustomerLoadRequest)
+        .filter(CustomerLoadRequest.id == request_id)
+        .first()
+    )
+
+    if not request:
+        raise HTTPException(
+            status_code=404,
+            detail="Request not found",
+        )
+
+    request.status = "ASSIGNED"
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Customer request converted to Order"
     }

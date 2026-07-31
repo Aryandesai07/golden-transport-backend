@@ -513,3 +513,5 @@ class CustomerLoadRequest(Base):
     
     remarks = Column(Text, nullable=True)
     
+    order_created = Column(Boolean, default=False)
+    
