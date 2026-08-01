@@ -595,11 +595,12 @@ class Invoice(Base):
         cascade="all, delete",
     )
     
+    paid_amount = Column(
+    Float,
+    default=0,
+)
     
     
-# =========================
-# INVOICE PAYMENTS
-# =========================
 class InvoicePayment(Base):
     __tablename__ = "invoice_payments"
 
@@ -611,24 +612,18 @@ class InvoicePayment(Base):
         index=True,
     )
 
-    amount = Column(
-        Float,
-        nullable=False,
-    )
+    amount = Column(Float)
 
-    payment_date = Column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-    )
+    payment_mode = Column(String)
 
-    payment_mode = Column(
-        String,
-        default="CASH",
-    )
-
-    transaction_id = Column(
+    transaction_no = Column(
         String,
         nullable=True,
+    )
+
+    paid_date = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
     )
 
     remarks = Column(
@@ -636,17 +631,4 @@ class InvoicePayment(Base):
         nullable=True,
     )
 
-    payment_slip = Column(
-        String,
-        nullable=True,
-    )
-
-    created_at = Column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-    )
-
-    invoice = relationship(
-    "Invoice",
-    back_populates="payments",
-)
+    invoice = relationship("Invoice")

@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -7,11 +8,12 @@ from database import get_db
 
 from models import Order, Invoice
 
-from invoice_schema import InvoiceCreate
+from invoice_schema import InvoiceCreate, InvoicePaymentCreate, InvoicePaymentResponse
 from invoice_pdf import generate_invoice_pdf
 
 from fastapi.responses import FileResponse
 import os
+from models import InvoicePayment
 
 router = APIRouter(
     prefix="/admin",
@@ -211,4 +213,82 @@ def download_invoice_pdf(
         pdf_file,
         media_type="application/pdf",
         filename=os.path.basename(pdf_file),
+    )
+    
+@router.post(
+    "/admin/invoices/{invoice_id}/payment",
+    response_model=InvoicePaymentResponse,
+)
+def add_invoice_payment(
+    invoice_id: int,
+    payment: InvoicePaymentCreate,
+    db: Session = Depends(get_db),
+):
+    invoice = (
+        db.query(Invoice)
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    payment_row = InvoicePayment(
+        invoice_id=invoice.id,
+        amount=payment.amount,
+        payment_mode=payment.payment_mode,
+        transaction_no=payment.transaction_no,
+        remarks=payment.remarks,
+        paid_date=datetime.now(timezone.utc),
+    )
+
+    db.add(payment_row)
+
+    invoice.paid_amount += payment.amount
+
+    invoice.balance = invoice.total_amount - invoice.paid_amount
+
+    if invoice.paid_amount <= 0:
+        invoice.payment_status = "UNPAID"
+
+    elif invoice.paid_amount < invoice.total_amount:
+        invoice.payment_status = "PARTIAL"
+
+    else:
+        invoice.payment_status = "PAID"
+        invoice.balance = 0
+
+    db.commit()
+    db.refresh(payment_row)
+
+    return payment_row
+
+@router.get(
+    "/admin/invoices/{invoice_id}/payments",
+    response_model=list[InvoicePaymentResponse],
+)
+def get_invoice_payments(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+):
+    invoice = (
+        db.query(Invoice)
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    return (
+        db.query(InvoicePayment)
+        .filter(InvoicePayment.invoice_id == invoice_id)
+        .order_by(InvoicePayment.paid_date.desc())
+        .all()
     )
