@@ -10,6 +10,9 @@ from models import Order, Invoice
 from invoice_schema import InvoiceCreate
 from invoice_pdf import generate_invoice_pdf
 
+from fastapi.responses import FileResponse
+import os
+
 router = APIRouter(
     prefix="/admin",
     tags=["Admin Invoice"],
@@ -166,6 +169,40 @@ def get_invoice(
 
             "remarks": invoice.remarks,
             
-            "pdf_path": invoice.pdf_path,s
+            "pdf_path": invoice.pdf_path,
         }
     }
+    
+@router.get("/orders/{order_id}/invoice/pdf")
+def download_invoice_pdf(
+    order_id: int,
+    db: Session = Depends(get_db),
+):
+
+    invoice = db.query(Invoice).filter(
+        Invoice.order_id == order_id
+    ).first()
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    if not invoice.pdf_path:
+        raise HTTPException(
+            status_code=404,
+            detail="PDF not found",
+        )
+
+    if not os.path.exists(invoice.pdf_path):
+        raise HTTPException(
+            status_code=404,
+            detail="PDF file missing",
+        )
+
+    return FileResponse(
+        invoice.pdf_path,
+        media_type="application/pdf",
+        filename=os.path.basename(invoice.pdf_path),
+    )
