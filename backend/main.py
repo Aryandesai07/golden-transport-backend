@@ -13,10 +13,7 @@ from routes.documents import router as documents_router
 from routes import admin_trip
 from routes.admin_fuel import router as adminFuelRouter
 from routes.customer_routes import router as customer_router
-
-
-
-
+from admin_invoice import router as admin_invoice_router
 from admin_driver_routes import router as admin_driver_router
 
 from admin_document_routes import router as admin_document_router
@@ -101,6 +98,8 @@ app.include_router(adminFuelRouter)
 app.include_router(admin_orders_router)
 
 app.include_router(customer_router)
+
+app.include_router(admin_invoice_router)
 # =====================================
 # HOME
 # =====================================
