@@ -268,20 +268,8 @@ def delete_order(
             detail="Order not found"
         )
 
-   # ==========================
-    # Make truck available again
     # ==========================
-    if order.assigned_truck:
-
-        truck = db.query(DriverTruck).filter(
-            DriverTruck.id == order.assigned_truck
-        ).first()
-
-        if truck:
-            truck.availability = "AVAILABLE"
-
-    # ==========================
-    # Delete trip if exists
+    # Delete Trip
     # ==========================
     if order.assigned_trip:
 
@@ -293,7 +281,27 @@ def delete_order(
             db.delete(trip)
 
     # ==========================
-    # Delete order
+    # Release Truck
+    # ==========================
+    if order.assigned_truck:
+
+        other_order = db.query(Order).filter(
+            Order.assigned_truck == order.assigned_truck,
+            Order.id != order.id,
+            Order.status.in_(["ASSIGNED", "LOADED", "IN_TRANSIT"]),
+        ).first()
+
+        if not other_order:
+
+            truck = db.query(DriverTruck).filter(
+                DriverTruck.id == order.assigned_truck
+            ).first()
+
+            if truck:
+                truck.availability = "AVAILABLE"
+
+    # ==========================
+    # Delete Order
     # ==========================
     db.delete(order)
 
