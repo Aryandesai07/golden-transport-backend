@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from database import get_db
-from dateutil.relativedelta import relativedelta
 
 from models import DriverTruck, Order, Driver, Trip
 
@@ -485,116 +484,6 @@ def assign_driver(
         "status": "success",
         "message": "Driver Assigned Successfully",
     }
-    
-@router.get("/order-analytics")
-def order_analytics(db: Session = Depends(get_db)):
-
-    # -----------------------------
-    # Summary
-    # -----------------------------
-
-    total_orders = db.query(Order).count()
-
-    completed_orders = (
-        db.query(Order)
-        .filter(Order.status == "DELIVERED")
-        .count()
-    )
-
-    pending_orders = (
-        db.query(Order)
-        .filter(
-            Order.status.in_([
-                "PENDING",
-                "ASSIGNED",
-                "LOADED",
-                "IN_TRANSIT",
-            ])
-        )
-        .count()
-    )
-
-    cancelled_orders = (
-        db.query(Order)
-        .filter(Order.status == "CANCELLED")
-        .count()
-    )
-
-
-    # -----------------------------
-    # Monthly Analytics
-    # Last 6 Months
-    # -----------------------------
-
-    current_date = datetime.now()
-
-    labels = []
-    received = []
-    completed = []
-
-    for i in range(5, -1, -1):
-
-        month_date = current_date - relativedelta(months=i)
-
-        month = month_date.month
-        year = month_date.year
-
-        labels.append(month_abbr[month])
-
-
-        received_count = (
-            db.query(Order)
-            .filter(
-                extract("year", Order.created_at) == year,
-                extract("month", Order.created_at) == month,
-            )
-            .count()
-        )
-
-
-        completed_count = (
-            db.query(Order)
-            .filter(
-                Order.status == "DELIVERED",
-                extract("year", Order.created_at) == year,
-                extract("month", Order.created_at) == month,
-            )
-            .count()
-        )
-
-
-        received.append(received_count)
-        completed.append(completed_count)
-
-
-
-    # -----------------------------
-    # Response
-    # -----------------------------
-
-    return {
-
-        "status": "success",
-
-        "summary": {
-            "total_orders": total_orders,
-            "completed": completed_orders,
-            "pending": pending_orders,
-            "cancelled": cancelled_orders,
-        },
-
-
-        "chart": {
-
-            "labels": labels,
-
-            "received": received,
-
-            "completed": completed,
-
-        }
-    }
-    
 @router.put("/orders/{order_id}/status")
 def change_order_status(
     order_id: int,
@@ -686,3 +575,143 @@ def order_dashboard(
                 .count(),
         }
     }
+    
+@router.get("/order-analytics")
+def order_analytics(
+    db: Session = Depends(get_db)
+):
+
+    # -----------------------------
+    # Summary Cards
+    # -----------------------------
+
+    total_orders = (
+        db.query(Order)
+        .count()
+    )
+
+    completed_orders = (
+        db.query(Order)
+        .filter(Order.status == "DELIVERED")
+        .count()
+    )
+
+    pending_orders = (
+        db.query(Order)
+        .filter(
+            Order.status.in_([
+                "PENDING",
+                "ASSIGNED",
+                "LOADED",
+                "IN_TRANSIT",
+            ])
+        )
+        .count()
+    )
+
+    cancelled_orders = (
+        db.query(Order)
+        .filter(Order.status == "CANCELLED")
+        .count()
+    )
+
+
+    # -----------------------------
+    # Last 6 Months Chart
+    # -----------------------------
+
+    today = datetime.now()
+
+    current_year = today.year
+    current_month = today.month
+
+    labels = []
+    received = []
+    completed = []
+
+
+    for i in range(5, -1, -1):
+
+        month = current_month - i
+        year = current_year
+
+        if month <= 0:
+            month += 12
+            year -= 1
+
+
+        labels.append(month_abbr[month])
+
+
+        received_count = (
+            db.query(Order)
+            .filter(
+                extract(
+                    "year",
+                    Order.created_at
+                ) == year,
+
+                extract(
+                    "month",
+                    Order.created_at
+                ) == month
+            )
+            .count()
+        )
+
+
+        completed_count = (
+            db.query(Order)
+            .filter(
+                Order.status == "DELIVERED",
+
+                extract(
+                    "year",
+                    Order.created_at
+                ) == year,
+
+                extract(
+                    "month",
+                    Order.created_at
+                ) == month
+            )
+            .count()
+        )
+
+
+        received.append(received_count)
+        completed.append(completed_count)
+
+
+
+    # -----------------------------
+    # Final Response
+    # -----------------------------
+
+    return {
+
+        "status": "success",
+
+        "summary": {
+
+            "total_orders": total_orders,
+
+            "completed": completed_orders,
+
+            "pending": pending_orders,
+
+            "cancelled": cancelled_orders,
+        },
+
+
+        "chart": {
+
+            "labels": labels,
+
+            "received": received,
+
+            "completed": completed,
+        }
+
+    }
+    
