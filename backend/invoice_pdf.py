@@ -87,35 +87,35 @@ def generate_invoice_pdf(invoice, order):
 
     story.append(
         Paragraph(
-            f"<b>Freight:</b> ₹ {invoice.subtotal:.2f}",
+            f"<b>Freight:</b> Rs. {invoice.subtotal:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>GST ({invoice.gst_percent}%):</b> ₹ {invoice.gst_amount:.2f}",
+            f"<b>GST ({invoice.gst_percent}%):</b> Rs. {invoice.gst_amount:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Advance:</b> ₹ {invoice.advance:.2f}",
+            f"<b>Advance:</b> Rs. {invoice.advance:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Total:</b> ₹ {invoice.total_amount:.2f}",
+            f"<b>Total:</b> Rs. {invoice.total_amount:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Balance:</b> ₹ {invoice.balance:.2f}",
+            f"<b>Balance:</b> Rs. {invoice.balance:.2f}",
             styles["Normal"],
         )
     )
