@@ -48,6 +48,7 @@ class InvoicePaymentCreate(BaseModel):
 
 class InvoicePaymentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
     invoice_id: int
     amount: float
@@ -55,3 +56,6 @@ class InvoicePaymentResponse(BaseModel):
     transaction_no: Optional[str]
     paid_date: datetime
     remarks: Optional[str]
+
+    receipt_pdf: Optional[str] = None
+    receipt_url: Optional[str] = None

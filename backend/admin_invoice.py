@@ -173,6 +173,8 @@ def get_invoice(
             "remarks": invoice.remarks,
             
             "pdf_path": invoice.pdf_path,
+            
+            "cancelled": invoice.cancelled,
         }
     }
     
@@ -190,6 +192,12 @@ def download_invoice_pdf(
         raise HTTPException(
             status_code=404,
             detail="Invoice not found",
+        )
+        
+    if invoice.cancelled:
+        raise HTTPException(
+            status_code=400,
+            detail="This invoice has been cancelled."
         )
 
     if not invoice.pdf_path:
@@ -238,6 +246,13 @@ def add_invoice_payment(
         raise HTTPException(
             status_code=404,
             detail="Invoice not found",
+        )
+
+    # Prevent payment on cancelled invoice
+    if invoice.cancelled:
+        raise HTTPException(
+            status_code=400,
+            detail="Invoice is cancelled."
         )
 
     payment_row = InvoicePayment(
@@ -293,10 +308,7 @@ def add_invoice_payment(
 # PAYMENT HISTORY
 # ==========================================================
 
-@router.get(
-    "/invoices/{invoice_id}/payments",
-    response_model=list[InvoicePaymentResponse],
-)
+@router.get("/invoices/{invoice_id}/payments")
 def get_invoice_payments(
     invoice_id: int,
     db: Session = Depends(get_db),
@@ -313,12 +325,29 @@ def get_invoice_payments(
             detail="Invoice not found",
         )
 
-    return (
+    payments = (
         db.query(InvoicePayment)
         .filter(InvoicePayment.invoice_id == invoice_id)
         .order_by(InvoicePayment.paid_date.desc())
         .all()
     )
+
+    result = []
+
+    for p in payments:
+        result.append({
+            "id": p.id,
+            "invoice_id": p.invoice_id,
+            "amount": p.amount,
+            "payment_mode": p.payment_mode,
+            "transaction_no": p.transaction_no,
+            "paid_date": p.paid_date,
+            "remarks": p.remarks,
+            "receipt_pdf": p.receipt_pdf,
+            "receipt_url": f"/admin/payments/{p.id}/receipt",
+        })
+
+    return result
 
 
 # ==========================================================
@@ -366,3 +395,97 @@ def download_payment_receipt(
         media_type="application/pdf",
         filename=os.path.basename(pdf_file),
     )
+    
+@router.get("/invoices/{invoice_id}/summary")
+def invoice_summary(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+):
+    invoice = (
+        db.query(Invoice)
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    order = (
+        db.query(Order)
+        .filter(Order.id == invoice.order_id)
+        .first()
+    )
+
+    payments = (
+        db.query(InvoicePayment)
+        .filter(InvoicePayment.invoice_id == invoice.id)
+        .order_by(InvoicePayment.paid_date.asc())
+        .all()
+    )
+
+    payment_list = []
+
+    total_paid = 0
+
+    for p in payments:
+        total_paid += p.amount
+
+        payment_list.append({
+            "payment_id": p.id,
+            "date": p.paid_date,
+            "amount": p.amount,
+            "mode": p.payment_mode,
+            "transaction_no": p.transaction_no,
+            "receipt_url": f"/admin/payments/{p.id}/receipt",
+        })
+
+    return {
+        "invoice": {
+            "id": invoice.id,
+            "invoice_number": invoice.invoice_number,
+            "customer": order.customer_name,
+            "invoice_date": invoice.invoice_date,
+            "invoice_total": invoice.total_amount,
+            "paid": total_paid,
+            "balance": invoice.balance,
+            "status": invoice.payment_status,
+            
+        },
+        "payments": payment_list,
+    }
+    
+@router.put("/invoices/{invoice_id}/cancel")
+def cancel_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+):
+    invoice = (
+        db.query(Invoice)
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    if invoice.paid_amount > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot cancel a paid invoice.",
+        )
+
+    invoice.cancelled = True
+    invoice.payment_status = "CANCELLED"
+
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": "Invoice cancelled successfully."
+    }

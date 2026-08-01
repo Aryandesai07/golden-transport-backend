@@ -600,6 +600,8 @@ class Invoice(Base):
     default=0,
 )
     
+    cancelled = Column(Boolean, default=False)
+    
     
 class InvoicePayment(Base):
     __tablename__ = "invoice_payments"
