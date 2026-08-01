@@ -8,6 +8,7 @@ from database import get_db
 from models import Order, Invoice
 
 from invoice_schema import InvoiceCreate
+from invoice_pdf import generate_invoice_pdf
 
 router = APIRouter(
     prefix="/admin",
@@ -79,21 +80,31 @@ def generate_invoice(
 
         remarks=data.remarks,
     )
-
     db.add(invoice)
+
+    db.flush()
+
+    pdf = generate_invoice_pdf(
+        invoice,
+        order,
+    )
+
+    invoice.pdf_path = pdf
 
     db.commit()
 
     db.refresh(invoice)
 
     return {
-        "status": "success",
-        "invoice": {
-            "id": invoice.id,
-            "invoice_number": invoice.invoice_number,
-            "total_amount": invoice.total_amount,
-        }
+    "status": "success",
+    "invoice": {
+        "id": invoice.id,
+        "invoice_number": invoice.invoice_number,
+        "invoice_date": invoice.invoice_date,
+        "total_amount": invoice.total_amount,
+        "pdf_path": invoice.pdf_path,
     }
+}
     
 @router.get("/orders/{order_id}/invoice")
 def get_invoice(
@@ -154,5 +165,7 @@ def get_invoice(
             "payment_status": invoice.payment_status,
 
             "remarks": invoice.remarks,
+            
+            "pdf_path": invoice.pdf_path,s
         }
     }
