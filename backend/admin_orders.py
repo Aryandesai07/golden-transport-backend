@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from database import get_db
+from dateutil.relativedelta import relativedelta
 
 from models import DriverTruck, Order, Driver, Trip
 
@@ -519,63 +520,80 @@ def order_analytics(db: Session = Depends(get_db)):
         .count()
     )
 
+
     # -----------------------------
-    # Chart (Last 6 Months)
+    # Monthly Analytics
+    # Last 6 Months
     # -----------------------------
 
-    current_year = datetime.now().year
-    current_month = datetime.now().month
-
-    start_month = max(1, current_month - 5)
+    current_date = datetime.now()
 
     labels = []
     received = []
     completed = []
 
-    for month in range(start_month, current_month + 1):
+    for i in range(5, -1, -1):
+
+        month_date = current_date - relativedelta(months=i)
+
+        month = month_date.month
+        year = month_date.year
 
         labels.append(month_abbr[month])
+
 
         received_count = (
             db.query(Order)
             .filter(
-                extract("year", Order.created_at) == current_year,
+                extract("year", Order.created_at) == year,
                 extract("month", Order.created_at) == month,
             )
             .count()
         )
+
 
         completed_count = (
             db.query(Order)
             .filter(
                 Order.status == "DELIVERED",
-                extract("year", Order.created_at) == current_year,
+                extract("year", Order.created_at) == year,
                 extract("month", Order.created_at) == month,
             )
             .count()
         )
 
+
         received.append(received_count)
         completed.append(completed_count)
+
+
 
     # -----------------------------
     # Response
     # -----------------------------
 
     return {
-    "status": "success",
-    "summary": {
-        "total_orders": total_orders,
-        "completed": completed_orders,
-        "pending": pending_orders,
-        "cancelled": cancelled_orders,
-    },
-    "chart": {
-        "labels": labels,
-        "received": received,
-        "completed": completed,
-    },
-}
+
+        "status": "success",
+
+        "summary": {
+            "total_orders": total_orders,
+            "completed": completed_orders,
+            "pending": pending_orders,
+            "cancelled": cancelled_orders,
+        },
+
+
+        "chart": {
+
+            "labels": labels,
+
+            "received": received,
+
+            "completed": completed,
+
+        }
+    }
     
 @router.put("/orders/{order_id}/status")
 def change_order_status(
@@ -668,34 +686,3 @@ def order_dashboard(
                 .count(),
         }
     }
-    
-@router.get("/order-analytics")
-def order_analytics(
-    db: Session = Depends(get_db),
-):
-
-    monthly = (
-        db.query(
-            func.to_char(Order.created_at, "Mon").label("month"),
-            func.count(Order.id).label("orders"),
-        )
-        .group_by(
-            func.to_char(Order.created_at, "Mon")
-        )
-        .order_by(
-            func.min(Order.created_at)
-        )
-        .all()
-    )
-
-    return {
-        "status": "success",
-        "monthly": [
-            {
-                "month": m.month,
-                "orders": m.orders,
-            }
-            for m in monthly
-        ]
-    }
-    
