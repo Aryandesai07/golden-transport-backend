@@ -192,17 +192,23 @@ def download_invoice_pdf(
     if not invoice.pdf_path:
         raise HTTPException(
             status_code=404,
-            detail="PDF not found",
+            detail="PDF path not found",
         )
 
-    if not os.path.exists(invoice.pdf_path):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    pdf_file = os.path.join(BASE_DIR, invoice.pdf_path)
+
+    print(pdf_file)
+
+    if not os.path.exists(pdf_file):
         raise HTTPException(
             status_code=404,
-            detail="PDF file missing",
+            detail=f"PDF file missing: {pdf_file}",
         )
 
     return FileResponse(
-        invoice.pdf_path,
+        pdf_file,
         media_type="application/pdf",
-        filename=os.path.basename(invoice.pdf_path),
+        filename=os.path.basename(pdf_file),
     )
