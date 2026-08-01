@@ -94,3 +94,65 @@ def generate_invoice(
             "total_amount": invoice.total_amount,
         }
     }
+    
+@router.get("/orders/{order_id}/invoice")
+def get_invoice(
+    order_id: int,
+    db: Session = Depends(get_db),
+):
+
+    invoice = db.query(Invoice).filter(
+        Invoice.order_id == order_id
+    ).first()
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found",
+        )
+
+    order = db.query(Order).filter(
+        Order.id == order_id
+    ).first()
+
+    return {
+        "status": "success",
+        "invoice": {
+
+            "id": invoice.id,
+
+            "invoice_number": invoice.invoice_number,
+
+            "invoice_date": invoice.invoice_date,
+
+            "customer_name": order.customer_name,
+
+            "customer_phone": order.customer_phone,
+
+            "pickup": order.pickup,
+
+            "drop": order.drop,
+
+            "material": order.material,
+
+            "weight": order.weight,
+
+            "vehicle_type": order.vehicle_type,
+
+            "subtotal": invoice.subtotal,
+
+            "gst_percent": invoice.gst_percent,
+
+            "gst_amount": invoice.gst_amount,
+
+            "total_amount": invoice.total_amount,
+
+            "advance": invoice.advance,
+
+            "balance": invoice.balance,
+
+            "payment_status": invoice.payment_status,
+
+            "remarks": invoice.remarks,
+        }
+    }
