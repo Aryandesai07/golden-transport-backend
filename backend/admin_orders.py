@@ -596,19 +596,27 @@ def change_order_status(
 
     order.status = data.status
 
-    # ==========================
-    # Release truck after trip ends
-    # ==========================
+    # =====================================
+    # Release truck when order is completed
+    # =====================================
     if data.status in ["DELIVERED", "CANCELLED"]:
 
         if order.assigned_truck:
 
-            truck = db.query(DriverTruck).filter(
-                DriverTruck.id == order.assigned_truck
+            other_order = db.query(Order).filter(
+                Order.assigned_truck == order.assigned_truck,
+                Order.id != order.id,
+                Order.status.in_(["ASSIGNED", "LOADED", "IN_TRANSIT"]),
             ).first()
 
-            if truck:
-                truck.availability = "AVAILABLE"
+            if not other_order:
+
+                truck = db.query(DriverTruck).filter(
+                    DriverTruck.id == order.assigned_truck
+                ).first()
+
+                if truck:
+                    truck.availability = "AVAILABLE"
 
     db.commit()
 
