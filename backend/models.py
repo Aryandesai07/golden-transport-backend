@@ -515,3 +515,77 @@ class CustomerLoadRequest(Base):
     
     order_created = Column(Boolean, default=False)
     
+class Invoice(Base):
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    invoice_number = Column(
+        String,
+        unique=True,
+        index=True,
+    )
+
+    order_id = Column(
+        Integer,
+        ForeignKey("orders.id"),
+        unique=True,
+    )
+
+    invoice_date = Column(
+        Date,
+        nullable=False,
+    )
+
+    subtotal = Column(
+        Float,
+        default=0,
+    )
+
+    gst_percent = Column(
+        Float,
+        default=18,
+    )
+
+    gst_amount = Column(
+        Float,
+        default=0,
+    )
+
+    total_amount = Column(
+        Float,
+        default=0,
+    )
+
+    advance = Column(
+        Float,
+        default=0,
+    )
+
+    balance = Column(
+        Float,
+        default=0,
+    )
+
+    payment_status = Column(
+        String,
+        default="UNPAID",
+    )
+
+    remarks = Column(
+        Text,
+        nullable=True,
+    )
+
+    pdf_path = Column(
+        String,
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    order = relationship("Order")
+    
