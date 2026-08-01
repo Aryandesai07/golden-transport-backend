@@ -631,4 +631,6 @@ class InvoicePayment(Base):
         nullable=True,
     )
 
-    invoice = relationship("Invoice")
+    invoice = relationship("Invoice", back_populates="payments")
+    
+    pdf_path = Column(String, nullable=True)
