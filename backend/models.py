@@ -615,6 +615,8 @@ class InvoicePayment(Base):
     amount = Column(Float)
 
     payment_mode = Column(String)
+    
+    receipt_pdf = Column(String, nullable=True)
 
     transaction_no = Column(
         String,

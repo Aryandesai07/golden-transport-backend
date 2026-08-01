@@ -14,6 +14,7 @@ from invoice_pdf import generate_invoice_pdf
 from fastapi.responses import FileResponse
 import os
 from models import InvoicePayment
+from payment_receipt_pdf import generate_payment_receipt
 
 router = APIRouter(
     prefix="/admin",
@@ -214,9 +215,12 @@ def download_invoice_pdf(
         media_type="application/pdf",
         filename=os.path.basename(pdf_file),
     )
-    
+ # ==========================================================
+# ADD PAYMENT
+# ==========================================================
+
 @router.post(
-    "/admin/invoices/{invoice_id}/payment",
+    "/invoices/{invoice_id}/payment",
     response_model=InvoicePaymentResponse,
 )
 def add_invoice_payment(
@@ -247,6 +251,24 @@ def add_invoice_payment(
 
     db.add(payment_row)
 
+    # Get payment ID before commit
+    db.flush()
+
+    order = (
+        db.query(Order)
+        .filter(Order.id == invoice.order_id)
+        .first()
+    )
+
+    receipt_pdf = generate_payment_receipt(
+        payment_row,
+        invoice,
+        order,
+    )
+
+    payment_row.receipt_pdf = receipt_pdf
+
+    # Update invoice totals
     invoice.paid_amount += payment.amount
 
     invoice.balance = invoice.total_amount - invoice.paid_amount
@@ -266,8 +288,13 @@ def add_invoice_payment(
 
     return payment_row
 
+
+# ==========================================================
+# PAYMENT HISTORY
+# ==========================================================
+
 @router.get(
-    "/admin/invoices/{invoice_id}/payments",
+    "/invoices/{invoice_id}/payments",
     response_model=list[InvoicePaymentResponse],
 )
 def get_invoice_payments(
@@ -291,4 +318,51 @@ def get_invoice_payments(
         .filter(InvoicePayment.invoice_id == invoice_id)
         .order_by(InvoicePayment.paid_date.desc())
         .all()
+    )
+
+
+# ==========================================================
+# DOWNLOAD PAYMENT RECEIPT PDF
+# ==========================================================
+
+@router.get("/payments/{payment_id}/receipt")
+def download_payment_receipt(
+    payment_id: int,
+    db: Session = Depends(get_db),
+):
+    payment = (
+        db.query(InvoicePayment)
+        .filter(InvoicePayment.id == payment_id)
+        .first()
+    )
+
+    if not payment:
+        raise HTTPException(
+            status_code=404,
+            detail="Payment not found",
+        )
+
+    if not payment.receipt_pdf:
+        raise HTTPException(
+            status_code=404,
+            detail="Receipt not generated",
+        )
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    pdf_file = os.path.join(
+        BASE_DIR,
+        payment.receipt_pdf,
+    )
+
+    if not os.path.exists(pdf_file):
+        raise HTTPException(
+            status_code=404,
+            detail="Receipt PDF not found",
+        )
+
+    return FileResponse(
+        pdf_file,
+        media_type="application/pdf",
+        filename=os.path.basename(pdf_file),
     )
