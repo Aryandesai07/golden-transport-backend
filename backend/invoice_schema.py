@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
 class InvoiceCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     gst_percent: float = 18
     remarks: Optional[str] = None
 
@@ -33,15 +34,13 @@ class InvoiceResponse(BaseModel):
     remarks: Optional[str]
     
     paid_amount: float
-
-    class Config:
-        from_attributes = True
         
 # ==========================================
 # Invoice Payment
 # ==========================================
 
 class InvoicePaymentCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     amount: float
     payment_mode: str
     transaction_no: Optional[str] = None
@@ -57,6 +56,3 @@ class InvoicePaymentResponse(BaseModel):
     transaction_no: Optional[str]
     paid_date: datetime
     remarks: Optional[str]
-
-    class Config:
-        from_attributes = True
