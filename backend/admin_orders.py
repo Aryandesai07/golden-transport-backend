@@ -311,38 +311,59 @@ def assign_driver(
     db: Session = Depends(get_db),
 ):
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = db.query(Order).filter(
+        Order.id == order_id
+    ).first()
 
     if not order:
-        raise HTTPException(404, "Order not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found",
+        )
 
     driver = db.query(Driver).filter(
         Driver.id == data.driver_id
     ).first()
-    
+
+    if not driver:
+        raise HTTPException(
+            status_code=404,
+            detail="Driver not found",
+        )
+
     truck = db.query(DriverTruck).filter(
         DriverTruck.id == data.truck_id
     ).first()
 
     if not truck:
         raise HTTPException(
-            404,
-            "Truck not found",
+            status_code=404,
+            detail="Truck not found",
         )
-        
-    if truck.availability == "ON_TRIP":
+
+    # ------------------------------------
+    # Check if truck is already assigned
+    # ------------------------------------
+
+    active_order = (
+        db.query(Order)
+        .filter(
+            Order.assigned_truck == truck.id,
+            Order.status.in_(["ASSIGNED", "LOADED", "IN_TRANSIT"]),
+            Order.id != order.id,
+        )
+        .first()
+    )
+
+    if active_order:
         raise HTTPException(
             status_code=400,
-            detail="Truck is already on another trip",
+            detail="Truck is already assigned to another order",
         )
 
-    if not driver:
-        raise HTTPException(404, "Driver not found")
-
-
-    # ----------------------------------
-    # Trip already exists?
-    # ----------------------------------
+    # ------------------------------------
+    # Update existing trip
+    # ------------------------------------
 
     if order.assigned_trip:
 
@@ -351,10 +372,15 @@ def assign_driver(
         ).first()
 
         if not trip:
-            raise HTTPException(404, "Trip not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Trip not found",
+            )
 
-        # If changing truck, free the old truck first
+        # Release old truck if changed
+
         if trip.truck_id and trip.truck_id != truck.id:
+
             old_truck = db.query(DriverTruck).filter(
                 DriverTruck.id == trip.truck_id
             ).first()
@@ -365,12 +391,9 @@ def assign_driver(
         trip.driver_id = driver.id
         trip.truck_id = truck.id
 
-        # Selected truck is now busy
-        truck.availability = "ON_TRIP"
-
         trip.customer_name = order.customer_name
         trip.customer_mobile = order.customer_phone
-        
+
         trip.pickup = order.pickup
         trip.pickup_lat = order.pickup_lat
         trip.pickup_lng = order.pickup_lng
@@ -378,21 +401,27 @@ def assign_driver(
         trip.drop_location = order.drop
         trip.drop_lat = order.drop_lat
         trip.drop_lng = order.drop_lng
-        
-        
-        trip.material = order.material
 
+        trip.material = order.material
         trip.load_weight = str(order.weight)
 
         trip.amount = order.freight
         trip.expected_delivery = order.expected_delivery
         trip.remarks = order.notes
 
+        truck.availability = "ON_TRIP"
+
+    # ------------------------------------
+    # Create New Trip
+    # ------------------------------------
+
     else:
 
-        last_trip = db.query(Trip).order_by(
-            Trip.id.desc()
-        ).first()
+        last_trip = (
+            db.query(Trip)
+            .order_by(Trip.id.desc())
+            .first()
+        )
 
         next_trip = last_trip.id + 1 if last_trip else 1
 
@@ -430,16 +459,22 @@ def assign_driver(
 
         order.assigned_trip = trip.id
 
+        truck.availability = "ON_TRIP"
+
+    # ------------------------------------
+    # Update Order
+    # ------------------------------------
 
     order.assigned_driver = driver.id
     order.assigned_truck = truck.id
     order.status = "ASSIGNED"
 
     db.commit()
+    db.refresh(order)
 
     return {
         "status": "success",
-        "message": "Driver Assigned Successfully"
+        "message": "Driver Assigned Successfully",
     }
     
 @router.get("/order-analytics")
