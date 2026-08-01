@@ -588,4 +588,65 @@ class Invoice(Base):
     )
 
     order = relationship("Order")
+
+    payments = relationship(
+        "InvoicePayment",
+        back_populates="invoice",
+        cascade="all, delete",
+    )
     
+    
+    
+# =========================
+# INVOICE PAYMENTS
+# =========================
+class InvoicePayment(Base):
+    __tablename__ = "invoice_payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    invoice_id = Column(
+        Integer,
+        ForeignKey("invoices.id"),
+        index=True,
+    )
+
+    amount = Column(
+        Float,
+        nullable=False,
+    )
+
+    payment_date = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    payment_mode = Column(
+        String,
+        default="CASH",
+    )
+
+    transaction_id = Column(
+        String,
+        nullable=True,
+    )
+
+    remarks = Column(
+        Text,
+        nullable=True,
+    )
+
+    payment_slip = Column(
+        String,
+        nullable=True,
+    )
+
+    created_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+    invoice = relationship(
+    "Invoice",
+    back_populates="payments",
+)
