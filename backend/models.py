@@ -617,24 +617,19 @@ class InvoicePayment(Base):
     amount = Column(Float)
 
     payment_mode = Column(String)
-    
-    receipt_pdf = Column(String, nullable=True)
 
-    transaction_no = Column(
-        String,
-        nullable=True,
-    )
+    transaction_no = Column(String, nullable=True)
 
     paid_date = Column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
     )
 
-    remarks = Column(
-        Text,
-        nullable=True,
-    )
+    remarks = Column(Text, nullable=True)
 
-    invoice = relationship("Invoice", back_populates="payments")
-    
-    pdf_path = Column(String, nullable=True)
+    receipt_pdf = Column(String, nullable=True)
+
+    invoice = relationship(
+        "Invoice",
+        back_populates="payments",
+    )
