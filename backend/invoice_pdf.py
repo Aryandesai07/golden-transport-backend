@@ -1,30 +1,72 @@
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-
 import os
+
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+)
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 def generate_invoice_pdf(invoice, order):
 
-    folder = "invoices"
+    # ==========================================
+    # BASE DIRECTORY
+    # ==========================================
+    BASE_DIR = os.path.dirname(
+        os.path.abspath(__file__)
+    )
+
+    # ==========================================
+    # CREATE invoices FOLDER
+    # ==========================================
+    folder = os.path.join(
+        BASE_DIR,
+        "invoices",
+    )
 
     os.makedirs(folder, exist_ok=True)
 
+    # ==========================================
+    # FILE NAME
+    # ==========================================
     filename = f"{invoice.invoice_number}.pdf"
 
-    filepath = os.path.join(folder, filename)
+    filepath = os.path.join(
+        folder,
+        filename,
+    )
 
+    # ==========================================
+    # PDF DOCUMENT
+    # ==========================================
     doc = SimpleDocTemplate(filepath)
 
     styles = getSampleStyleSheet()
 
     story = []
 
-    story.append(Paragraph("<b>GOLDEN TRANSPORT</b>", styles["Title"]))
+    # ==========================================
+    # COMPANY
+    # ==========================================
+    story.append(
+        Paragraph(
+            "<b>GOLDEN TRANSPORT</b>",
+            styles["Title"],
+        )
+    )
 
-    story.append(Spacer(1, 0.25 * inch))
+    story.append(
+        Spacer(
+            1,
+            0.25 * inch,
+        )
+    )
 
+    # ==========================================
+    # INVOICE DETAILS
+    # ==========================================
     story.append(
         Paragraph(
             f"<b>Invoice No:</b> {invoice.invoice_number}",
@@ -39,8 +81,16 @@ def generate_invoice_pdf(invoice, order):
         )
     )
 
-    story.append(Spacer(1, 0.20 * inch))
+    story.append(
+        Spacer(
+            1,
+            0.20 * inch,
+        )
+    )
 
+    # ==========================================
+    # CUSTOMER DETAILS
+    # ==========================================
     story.append(
         Paragraph(
             f"<b>Customer:</b> {order.customer_name}",
@@ -83,45 +133,83 @@ def generate_invoice_pdf(invoice, order):
         )
     )
 
-    story.append(Spacer(1, 0.25 * inch))
-
     story.append(
         Paragraph(
-            f"<b>Freight:</b> Rs. {invoice.subtotal:.2f}",
+            f"<b>Vehicle:</b> {order.vehicle_type}",
+            styles["Normal"],
+        )
+    )
+
+    story.append(
+        Spacer(
+            1,
+            0.25 * inch,
+        )
+    )
+
+    # ==========================================
+    # BILL DETAILS
+    # ==========================================
+    story.append(
+        Paragraph(
+            f"<b>Freight:</b> ₹ {invoice.subtotal:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>GST ({invoice.gst_percent}%):</b> Rs. {invoice.gst_amount:.2f}",
+            f"<b>GST ({invoice.gst_percent}%):</b> ₹ {invoice.gst_amount:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Advance:</b> Rs. {invoice.advance:.2f}",
+            f"<b>Advance:</b> ₹ {invoice.advance:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Total:</b> Rs. {invoice.total_amount:.2f}",
+            f"<b>Total:</b> ₹ {invoice.total_amount:.2f}",
             styles["Normal"],
         )
     )
 
     story.append(
         Paragraph(
-            f"<b>Balance:</b> Rs. {invoice.balance:.2f}",
+            f"<b>Balance:</b> ₹ {invoice.balance:.2f}",
             styles["Normal"],
         )
     )
 
-    story.append(Spacer(1, 0.5 * inch))
+    story.append(
+        Paragraph(
+            f"<b>Payment Status:</b> {invoice.payment_status}",
+            styles["Normal"],
+        )
+    )
 
+    if invoice.remarks:
+        story.append(
+            Paragraph(
+                f"<b>Remarks:</b> {invoice.remarks}",
+                styles["Normal"],
+            )
+        )
+
+    story.append(
+        Spacer(
+            1,
+            0.5 * inch,
+        )
+    )
+
+    # ==========================================
+    # SIGNATURE
+    # ==========================================
     story.append(
         Paragraph(
             "Authorized Signature",
@@ -129,6 +217,12 @@ def generate_invoice_pdf(invoice, order):
         )
     )
 
+    # ==========================================
+    # BUILD PDF
+    # ==========================================
     doc.build(story)
 
-    return filepath
+    # ==========================================
+    # SAVE RELATIVE PATH IN DATABASE
+    # ==========================================
+    return f"invoices/{filename}"
