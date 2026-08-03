@@ -213,10 +213,20 @@ def download_invoice_pdf(
     print(pdf_file)
 
     if not os.path.exists(pdf_file):
-        raise HTTPException(
-            status_code=404,
-            detail=f"PDF file missing: {pdf_file}",
+
+        order = (
+            db.query(Order)
+            .filter(Order.id == invoice.order_id)
+            .first()
         )
+
+        pdf_file = generate_invoice_pdf(
+            invoice,
+            order,
+        )
+
+        invoice.pdf_path = pdf_file
+        db.commit()
 
     return FileResponse(
         pdf_file,
